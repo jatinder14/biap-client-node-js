@@ -2,18 +2,19 @@ import loadEnvVariables from './utils/envHelper.js';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import express from "express";
-import cors from "cors";
 import logger from 'morgan';
 import initializeFirebase from './lib/firebase/initializeFirebase.js';
 import logErrors from './utils/logErrors.js';
 import router from './utils/router.js';
 import dbConnect from './database/mongooseConnector.js';
 import mongoSanitize from 'express-mongo-sanitize'
+import subscriberRoute from './utils/subscribe.js'
+import {schedulerEachDay} from './rsp_integration/rsp_service/crons.js'
+
 const app = express();
 
 loadEnvVariables();
 initializeFirebase();
-
 //app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json({limit: '50mb'}));
@@ -27,7 +28,7 @@ app.use(
         },
     }),
 );
-app.use(logger('combined'))
+app.use(logger("combined"));
 
 //
 // // Global exception handler for HTTP/HTTPS requests
@@ -43,9 +44,10 @@ app.use(logger('combined'))
 //     res.status(500).json({ error: 'Something went wrong. Please try again' });
 // });
 
-app.use(cors());
-app.use('/clientApis', cors(), router);
-app.use(logErrors)
+// app.use(cors());
+app.use("/clientApis", router);
+app.use("/ondc/onboarding/", subscriberRoute);
+app.use(logErrors);
 // app.use(logger('dev'));
 
 app.get("*", (req, res) => {
@@ -60,7 +62,7 @@ const port = process.env.PORT || 8080;
 dbConnect()
     .then((db) => {
         console.log("Database connection successful");
-        
+        schedulerEachDay()
         app.listen(port, () => {
             console.log(`Listening on port ${port}`);
         });
