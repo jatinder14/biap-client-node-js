@@ -1,9 +1,8 @@
 import jwt from "jsonwebtoken";
-// const { JWT_DECODE_ERR } = require("../errors");
-// const { JWT_SECRET } = require("../../");
 const JWT_SECRET = 'secret_token';
 
 export const createJwtToken = (payload) => {
+  payload.loginWithOTP = true
   const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
   return token;
 };
@@ -11,9 +10,11 @@ export const createJwtToken = (payload) => {
 export const verifyJwtToken = (token, next) => {
   try {
     const { userId } = jwt.verify(token, JWT_SECRET);
-    return userId;
+    if(userId){
+      return true;
+    }
   } catch (err) {
-    next(err);
+    return false;
   }
 };
 export const decodeJwtToken = (token, next) => {
@@ -21,7 +22,7 @@ export const decodeJwtToken = (token, next) => {
     const decodedToken = jwt.decode(token, JWT_SECRET);
     return decodedToken;
   } catch (err) {
-    next(err);
+   return false;
   }
 };
 
