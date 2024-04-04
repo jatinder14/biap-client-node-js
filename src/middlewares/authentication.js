@@ -5,8 +5,12 @@ import MESSAGES from "../utils/messages.js";
 const authentication = (options) => (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (authHeader) {
-    const idToken = authHeader.split(" ")[1];
-    validateToken(idToken).then((decodedToken) => {
+    let idToken = authHeader, is_otp_login = true;
+    if (authHeader.includes("Bearer")) {
+      idToken = authHeader.split(" ")[1];
+      is_otp_login = false
+    }
+    validateToken(idToken, is_otp_login).then((decodedToken) => {
       if (decodedToken) {
         req.user = { decodedToken: decodedToken, token: idToken };
         next();
