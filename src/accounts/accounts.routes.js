@@ -4,12 +4,14 @@ import {bhashiniTranslator} from '../../src/middlewares/bhashiniTranslator/deliv
 import BillingController from "./billings/billing.controller.js";
 import DeliveryAddressController from "./deliveryAddress/deliveryAddress.controller.js";
 import MapController from "./map/map.controller.js";
+import UserController from "../accounts/users/user.controller.js";
 
 const rootRouter = new Router();
 
 const billingController = new BillingController();
 const mapController = new MapController();
 const deliveryAddressController = new DeliveryAddressController();
+const userController = new UserController();
 
 //#region billing details
 
@@ -24,6 +26,11 @@ rootRouter.get(
   authentication(),
   billingController.onBillingDetails
 );
+
+
+rootRouter.post('/signup', userController.signUp);
+  
+rootRouter.post('/verifyotp', userController.verifyOTP);
 
 rootRouter.post(
   "/v1/update_billing_details/:id",
