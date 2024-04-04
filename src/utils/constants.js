@@ -100,6 +100,8 @@ export const JUSPAY_PAYMENT_STATUS = {
 
 export const ORDER_STATUS = {
     COMPLETED: "completed",
+    CANCELLED: "cancelled",
+    RETURNED: "returned",
     "IN-PROGRESS": "in-progress"
 }
 
