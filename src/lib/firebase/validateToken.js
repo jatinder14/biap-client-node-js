@@ -13,7 +13,6 @@ const validateToken = async (token, is_otp_login) => {
   try {
     if (is_otp_login) {
       decodedToken =  decodeJwtToken(token);
-      console.log('decodedToken',decodedToken)
     } else {
       decodedToken = await admin.auth().verifyIdToken(token);
     }

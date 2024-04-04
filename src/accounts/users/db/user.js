@@ -13,7 +13,7 @@ const  UserSchema = new mongoose.Schema(
     },
     { _id: true, timestamps: true }
 );
-UserSchema.index({ phone_otp: 1 }, { expireAfterSeconds: 10 });
+// UserSchema.index({ phone_otp: 1 }, { expireAfterSeconds: 10 });
 
 
 const User  = mongoose.model('user', UserSchema, "User");
