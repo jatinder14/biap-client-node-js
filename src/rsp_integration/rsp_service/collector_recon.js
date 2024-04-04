@@ -72,7 +72,7 @@ export const initiateRsp = async () => {
           bap_uri: process.env.CLIENT_WEBHOOK_ENDPOINT + "v2",
 
           bpp_id: process.env.RSP_ID,
-          bpp_uri: process.env.RSP_ID,
+          bpp_uri: process.env.RSP_URI,
           transaction_id: uuidv4(),
           message_id: uuidv4(),
           timestamp: currentTimestamp,
@@ -133,7 +133,7 @@ export const initiateRsp = async () => {
                     .code, // NIL
                 },
                 address:
-                  seller.message.order.fulfillments[0].start?.location?.address?.building
+                  seller.message.order.fulfillments[0].start?.location?.address?.city
                 ,
               },
               payment: {
@@ -190,7 +190,7 @@ export const initiateRsp = async () => {
                         .beneficiary_name,
                     beneficiary_address: 
                       seller?.message?.order?.fulfillments[0]?.start?.location
-                        ?.address?.building?.replace(/^\"|\"$/g, '')?.replace(/\\/g, '')
+                        ?.address?.city
                     ,
                     settlement_status: "NOT-PAID",
                   },
