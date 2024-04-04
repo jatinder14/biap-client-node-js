@@ -133,7 +133,7 @@ export const initiateRsp = async () => {
                     .code, // NIL
                 },
                 address:
-                  seller.message.order.fulfillments[0].start?.location?.address?.city
+                  seller.message.order.fulfillments[0].start?.location?.address?.city || "India"
                 ,
               },
               payment: {
@@ -190,7 +190,7 @@ export const initiateRsp = async () => {
                         .beneficiary_name,
                     beneficiary_address: 
                       seller?.message?.order?.fulfillments[0]?.start?.location
-                        ?.address?.city
+                        ?.address?.city || "India"
                     ,
                     settlement_status: "NOT-PAID",
                   },

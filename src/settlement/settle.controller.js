@@ -1,5 +1,6 @@
 import OrderModel from "../order/v1/db/order.js";
 import ConfirmModel from "../order/v1/db/onConfirmDump.js";
+import { SETTLE_STATUS } from "../utils/constants.js";
 
 export async function getSettlementsHandler(req, res) {
     try {
@@ -9,7 +10,7 @@ export async function getSettlementsHandler(req, res) {
             res.status(401).send('Missing or wrong wil-api-key header');
             return;
         }
-        const { limit = 20, page = 1, bppId } = req.query;
+        const { limit = 100, page = 1, bppId } = req.query;
          // Parse limit and page to integers
          const limitValue = parseInt(limit);
          const pageValue = parseInt(page);
@@ -31,7 +32,12 @@ export async function getSettlementsHandler(req, res) {
         completedOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code  }) => {
-            sumCompletedOrderAmount += parseFloat(quote?.price?.value) || 0;
+            if (settle_status == SETTLE_STATUS.SETTLE)  {
+                sumCompletedOrderAmount += parseFloat(quote?.price?.value) || 0;
+            } else {
+                sumPendingOrderAmount += parseFloat(quote?.price?.value) || 0;
+            }
+            
             const settlementItem = {
                 id: id || _id,
                 order_id: _id,
