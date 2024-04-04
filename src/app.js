@@ -12,6 +12,9 @@ import subscriberRoute from './utils/subscribe.js'
 import {schedulerEachDay} from './rsp_integration/rsp_service/crons.js'
 import settleRouter from "./settlement/settle.routes.js"
 const app = express();
+// import Redis from 'ioredis';
+// global.redisCache = new Redis(process.env.BHASHINI_REDIS_PORT,process.env.BHASHINI_REDIS_HOST);
+
 
 loadEnvVariables();
 initializeFirebase();

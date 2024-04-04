@@ -12,6 +12,7 @@ import BppConfirmService from "./bppConfirm.service.js";
 import JuspayService from "../../../payment/juspay.service.js";
 import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
+import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
 const juspayService = new JuspayService();
@@ -112,28 +113,28 @@ class ConfirmOrderService {
                 pincode:requestContext?.pincode,
             });
 
-            if(order.payment.paymentGatewayEnabled){//remove this check once juspay is enabled
-                if (await this.arePaymentsPending(
-                    order?.payment,
-                    orderRequest?.context?.parent_order_id,
-                    total,
-                    confirmPayment,
-                )) {
-                    return {
-                        context,
-                        error: {
-                            message: "BAP hasn't received payment yet",
-                            status: "BAP_015",
-                            name: "PAYMENT_PENDING"
-                        }
-                    };
-                }
-
-                paymentStatus = await juspayService.getOrderStatus(orderRequest?.context?.transaction_id);
-
-            }else{
+            // if(order.payment.paymentGatewayEnabled){//remove this check once juspay is enabled
+            //     if (await this.arePaymentsPending(
+            //         order?.payment,
+            //         orderRequest?.context?.parent_order_id,
+            //         total,
+            //         confirmPayment,
+            //     )) {
+            //         return {
+            //             context,
+            //             error: {
+            //                 message: "BAP hasn't received payment yet",
+            //                 status: "BAP_015",
+            //                 name: "PAYMENT_PENDING"
+            //             }
+            //         };
+            //     }
+            //
+            //     paymentStatus = await juspayService.getOrderStatus(orderRequest?.context?.transaction_id);
+            //
+            // }else{
                 paymentStatus = {txn_id:requestContext?.transaction_id}
-            }
+            // }
 
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
@@ -309,7 +310,9 @@ class ConfirmOrderService {
                     { ...orderSchema }
                 );
 
-
+                let billingContactPerson = orderSchema.billing.phone
+                let provider = orderSchema.provider.descriptor.name
+                await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
 
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
@@ -399,9 +402,16 @@ class ConfirmOrderService {
             orders.map(async orderRequest => {
                 try {
                     return await this.confirmAndUpdateOrder(orderRequest, total, true);
+                    // if(paymentData){
+                    //     return await this.confirmAndUpdateOrder(orderRequest, total, true,paymentData);
+                    // }else{
+                    //     return await this.confirmAndUpdateOrder(orderRequest, total, false,paymentData);
+                    // }
+
                 }
                 catch (err) {
-                    return err.response.data;
+                    console.log("error confirmMultipleOrder ----", err)
+                    return err?.response?.data;
                 }
             })
         );
@@ -430,7 +440,6 @@ class ConfirmOrderService {
                 protocolConfirmResponse.context.message_id &&
                 protocolConfirmResponse.context.transaction_id
             ) {
-                console.log("protocolConfirmResponse>>>>>>>>>",JSON.stringify(protocolConfirmResponse))//,protocolConfirmResponse)
                 return protocolConfirmResponse;
 
             } else {

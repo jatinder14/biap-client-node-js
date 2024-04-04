@@ -11,7 +11,7 @@ export const rootRouter = new Router();
 
 // confirm order v1
 rootRouter.post(
-    '/v2/on_collector_recon',onCollectorReconController.onCollectorRecon,
+    '/response/v2/on_collector_recon',onCollectorReconController.onCollectorRecon, 
 );
 
 

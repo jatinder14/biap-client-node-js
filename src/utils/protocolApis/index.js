@@ -171,6 +171,22 @@ const protocolSearchItems = async (data) => {
     return result.data;
 }
 
+const protocolProvideDetails = async (data) => {
+
+    const apiCall = new HttpRequest(
+        process.env.PROTOCOL_BASE_URL,
+        PROTOCOL_API_URLS.PROVIDER_DETAILS,
+        "GET",
+        {
+            ...data
+        }
+    );
+
+    const result = await apiCall.send();
+
+    return result.data;
+}
+
 /**
  * search items
  * @param {Object} data
@@ -325,6 +341,22 @@ const protocolGetLocationDetails = async (searchRequest) => {
     const apiCall = new HttpRequest(
         process.env.PROTOCOL_BASE_URL,
         PROTOCOL_API_URLS.LOCATIONS_DETAILS,
+        "GET",
+        {
+            ...searchRequest
+        }
+    );
+
+    const result = await apiCall.send();
+
+    return result.data;
+}
+
+const protocolGetItemDetails = async (searchRequest) => {
+
+    const apiCall = new HttpRequest(
+        process.env.PROTOCOL_BASE_URL,
+        PROTOCOL_API_URLS.SEARCH_ITEM_DETAILS,
         "GET",
         {
             ...searchRequest
@@ -565,5 +597,7 @@ export {
     protocolGetItemList,
     protocolGetLocations,
     protocolGetLocationDetails,
-    protocolGetDumps
+    protocolGetDumps,
+    protocolProvideDetails,
+    protocolGetItemDetails
 };

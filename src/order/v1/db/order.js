@@ -349,7 +349,17 @@ const OrderSchema = new mongoose.Schema(
         settlementDetails:{type:Object},
         tags:{type:Object},
         domain:{type:String},
-        documents:{type:Object}
+        documents:{type:Object},
+        settle_status: { type: String },
+        is_settlement_sent: { type: Boolean, default: false },
+        settlement_id: { type: String },
+        settlement_reference_no: { type: String },
+        order_recon_status: { type: String },
+        counterparty_recon_status: { type: String },
+        counterparty_diff_amount_value: { type: String },
+        counterparty_diff_amount_currency: { type: String },
+        receiver_settlement_message: { type: String },
+        receiver_settlement_message_code: { type: String },
     },
     { _id: true, timestamps: true }
 );
