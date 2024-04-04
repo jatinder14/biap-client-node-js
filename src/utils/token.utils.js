@@ -22,7 +22,7 @@ export const decodeJwtToken = (token, next) => {
     const decodedToken = jwt.decode(token, JWT_SECRET);
     return decodedToken;
   } catch (err) {
-   return false;
+    next(err);
   }
 };
 
