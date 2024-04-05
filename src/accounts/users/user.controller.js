@@ -7,12 +7,10 @@ import sendOTPUtil from  '../../utils/otp.js';
 class UserController{
 
   async signUp(req, res) {
-    const { name,phone,email } = req.body;
-
-    console.log("@@@@@@signup",req.body);
+    const { name, phone, email } = req.body;
     let digits ="0123456789";
     let otp = "";
-    for(let i=0;i<4;i++){
+    for(let i=0; i<4; i++){
       otp+= digits[Math.floor(Math.random()*10)];
     }
     console.log("otp::",otp);
@@ -47,7 +45,7 @@ class UserController{
         return res.status(400).json({ success: false, message: 'Invalid OTP' });
       }
 
-      const token = createJwtToken({ userId: user._id });
+      const token = createJwtToken({ userId: user._id, uid: user._id });
   
       user.phone_otp = "";
       await user.save();

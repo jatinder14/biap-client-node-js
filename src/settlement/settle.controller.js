@@ -25,18 +25,69 @@ export async function getSettlementsHandler(req, res) {
 
         const orderCount = await OrderModel.countDocuments({})
 
-        let sumCompletedOrderAmount = 0; // Need to manage calculation
-        let sumPendingOrderAmount = 0; // Need to manage calculation
+        const allOrders = await OrderModel.find({}).sort({createdAt:-1}).lean()
+
+        let sumCompletedOrderAmount = 0;
+        let sumPendingOrderAmount = 0;
         const settlementData = [];
 
-        completedOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
-            settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
-            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code  }) => {
+        const orderAnalysis = {
+            year: {},
+            month: {},
+            week: {},
+        }
+
+        allOrders.forEach((el) => {
+            let { createdAt, items, quote, settle_status } = el
+            const gross_order_price = quote?.price?.value || 0
+            const item_price = items.reduce((accumulator, currentItem) => accumulator + (currentItem.product?.price?.value || 0) * (currentItem.quantity?.count || 0), 0);
+            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June",
+                "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+            // Extract year, month, and week from createdAt
+            createdAt = new Date(createdAt);
+            const year = createdAt.getFullYear();
+            const month = monthNames[createdAt.getMonth()];
+            const week = Math.ceil((createdAt.getDate() + new Date(createdAt.getFullYear(), 0, 1).getDay()) / 7);
+            const orderYear = year
+            const orderMonth = month
+            const orderWeek = week
+            const grossOrderPrice = gross_order_price
+            const itemPrice = item_price
+
             if (settle_status == SETTLE_STATUS.SETTLE)  {
                 sumCompletedOrderAmount += parseFloat(quote?.price?.value) || 0;
             } else {
                 sumPendingOrderAmount += parseFloat(quote?.price?.value) || 0;
             }
+
+            // Group by year
+            if (!orderAnalysis.year[orderYear]) {
+            orderAnalysis.year[orderYear] = { grossOrderPrice: 0, netItemPrice: 0 }
+            }
+
+            orderAnalysis.year[orderYear].grossOrderPrice += parseFloat(grossOrderPrice)
+            orderAnalysis.year[orderYear].netItemPrice += parseFloat(itemPrice)
+
+            // Group by month
+            if (!orderAnalysis.month[orderMonth]) {
+            orderAnalysis.month[orderMonth] = { grossOrderPrice: 0, netItemPrice: 0 }
+            }
+
+            orderAnalysis.month[orderMonth].grossOrderPrice += parseFloat(grossOrderPrice)
+            orderAnalysis.month[orderMonth].netItemPrice += parseFloat(itemPrice)
+
+            // Group by week
+            if (!orderAnalysis.week[orderWeek]) {
+            orderAnalysis.week[orderWeek] = { grossOrderPrice: 0, netItemPrice: 0 }
+            }
+
+            orderAnalysis.week[orderWeek].grossOrderPrice += parseFloat(grossOrderPrice)
+            orderAnalysis.week[orderWeek].netItemPrice += parseFloat(itemPrice)
+        })
+
+        completedOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
+            settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
+            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code  }) => {
             
             const settlementItem = {
                 id: id || _id,
@@ -96,6 +147,7 @@ export async function getSettlementsHandler(req, res) {
             count: orderCount,
             sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
             sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+            orderAnalysis: orderAnalysis
         });
     } catch (error) {
         console.error("Error fetching settlements:", error);
