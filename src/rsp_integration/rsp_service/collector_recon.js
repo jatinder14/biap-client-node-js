@@ -121,8 +121,8 @@ export const initiateRsp = async () => {
               id: objectId,
               invoice_no: uuidv4(),
               collector_app_id: bap_id,
-              receiver_app_id: on_confirm.context?.bap_id,
-              receiver_app_uri: on_confirm.context?.bap_uri, // seller.bpp_uri, // confirm BAP
+              receiver_app_id: on_confirm.context?.bpp_id,
+              receiver_app_uri: on_confirm.context?.bpp_uri, // seller.bpp_uri, // confirm BAP
               state: on_confirm.message.order.state,
               provider: {
                 name: {
