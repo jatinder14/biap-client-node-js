@@ -39,6 +39,7 @@ class MapController {
           },
         }
       );
+
       if (result.data.features[0] == undefined) {
         return res.status(400).json({
           success: false,
