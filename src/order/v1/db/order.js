@@ -61,8 +61,8 @@ const BillingSchema = new mongoose.Schema(
         time: { type: TimeSchema },
         taxNumber: { type: String },
         locationId: { type: String },
-        updated_at:{type: String},
-        created_at:{type: String}
+        updated_at: { type: String },
+        created_at: { type: String }
     },
     { _id: false }
 );
@@ -243,7 +243,7 @@ const ProviderSchema = new mongoose.Schema(
     {
         id: { type: String, required: true },
         locations: [ProviderLocationSchema],
-        descriptor:{type:Object}
+        descriptor: { type: Object }
     },
     { _id: false }
 );
@@ -261,12 +261,12 @@ const ItemsSchema = new mongoose.Schema(
         id: { type: String, required: true },
         quantity: { type: ItemQuantityAllocatedSchema, required: true },
         tags: { type: Object },
-        product:{type:Object, required: false},
-        fulfillment_status:{type: String, required:false },
-        cancellation_status:{type: String, required:false },
-        return_status:{type: String, required:false },
-        fulfillment_id:{type:String},
-        parent_item_id:{type:String}
+        product: { type: Object, required: false },
+        fulfillment_status: { type: String, required: false },
+        cancellation_status: { type: String, required: false },
+        return_status: { type: String, required: false },
+        fulfillment_id: { type: String },
+        parent_item_id: { type: String }
     },
     { _id: false }
 );
@@ -314,7 +314,7 @@ const QuotationSchema = new mongoose.Schema(
 const PaymentSchema = mongoose.Schema(
     {
         uri: { type: String },
-        razorpayPaymentId:{ type: String },
+        razorpayPaymentId: { type: String },
         tlMethod: { type: String, enum: ['http/get', 'http/post'] },
         params: { type: Map },
         type: { type: String, enum: ['ON-ORDER', 'PRE-FULFILLMENT', 'ON-FULFILLMENT', 'POST-FULFILLMENT'] },
@@ -327,13 +327,14 @@ const PaymentSchema = mongoose.Schema(
 const OrderSchema = new mongoose.Schema(
     {
         provider: { type: ProviderSchema },
+        customer: { type: CustomerSchema },
         items: { type: [ItemsSchema] },
         addOns: { type: [AddOnsSchema] },
         offers: { type: [OfferSchema] },
         billing: { type: BillingSchema },
-        fulfillments: { type: Object },
+        fulfillments: { type: [FulfillmentSchema] },
         quote: { type: Object },
-        updatedQuote: { type: Object},
+        updatedQuote: { type: Object },
         payment: { type: PaymentSchema },
         id: { type: String },
         city: { type: String },
@@ -346,10 +347,10 @@ const OrderSchema = new mongoose.Schema(
         bppId: { type: String },
         bpp_uri: { type: String },
         bapOrderId: { type: String },
-        settlementDetails:{type:Object},
-        tags:{type:Object},
-        domain:{type:String},
-        documents:{type:Object},
+        settlementDetails: { type: Object },
+        tags: { type: Object },
+        domain: { type: String },
+        documents: { type: Object },
         settle_status: { type: String },
         is_settlement_sent: { type: Boolean, default: false },
         settlement_id: { type: String },
@@ -364,7 +365,7 @@ const OrderSchema = new mongoose.Schema(
     { _id: true, timestamps: true }
 );
 
-OrderSchema.index({userId: 1, createdAt: -1});
+OrderSchema.index({ userId: 1, createdAt: -1 });
 
 const Order = mongoose.model('order', OrderSchema, "order");
 

@@ -54,7 +54,7 @@ class ConfirmOrderController {
     onConfirmOrder(req, res, next) {
         const { query } = req;
         const { messageId } = query;
-        
+
         confirmOrderService.onConfirmOrder(messageId).then(order => {
             res.json(order);
         }).catch((err) => {
@@ -72,16 +72,16 @@ class ConfirmOrderController {
     onConfirmMultipleOrder(req, res, next) {
         const { query } = req;
         const { messageIds } = query;
-        
-        if(messageIds && messageIds.length && messageIds.trim().length) { 
+
+        if (messageIds && messageIds.length && messageIds.trim().length) {
             const messageIdArray = messageIds.split(",");
-            
+
             confirmOrderService.onConfirmMultipleOrder(messageIdArray).then(orders => {
                 res.json(orders);
             }).catch((err) => {
                 next(err);
             });
-            
+
         }
         else
             throw new BadRequestParameterError();
@@ -91,11 +91,23 @@ class ConfirmOrderController {
         const { params } = req;
         const { orderId } = params;
 
-            confirmOrderService.getOrderDetails(orderId).then(orders => {
+        confirmOrderService.getOrderDetails(orderId).then(orders => {
+            res.json(orders);
+        }).catch((err) => {
+            next(err);
+        });
+    }
+
+    orders(req, res, next) {
+        const skip = parseInt(req.params.skip) || 0;
+        const take = parseInt(req.params.take) || 50;
+
+        confirmOrderService.getOrders(skip, take)
+            .then(orders => {
                 res.json(orders);
             }).catch((err) => {
                 next(err);
-            });
+            })
     }
 }
 

@@ -1,4 +1,4 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import { authentication } from '../../middlewares/index.js';
 import { bhashiniTranslator } from '../../middlewares/bhashiniTranslator/order.js';
 import CancelOrderController from './cancel/cancelOrder.controller.js';
@@ -20,8 +20,8 @@ const orderHistoryController = new OrderHistoryController();
 const orderStatusController = new OrderStatusController();
 const selectOrderController = new SelectOrderController();
 const updateOrderController = new UpdateOrderController();
-const complaintOrderController  = new  ComplaintOrderController ();
-const uploadController = new  UploadController();
+const complaintOrderController = new ComplaintOrderController();
+const uploadController = new UploadController();
 
 //#region confirm order
 
@@ -72,7 +72,7 @@ rootRouter.post(
 
 // initialize order v2
 rootRouter.post(
-    '/v2/initialize_order', 
+    '/v2/initialize_order',
     authentication(),
     initOrderController.initMultipleOrder,
 );
@@ -95,7 +95,7 @@ rootRouter.post(
 
 // order status v2
 rootRouter.post(
-    '/v2/order_status', 
+    '/v2/order_status',
     authentication(),
     orderStatusController.orderStatusV2,
 );
@@ -112,14 +112,14 @@ rootRouter.get('/v2/on_order_status', authentication(), orderStatusController.on
 
 // select order v1
 rootRouter.post(
-    '/v1/select', 
+    '/v1/select',
     authentication(),
     selectOrderController.selectOrder,
 );
 
 // select order v2
 rootRouter.post(
-    '/v2/select', 
+    '/v2/select',
     authentication(),
     selectOrderController.selectMultipleOrder,
 );
@@ -143,6 +143,8 @@ rootRouter.get('/v2/on_update', authentication(), updateOrderController.onUpdate
 rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), uploadController.upload);
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
+
+rootRouter.get('/api/orderdetails', authentication(), confirmOrderController.orders)
 
 //#endregion
 
