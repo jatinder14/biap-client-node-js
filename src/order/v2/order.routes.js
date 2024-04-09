@@ -144,7 +144,7 @@ rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), uploadCont
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
 
-rootRouter.get('/v2/orderdetail', authentication(), confirmOrderController.orders)
+rootRouter.get('/v2/orderdetails', authentication(), confirmOrderController.orders)
 
 //#endregion
 
