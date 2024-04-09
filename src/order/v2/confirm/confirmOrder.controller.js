@@ -97,18 +97,6 @@ class ConfirmOrderController {
             next(err);
         });
     }
-
-    orders(req, res, next) {
-        const skip = parseInt(req.params.skip) || 0;
-        const take = parseInt(req.params.take) || 50;
-
-        confirmOrderService.getOrders(skip, take)
-            .then(orders => {
-                res.json(orders);
-            }).catch((err) => {
-                next(err);
-            })
-    }
 }
 
 export default ConfirmOrderController;

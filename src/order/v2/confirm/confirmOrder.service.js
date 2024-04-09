@@ -426,15 +426,6 @@ class ConfirmOrderService {
         return dbResponse
     }
 
-    async getOrders(skip, take) {
-        try {
-            const dbResponse = await Order.find({}).limit(take).skip(skip);
-            return dbResponse;
-        } catch (error) {
-            throw error;
-        }
-    }
-
     /**
     * on confirm order
     * @param {Object} messageId
