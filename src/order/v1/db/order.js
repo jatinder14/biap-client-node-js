@@ -212,7 +212,7 @@ const CustomerSchema = new mongoose.Schema(
         person: { type: PersonSchema },
         contact: { type: ContactSchema }
     },
-    { _id: false }
+    { _id: true }
 );
 
 const FulfillmentSchema = new mongoose.Schema(

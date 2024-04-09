@@ -25,7 +25,7 @@ export async function getOrdersHandler(req, res) {
 
         allOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
-            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code }) => {
+            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer }) => {
             const fulfillment_state = fulfillments.map(fulfillment => {
                 if (fulfillment.state) {
                     return fulfillment?.state?.descriptor?.code;
@@ -33,6 +33,12 @@ export async function getOrdersHandler(req, res) {
                     return null;
                 }
             });
+
+            const logistics_details = fulfillments.map(fulfillment => {
+                if (fulfillment?.agent) {
+                    return { agent_name: fulfillment?.agent?.name || "", vehicle: fulfillment?.vehicle?.registration || "" }
+                }
+            })
 
             const orderItem = {
                 id: id || _id,
@@ -60,6 +66,18 @@ export async function getOrdersHandler(req, res) {
                 order_amount: quote?.price?.value,
                 settle_status,
                 fulfillment_state: fulfillment_state,
+                customer: {
+                    id: customer._id,
+                    person: {
+                        name: customer?.person?.name || "",
+                        gender: customer?.person?.gender || "",
+                    },
+                    contact: {
+                        phone: customer?.contact?.phone || "",
+                        email: customer?.contact?.email || "",
+                    }
+                },
+                logistics_details: logistics_details,
                 items: items.map(({ id, title, price, quantity, product }) => ({
                     sku: id,
                     name: product?.descriptor?.name,
@@ -77,7 +95,6 @@ export async function getOrdersHandler(req, res) {
                 payment_type: 'PREPAID',
                 shopify_order_status: 'unfulfilled',
                 replaced_with_order_id: null,
-                customer_id: 'Customer ID',
                 replaced_order_details: null,
                 settlement_type: settle_status || 'Pending',
                 returns: null,
