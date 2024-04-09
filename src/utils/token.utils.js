@@ -9,9 +9,11 @@ export const createJwtToken = (payload) => {
 
 export const verifyJwtToken = (token, next) => {
   try {
-    const { userId } = jwt.verify(token, JWT_SECRET);
-    if(userId){
+    const user = jwt.verify(token, JWT_SECRET);
+    if(user){
       return true;
+    } else {
+      return false;
     }
   } catch (err) {
     return false;

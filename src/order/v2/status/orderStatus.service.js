@@ -1,5 +1,5 @@
 import { onOrderStatus } from "../../../utils/protocolApis/index.js";
-import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
+import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import {
     addOrUpdateOrderWithTransactionId,getOrderRequestLatestFirst,
     addOrUpdateOrderWithTransactionIdAndProvider,
@@ -135,7 +135,11 @@ class OrderStatusService {
                                 if(orderSchema.state!==onOrderStatusResponse?.message?.order?.state && onOrderStatusResponse?.message?.order?.state ==='Completed'){
                                     let billingContactPerson = orderSchema.billing.phone
                                     let provider = orderSchema.provider.descriptor.name
+                                    orderSchema.settle_status = SETTLE_STATUS.CREDIT
                                     await sendAirtelSingleSms(billingContactPerson, [provider,'delivered'], 'ORDER_DELIVERED', false)
+                                }
+                                if(onOrderStatusResponse?.message?.order?.state ==='Cancelled') {
+                                    orderSchema.settle_status = SETTLE_STATUS.DEBIT
                                 }
                                 orderSchema.state = onOrderStatusResponse?.message?.order?.state;
 

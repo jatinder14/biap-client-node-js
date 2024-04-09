@@ -2,17 +2,16 @@ import { createJwtToken } from '../../utils/token.utils.js';
 
 import User from './db/user.js';
 import sendOTPUtil from  '../../utils/otp.js';
+const JWT_SECRET = 'secret_token';
 // const {randomInt} = require('crypto');
 
 class UserController{
 
   async signUp(req, res) {
-    const { name,phone,email } = req.body;
-
-    console.log("@@@@@@signup",req.body);
+    const { name, phone, email } = req.body;
     let digits ="0123456789";
     let otp = "";
-    for(let i=0;i<4;i++){
+    for(let i=0; i<4; i++){
       otp+= digits[Math.floor(Math.random()*10)];
     }
     console.log("otp::",otp);
@@ -47,7 +46,7 @@ class UserController{
         return res.status(400).json({ success: false, message: 'Invalid OTP' });
       }
 
-      const token = createJwtToken({ userId: user._id });
+      const token = createJwtToken({ userId: user._id, uid: user._id });
   
       user.phone_otp = "";
       await user.save();
@@ -66,6 +65,23 @@ class UserController{
     }
   }
 
+  async genRefreshToken(req, res) {
+    const refreshToken = req.body.refreshToken;
+  
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'Refresh token is required' });
+    }
+  
+    jwt.verify(refreshToken, JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+  
+        const accessToken = jwt.sign({ userId: user.userId }, JWT_SECRET, {expiresIn: "12h"  });
+  
+        res.json({ accessToken });
+    });
+  };
 }
 
 export default UserController;

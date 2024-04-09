@@ -1,5 +1,5 @@
 import { onOrderCancel ,onUpdateStatus} from "../../../utils/protocolApis/index.js";
-import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
+import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import {
     getOrderById, saveOrderRequest,getOrderRequest,
     addOrUpdateOrderWithdOrderId
@@ -542,6 +542,7 @@ class UpdateOrderService {
                             if(fulfillmentStatus.type==='Return' || fulfillmentStatus.type==='Cancel' ){
                                 item.return_status = fulfillmentStatus?.state?.descriptor?.code;
                                 item.cancellation_status = fulfillmentStatus?.state?.descriptor?.code;
+                                // orderSchema.settle_status = SETTLE_STATUS.DEBIT
                             }
                             item.fulfillment_status = fulfillmentStatus?.state?.descriptor?.code;
                             item.product = temp.product;

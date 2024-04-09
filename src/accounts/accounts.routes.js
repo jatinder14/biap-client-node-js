@@ -32,6 +32,10 @@ rootRouter.post('/signup', userController.signUp);
   
 rootRouter.post('/verifyotp', userController.verifyOTP);
 
+rootRouter.post('/refreshToken', userController.genRefreshToken);
+
+
+
 rootRouter.post(
   "/v1/update_billing_details/:id",
   authentication(),
