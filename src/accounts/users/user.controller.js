@@ -1,7 +1,9 @@
-import { createJwtToken } from '../../utils/token.utils.js';
+import { createJwtToken, verifyJwtToken } from '../../utils/token.utils.js';
 
 import User from './db/user.js';
 import sendOTPUtil from  '../../utils/otp.js';
+import validateToken from '../../lib/firebase/validateToken.js';
+const JWT_SECRET = 'secret_token';
 // const {randomInt} = require('crypto');
 
 class UserController{
@@ -64,6 +66,9 @@ class UserController{
     }
   }
 
+  
+
+  
 }
 
 export default UserController;

@@ -32,6 +32,11 @@ rootRouter.post('/signup', userController.signUp);
   
 rootRouter.post('/verifyotp', userController.verifyOTP);
 
+//I have to work on this route once cart issue will merge i will work on refresh token
+// rootRouter.post('/refreshToken', userController.genRefreshToken);
+
+
+
 rootRouter.post(
   "/v1/update_billing_details/:id",
   authentication(),
