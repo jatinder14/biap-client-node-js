@@ -31,7 +31,9 @@ class SearchController {
             if(!response || response === null)
                 throw new NoRecordFoundError("No result found");
             else
-                res.json(response);
+                // res.json(response);
+                req.body.responseData = response;
+                next()
         }).catch((err) => {
             next(err);
         });
