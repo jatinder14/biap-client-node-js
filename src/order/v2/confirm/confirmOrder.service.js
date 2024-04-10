@@ -6,6 +6,7 @@ import {
     getOrderByTransactionIdAndProvider,
     getOrderById
 } from "../../v1/db/dbService.js";
+import Order from "../../v1/db/order.js";
 import OnConfirmData from "../../v1/db/onConfirmDump.js"
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppConfirmService from "./bppConfirm.service.js";
@@ -75,7 +76,7 @@ class ConfirmOrderService {
 
 
         await addOrUpdateOrderWithTransactionIdAndProvider(
-            confirmResponse?.context?.transaction_id,dbResponse.provider.id,
+            confirmResponse?.context?.transaction_id, dbResponse.provider.id,
             { ...orderSchema }
         );
     }
@@ -92,12 +93,12 @@ class ConfirmOrderService {
             message: order = {}
         } = orderRequest || {};
         let paymentStatus = {}
-     
+
         // console.log("message---------------->",orderRequest.message)
 
-        const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id,orderRequest.message.providers.id);
+        const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
-        console.log("dbResponse---------------->",dbResponse)
+        console.log("dbResponse---------------->", dbResponse)
 
         if (dbResponse?.paymentStatus === null) {
 
@@ -107,10 +108,10 @@ class ConfirmOrderService {
                 transactionId: requestContext?.transaction_id,
                 bppId: dbResponse.bppId,
                 bpp_uri: dbResponse.bpp_uri,
-                city:requestContext.city,
-                state:requestContext.state,
-                domain:requestContext.domain,
-                pincode:requestContext?.pincode,
+                city: requestContext.city,
+                state: requestContext.state,
+                domain: requestContext.domain,
+                pincode: requestContext?.pincode,
             });
 
             // if(order.payment.paymentGatewayEnabled){//remove this check once juspay is enabled
@@ -133,16 +134,16 @@ class ConfirmOrderService {
             //     paymentStatus = await juspayService.getOrderStatus(orderRequest?.context?.transaction_id);
             //
             // }else{
-                paymentStatus = {txn_id:requestContext?.transaction_id}
+            paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
 
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
-                {...order,jusPayTransactionId:paymentStatus.txn_id},
+                { ...order, jusPayTransactionId: paymentStatus.txn_id },
                 dbResponse
             );
 
-            console.log("bppConfirmResponse-------------------->",bppConfirmResponse);
+            console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
 
             if (bppConfirmResponse?.message?.ack)
                 await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type);
@@ -156,9 +157,9 @@ class ConfirmOrderService {
                 transactionId: requestContext?.transaction_id,
                 bppId: dbResponse?.bppId,
                 messageId: dbResponse?.messageId,
-                city:requestContext.city,
-                state:requestContext.state,
-                domain:requestContext.domain
+                city: requestContext.city,
+                state: requestContext.state,
+                domain: requestContext.domain
             });
 
             return {
@@ -180,7 +181,7 @@ class ConfirmOrderService {
     async processOnConfirmResponse(response = {}) {
         try {
 
-            console.log("processOnConfirmResponse------------------------------>",JSON.stringify(response))
+            console.log("processOnConfirmResponse------------------------------>", JSON.stringify(response))
             const newDataInstance = new OnConfirmData({
                 message: {
                     order: {
@@ -203,14 +204,14 @@ class ConfirmOrderService {
                 },
                 context: response.context
             });
-            
+
             // Save the new instance to the database
             await newDataInstance.save();
-            console.log("newDataInstance>>>>>>>>>>>",newDataInstance)
-            console.log("processOnConfirmResponse------------------------------>",response?.message?.order.provider)
+            console.log("newDataInstance>>>>>>>>>>>", newDataInstance)
+            console.log("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
             if (response?.message?.order) {
                 const dbResponse = await getOrderByTransactionIdAndProvider(
-                    response?.context?.transaction_id,response?.message?.order.provider.id
+                    response?.context?.transaction_id, response?.message?.order.provider.id
                 );
 
                 let orderSchema = { ...response?.message?.order };
@@ -224,43 +225,43 @@ class ConfirmOrderService {
                     }
                 };
 
-                if(orderSchema.fulfillment) {
+                if (orderSchema.fulfillment) {
                     orderSchema.fulfillments = [orderSchema.fulfillment];
                     delete orderSchema.fulfillment;
                 }
 
 
-                for(let fulfillment of orderSchema.fulfillments){
-                    console.log("fulfillment--->",fulfillment)
+                for (let fulfillment of orderSchema.fulfillments) {
+                    console.log("fulfillment--->", fulfillment)
                     // if(fulfillment.type==='Delivery'){
-                    let existingFulfillment  =await FulfillmentHistory.findOne({
-                        id:fulfillment.id,
-                        state:fulfillment.state.descriptor.code,
-                        orderId:orderSchema.id
+                    let existingFulfillment = await FulfillmentHistory.findOne({
+                        id: fulfillment.id,
+                        state: fulfillment.state.descriptor.code,
+                        orderId: orderSchema.id
                     })
-                    if(!existingFulfillment){
+                    if (!existingFulfillment) {
                         await FulfillmentHistory.create({
-                            orderId:orderSchema.id,
-                            type:fulfillment.type,
-                            id:fulfillment.id,
-                            state:fulfillment.state.descriptor.code,
-                            updatedAt:orderSchema.toString()
+                            orderId: orderSchema.id,
+                            type: fulfillment.type,
+                            id: fulfillment.id,
+                            state: fulfillment.state.descriptor.code,
+                            updatedAt: orderSchema.toString()
                         })
                     }
-                    console.log("existingFulfillment--->",existingFulfillment);
+                    console.log("existingFulfillment--->", existingFulfillment);
                     // }
                 }
 
-                console.log("processOnConfirmResponse----------------dbResponse.items-------------->",dbResponse)
-            
-                console.log("processOnConfirmResponse----------------dbResponse.orderSchema-------------->",orderSchema)
+                console.log("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
 
-                if(orderSchema.items && dbResponse.items) {
+                console.log("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
+
+                if (orderSchema.items && dbResponse.items) {
                     orderSchema.items = dbResponse.items
                 }
 
                 orderSchema.provider = dbResponse.provider
-                if(orderSchema.fulfillment) {
+                if (orderSchema.fulfillment) {
                     orderSchema.fulfillments = [...orderSchema.fulfillments].map((fulfillment) => {
                         return {
                             ...fulfillment,
@@ -278,9 +279,9 @@ class ConfirmOrderService {
                 }
 
                 let updateItems = []
-                for(let item of dbResponse.items){
-                    let temp = orderSchema?.fulfillments?.find(fulfillment=> fulfillment?.id === item?.fulfillment_id)
-                    item.fulfillment_status = temp?.state?.descriptor?.code??""
+                for (let item of dbResponse.items) {
+                    let temp = orderSchema?.fulfillments?.find(fulfillment => fulfillment?.id === item?.fulfillment_id)
+                    item.fulfillment_status = temp?.state?.descriptor?.code ?? ""
                     //     let updatedItem = {}
                     //
                     //     // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO: verify if this will work with cancel/returned items
@@ -301,12 +302,12 @@ class ConfirmOrderService {
                     updateItems.push(item)
                 }
                 orderSchema.items = updateItems;
-                orderSchema.updatedQuote= orderSchema.quote;
-                orderSchema.tags= orderSchema.tags;
-                orderSchema.domain= response?.context.domain
+                orderSchema.updatedQuote = orderSchema.quote;
+                orderSchema.tags = orderSchema.tags;
+                orderSchema.domain = response?.context.domain
 
                 await addOrUpdateOrderWithTransactionIdAndProvider(
-                    response.context.transaction_id,dbResponse.provider.id,
+                    response.context.transaction_id, dbResponse.provider.id,
                     { ...orderSchema }
                 );
 
@@ -317,7 +318,7 @@ class ConfirmOrderService {
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
 
-                cartService.clearCart({userId:dbResponse.userId});
+                cartService.clearCart({ userId: dbResponse.userId });
             }
 
 
@@ -340,8 +341,8 @@ class ConfirmOrderService {
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.CONFIRM,
                 transactionId: requestContext?.transaction_id,
-                city:requestContext.city,
-                state:requestContext.state
+                city: requestContext.city,
+                state: requestContext.state
             });
 
             if (!(order?.items?.length)) {
@@ -380,7 +381,7 @@ class ConfirmOrderService {
 
             return await bppConfirmService.confirmV1(
                 context,
-                {...order,jusPayTransactionId:paymentStatus.txn_id}
+                { ...order, jusPayTransactionId: paymentStatus.txn_id }
             );
         }
         catch (err) {
@@ -419,7 +420,7 @@ class ConfirmOrderService {
         return confirmOrderResponse;
     }
 
-    async getOrderDetails(orderId){
+    async getOrderDetails(orderId) {
 
         const dbResponse = await getOrderById(orderId);
         return dbResponse
