@@ -7,7 +7,7 @@ class CartController {
     async addItem(req, res, next) {
         try {
             // console.log('req.body:', req.body,'req.params',req.params,req.ip);
-           return res.send(await cartService.addItem({...req.body, ...req.params, ipAddress: req.ip}));
+           return res.send(await cartService.addItem({...req.body, ...req.params, ipAddress: req.ip,cart_key:req.body.cart_key}));
 
         }
         catch (err) {
@@ -17,7 +17,7 @@ class CartController {
 
     async getCartItem(req, res, next) {
         try {
-            const cartItem=await cartService.getCartItem({...req.body,...req.params, ipAddress: req.ip})
+            const cartItem=await cartService.getCartItem({...req.body,...req.params, ipAddress: req.ip, cart_key:req.body.cart_key})
             req.body.responseData = cartItem;
             next()
 

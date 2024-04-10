@@ -1,7 +1,8 @@
-import { createJwtToken } from '../../utils/token.utils.js';
+import { createJwtToken, verifyJwtToken } from '../../utils/token.utils.js';
 
 import User from './db/user.js';
 import sendOTPUtil from  '../../utils/otp.js';
+import validateToken from '../../lib/firebase/validateToken.js';
 const JWT_SECRET = 'secret_token';
 // const {randomInt} = require('crypto');
 
@@ -65,23 +66,9 @@ class UserController{
     }
   }
 
-  async genRefreshToken(req, res) {
-    const refreshToken = req.body.refreshToken;
   
-    if (!refreshToken) {
-        return res.status(401).json({ message: 'Refresh token is required' });
-    }
+
   
-    jwt.verify(refreshToken, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: 'Invalid refresh token' });
-        }
-  
-        const accessToken = jwt.sign({ userId: user.userId }, JWT_SECRET, {expiresIn: "12h"  });
-  
-        res.json({ accessToken });
-    });
-  };
 }
 
 export default UserController;
