@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import express from "express";
 import logger from 'morgan';
-// import initializeFirebase from './lib/firebase/initializeFirebase.js';
+import initializeFirebase from './lib/firebase/initializeFirebase.js';
 import logErrors from './utils/logErrors.js';
 import router from './utils/router.js';
 import dbConnect from './database/mongooseConnector.js';
@@ -19,7 +19,7 @@ const app = express();
 
 
 loadEnvVariables();
-// initializeFirebase();
+initializeFirebase();
 //app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json({ limit: '50mb' }));
