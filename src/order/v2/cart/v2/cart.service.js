@@ -3,18 +3,23 @@ import CartItem from "../../db/items.js";
 
 class CartService {
   async addItem(data) {
+    // return data
     try {
       let cart = {};
-      if (data.userId == "undefined") {
+      if (data.userId == "guestUser") {
         cart = await Cart.findOne({
-          ipAddress: data.ipAddress,
           cart_key: data.cart_key,
         });
       } else {
         cart = await Cart.findOne({ userId: data.userId });
       }
       if (cart) {
-        //add items to the cart
+      //Can be implement further
+      //    // Check if the cart belongs to a guest user and is now being accessed by a logged-in user
+      //   if (cart.userId !== data.userId && data.userId !== "guestUser") {
+      //     // Delete cart items for guest users
+      //     await CartItem.deleteMany({ cart: cart._id });
+      // }
 
         let cartItem = new CartItem();
         cartItem.cart = cart._id;
@@ -23,13 +28,12 @@ class CartService {
       } else {
         //create a new cart
         let cart = {};
-        if (data.userId == "undefined")
+        if (data.userId == "guestUser")
           cart = await new Cart({
-            ipAddress: data.ipAddress,
             cart_key: data.cart_key,
           }).save();
         else {
-          cart = await new Cart({ userId: data.userId }).save();
+          cart = await new Cart({ userId: data.userId, cart_key: data.cart_key,}).save();
         }
         let cartItem = new CartItem();
         cartItem.cart = cart._id;
@@ -87,11 +91,11 @@ class CartService {
     try {
       let cart = {};
       let cart2 = false;
-      if (data.userId == "undefined")
-        cart = await Cart.findOne({ ipAddress: data.ipAddress,cart_key: data.cart_key });
+      if (data.userId == "guestUser")
+        cart = await Cart.findOne({ cart_key: data.cart_key });
       else {
         cart = await Cart.findOne({ userId: data.userId });
-        cart2 = await Cart.findOne({ ipAddress: data.ipAddress, cart_key: data.cart_key });
+        cart2 = await Cart.findOne({ cart_key: data.cart_key });
         
       }
 
@@ -105,6 +109,9 @@ class CartService {
       if (cart2) {
         let cart2Item = await CartItem.find({ cart: cart2._id });
         newCart = [...cart1Item, ...cart2Item];
+        // await CartItem.updateOne({cart:cart._id},{ $set: { item: newCart }});
+        // await Cart.deleteOne({ ipAddress: data.ipAddress });
+
       }
 
       return newCart;

@@ -5,10 +5,9 @@ const cartService = new CartService();
 class CartController {
 
     async addItem(req, res, next) {
+        
         try {
-            // console.log('req.body:', req.body,'req.params',req.params,req.ip);
-           return res.send(await cartService.addItem({...req.body, ...req.params, ipAddress: req.ip,cart_key:req.body.cart_key}));
-
+           return res.send(await cartService.addItem({...req.body, ...req.params}));
         }
         catch (err) {
            next(err);
