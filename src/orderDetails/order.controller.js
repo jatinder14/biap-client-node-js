@@ -35,11 +35,11 @@ export async function getOrdersHandler(req, res) {
             const fulfillment = await FulfillmentHistory.find({ orderId: id }).sort({ updatedAt: -1 }).lean()
             const fulfillment_state = fulfillment.length ? fulfillment[0] : {}
 
-            const logistics_details = fulfillments.map(fulfillment => {
+            const logistics_details = fulfillments.find(fulfillment => {
                 if (fulfillment?.agent) {
                     return { agent_name: fulfillment?.agent?.name || "", vehicle: fulfillment?.vehicle?.registration || "" }
                 }
-            })
+            }) || {}
 
             const orderItem = {
                 id: id || _id,
