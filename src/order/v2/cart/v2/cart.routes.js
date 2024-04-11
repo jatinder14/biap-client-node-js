@@ -8,7 +8,7 @@ const rootRouter = new Router();
 const cartController = new CartController();
 
 rootRouter.post(
-    '/v2/cart/:userId',
+    '/v2/cart/:userId/:cart_key',
     cartController.addItem,
 );
 
