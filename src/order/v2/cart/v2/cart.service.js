@@ -33,7 +33,7 @@ class CartService {
             cart_key: data.cart_key,
           }).save();
         else {
-          cart = await new Cart({ userId: data.userId}).save();
+          cart = await new Cart({ userId: data.userId, cart_key: data.cart_key,}).save();
         }
         let cartItem = new CartItem();
         cartItem.cart = cart._id;
