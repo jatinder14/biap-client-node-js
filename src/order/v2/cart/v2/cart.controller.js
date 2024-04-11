@@ -16,7 +16,7 @@ class CartController {
 
     async getCartItem(req, res, next) {
         try {
-            const cartItem=await cartService.getCartItem({...req.body,...req.params, ipAddress: req.ip, cart_key:req.body.cart_key})
+            const cartItem=await cartService.getCartItem({...req.query,...req.params })
             req.body.responseData = cartItem;
             next()
 
@@ -47,7 +47,7 @@ class CartController {
 
     async clearCart(req, res, next) {
         try {
-            return  res.send(await cartService.clearCart({...req.body,...req.params}));
+            return  res.send(await cartService.clearCart({ ...req.params }));
         }
         catch (err) {
             next(err);

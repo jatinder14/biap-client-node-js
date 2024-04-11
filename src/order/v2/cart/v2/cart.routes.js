@@ -13,12 +13,12 @@ rootRouter.post(
 );
 
 rootRouter.get(
-    '/v2/cart/:userId',
+    '/v2/cart/:userId/:cart_key',
     cartController.getCartItem,cartTranslator
 );
 
 rootRouter.delete(
-    '/v2/cart/:userId',
+    '/v2/cart/:userId/:cart_key',
     cartController.clearCart,
 );
 

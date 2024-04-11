@@ -1,4 +1,5 @@
 import OrderModel from "../order/v1/db/order.js";
+import FulfillmentHistory from "../order/v2/db/fulfillmentHistory.js"
 
 export async function getOrdersHandler(req, res) {
     console.log("Insidssd")
@@ -18,21 +19,21 @@ export async function getOrdersHandler(req, res) {
         const skip = (pageValue - 1) * limitValue;
 
         const orderCount = await OrderModel.countDocuments({})
-
         const allOrders = await OrderModel.find({}).skip(skip).limit(limitValue);
 
-        const orderData = [];
-
-        allOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
+        let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer }) => {
-            const fulfillment_state = fulfillments.map(fulfillment => {
-                if (fulfillment.state) {
-                    return fulfillment?.state?.descriptor?.code;
-                } else {
-                    return null;
-                }
-            });
+            // const fulfillment_state = fulfillments.map(fulfillment => {
+            //     if (fulfillment.state) {
+            //         return fulfillment?.state?.descriptor?.code;
+            //     } else {
+            //         return null;
+            //     }
+            // });
+
+            const fulfillment = await FulfillmentHistory.find({ orderId: id }).sort({ updatedAt: -1 }).lean()
+            const fulfillment_state = fulfillment.length ? fulfillment[0] : {}
 
             const logistics_details = fulfillments.map(fulfillment => {
                 if (fulfillment?.agent) {
@@ -65,7 +66,7 @@ export async function getOrdersHandler(req, res) {
                 on_collector_recon_received: false,
                 order_amount: quote?.price?.value,
                 settle_status,
-                fulfillment_state: fulfillment_state,
+                fulfillment_state: fulfillment_state?.state || 'Pending',
                 customer: {
                     id: customer._id,
                     person: {
@@ -102,8 +103,10 @@ export async function getOrdersHandler(req, res) {
                 replaced_order_details: null
             };
 
-            orderData.push(orderItem);
+            return orderItem;
         });
+
+        orderData = await Promise.all(orderData)
 
         res.send({
             success: true,
