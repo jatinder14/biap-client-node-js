@@ -11,6 +11,7 @@ import mongoSanitize from 'express-mongo-sanitize'
 import subscriberRoute from './utils/subscribe.js'
 import { schedulerEachDay } from './rsp_integration/rsp_service/crons.js'
 import settleRouter from "./settlement/settle.routes.js"
+import orderRouter from "./orderDetails/order.routes.js"
 import analyticsRouter from "./utils/analytics/router.js"
 const app = express();
 // import Redis from 'ioredis';
