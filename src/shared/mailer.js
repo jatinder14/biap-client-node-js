@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send notification
-export async function sendEmail({ userEmail, orderId, userName }) {
+export async function sendEmail({ userEmail, orderId, userName ,subject}) {
     try {
 
         // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
@@ -32,7 +32,7 @@ export async function sendEmail({ userEmail, orderId, userName }) {
         const mailOptions = {
             from: user,
             to: userEmail,
-            subject: "Order has been placed",
+            subject: subject,
             html: html
         };
 

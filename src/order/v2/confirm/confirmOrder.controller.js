@@ -84,7 +84,9 @@ class ConfirmOrderController {
                 const userName=req.user.decodedToken.name
                 const orderId=orders[0].message.order.id
                 await sendEmail({userEmail,orderId,HTMLtemplate: '/template.ejs',
-                userName: userName || ''
+                userName: userName || '',
+                subject: 'Order has been placed'
+
 
             });
                 res.json(orders);
