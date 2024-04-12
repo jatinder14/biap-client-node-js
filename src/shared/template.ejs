@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BHARATAM</title>
+    <title>Order Confirmation</title>
 </head>
 
 <body style="
@@ -35,14 +35,13 @@
           padding: 20px 40px;
         ">
             <p style="font-size: 20px; font-weight: 700; color: #121a26">
-                Welcome to BHARATAM!
+                Order Confirmation
             </p>
             <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
-                Hi <%= userName %>,
+                Hi "<%= userName %>",
             </p>
             <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
-                We’re excited to welcome you to BHARATAM and we’re even more excited about what we’ve got planned.
-                You’re already on your way
+                Your order with ID "<%= orderId %>" has been confirmed.
             </p>
             
 
@@ -52,8 +51,10 @@
                 flex-direction: column;
             ">
                 <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
-                    Thanks, <br>BHARATAM TEAM</p>
+                    Thanks for choosing BHARATHAM!
+                    <br>
                 </p>
+              
 
             </div>
             <div style="
@@ -77,7 +78,7 @@
                         display: inline-block; 
                         text-align: center; 
                       ">
-                        Get Started
+                        Track Order
                     </a>
                 </div>
             </div>
