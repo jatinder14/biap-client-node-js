@@ -58,7 +58,7 @@ class TopSellingService {
             const sortedProducts = productsArray.sort((a, b) => b.quantityCount - a.quantityCount);
             
             // Return sorted products with quantity count
-            return sortedProducts.map(({ product, quantityCount }) => ({ product, quantityCount }));
+            return sortedProducts.map(({product} ) => ( {product} ));
         } catch (error) {
             throw error;
         }
