@@ -13,6 +13,7 @@ class TopSellingController {
     * @param {*} next   Callback argument to the middleware function
     * @return {callback}
     */
+   
     topSellingProduct(req, res, next) {
         const { query = {}, user } = req;
 
@@ -22,18 +23,17 @@ class TopSellingController {
             console.log("21>>>>>>>>>>>")
             topSellingService.getTopOrderList(user, query).then(response => {
                 if(!response.error) {
-                    res.send("hello")
+                    res.send(response)
                 }
                 else
-                res.send("fail")
 
-                    // res.status(404).json(
-                    //     {
-                    //         totalCount: 0,
-                    //         orders: [],
-                    //         error: response.error,
-                    //     }
-                    // );
+                    res.status(404).json(
+                        {
+                            totalCount: 0,
+                            orders: [],
+                            error: response.error,
+                        }
+                    );
             }).catch((err) => {
                 next(err);
             });
