@@ -46,23 +46,25 @@ class TopSellingService {
             filteredItems.forEach(item => {
                 const productId = item.product.id;
                 if (!productCounts[productId]) {
-                    productCounts[productId] = { product: item.product, count: 0 };
+                    productCounts[productId] = { product: item.product, quantityCount: 0 };
                 }
-                productCounts[productId].count++;
+                productCounts[productId].quantityCount += parseInt(item.quantity.count);
             });
             
             // Convert object into array
             const productsArray = Object.values(productCounts);
             
-            // Sort products by occurrence count in descending order
-            const sortedProducts = productsArray.sort((a, b) => b.count - a.count);
+            // Sort products by quantity count in descending order
+            const sortedProducts = productsArray.sort((a, b) => b.quantityCount - a.quantityCount);
             
-            // Return sorted products with count
-            return sortedProducts;
+            // Return sorted products with quantity count
+            return sortedProducts.map(({ product, quantityCount }) => ({ product, quantityCount }));
         } catch (error) {
             throw error;
         }
     }
+    
+    
 }
 
 export default TopSellingService;
