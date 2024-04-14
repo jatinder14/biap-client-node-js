@@ -6,7 +6,6 @@ import path from "path";
 
 const sendEmail = async ({
   email,
-  subject,
   HTMLtemplate,
 }) => {
   try {
@@ -30,13 +29,13 @@ const sendEmail = async ({
     await transporter.sendMail({
       from: "Wits Innovation Lab",
       to: email,
-      subject: subject,
+      subject: 'Order has been Placed',
       html,
     });
     console.log('email sent sucessfully')
   } catch (error) {
     console.log('email not sent')
-    console.log(error)
+    throw error; // Throw the caught error again
   }
 };
 
