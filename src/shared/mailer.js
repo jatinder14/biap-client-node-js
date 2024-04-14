@@ -16,14 +16,17 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send notification
-export async function sendEmail({ userEmail, orderId, userName ,subject}) {
+export async function sendEmail({ userEmail, orderId, HTMLtemplate,userName ,subject}) {
     try {
-
+  console.log("templatePath>>>>>>>>",userEmail)
         // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
-        const templatePath = path.join(new URL(import.meta.url).pathname, '..', 'template.ejs');
-
+        const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
+        console.log("24>>>>>>>>>>",templatePath)
         // Read the EJS template file
         const template = fs.readFileSync(templatePath, 'utf8');
+
+        // Read the EJS template file
+      
 
         // Render the EJS template
         const html = ejs.render(template, { orderId, userName });
@@ -38,8 +41,10 @@ export async function sendEmail({ userEmail, orderId, userName ,subject}) {
 
         // Send email
         await transporter.sendMail(mailOptions);
+        // res.send("hello")
         console.log('Email sent successfully');
     } catch (error) {
+
         console.log('Error sending email:', error);
     }
 }

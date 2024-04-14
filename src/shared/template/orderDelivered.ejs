@@ -1,0 +1,90 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Delivered</title>
+</head>
+
+<body style="
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Inter;
+      font-style: normal;
+    ">
+    <div style="
+        max-width: 600px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        background: #ffefec;
+        border-radius: 12px;
+        padding: 28px;
+      ">
+
+        <div style="
+          padding: 4vw 0;
+          line-height: 24px;
+          background-color: #fff;
+          border-radius: 8px;
+          padding: 20px 40px;
+        ">
+            <p style="font-size: 20px; font-weight: 700; color: #121a26">
+                Order Delivered
+            </p>
+            <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
+                Hi "<%= userName %>",
+            </p>
+            <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
+                Your order with ID "<%= orderId %>" has been Delivered.
+            </p>
+            
+
+            
+            <div style="
+                display: flex;
+                flex-direction: column;
+            ">
+                <p style="font-size: 16px; font-weight: 400; color: #4a4a4a">
+                    Thanks for choosing BHARATHAM!
+                    <br>
+                </p>
+              
+
+            </div>
+            <div style="
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          ">
+                <div style="display: flex; gap: 20px">
+                    <a href= "https://products-bharatham-react-dev.thewitslab.com" target="_blank" style="
+                        width: 146px;
+                        padding: 16px;
+                        border-radius: 8px;
+                        background-color: #ec6d51;
+                        outline: none;
+                        border: none;
+                        font-weight: 600;
+                        font-size: 16px;
+                        color: #fff;
+                        text-decoration: none; 
+                        display: inline-block; 
+                        text-align: center; 
+                      ">
+                        Track Order
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+
+</html> 

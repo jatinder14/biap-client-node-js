@@ -76,8 +76,10 @@ class OrderStatusController {
         
         if(messageIds && messageIds.length && messageIds.trim().length) { 
             const messageIdsArray = messageIds.split(",");
-            
-            orderStatusService.onOrderStatusV2(messageIdsArray).then(orders => {
+            const userEmail=req.user.decodedToken.email
+            const userName=req.user.decodedToken.name
+
+            orderStatusService.onOrderStatusV2(messageIdsArray,userEmail,userName).then(orders => {
                 res.json(orders);
             }).catch((err) => {
                 next(err);
