@@ -5,6 +5,7 @@ import CancelOrderController from './cancel/cancelOrder.controller.js';
 import ConfirmOrderController from './confirm/confirmOrder.controller.js';
 import InitOrderController from './init/initOrder.controller.js';
 import OrderHistoryController from './history/orderHistory.controller.js';
+import TopSellingController from './top_selling_product/topSellingProduct.controller.js'
 import OrderStatusController from './status/orderStatus.controller.js';
 import SelectOrderController from './select/selectOrder.controller.js';
 import UpdateOrderController from './update/updateOrder.controller.js';
@@ -17,6 +18,7 @@ const cancelOrderController = new CancelOrderController();
 const confirmOrderController = new ConfirmOrderController();
 const initOrderController = new InitOrderController();
 const orderHistoryController = new OrderHistoryController();
+const topSellingController= new TopSellingController()
 const orderStatusController = new OrderStatusController();
 const selectOrderController = new SelectOrderController();
 const updateOrderController = new UpdateOrderController();
@@ -60,6 +62,8 @@ rootRouter.get('/v2/on_cancel_order', authentication(), cancelOrderController.on
 
 //#region order history
 rootRouter.get('/v2/orders', authentication(), orderHistoryController.getOrdersList, bhashiniTranslator);
+rootRouter.get('/v2/top_selling_order', authentication(), topSellingController.topSellingProduct);
+
 //#endregion
 
 //#region Initialize order
