@@ -11,8 +11,7 @@ import mongoSanitize from 'express-mongo-sanitize'
 import subscriberRoute from './utils/subscribe.js'
 import { schedulerEachDay } from './rsp_integration/rsp_service/crons.js'
 import settleRouter from "./settlement/settle.routes.js"
-import orderRouter from "./orderDetails/order.routes.js"
-import analyticsRouter from "./utils/analytics/router.js"
+// import analyticsRouter from "./utils/analytics/router.js"
 const app = express();
 // import Redis from 'ioredis';
 // global.redisCache = new Redis(process.env.BHASHINI_REDIS_PORT,process.env.BHASHINI_REDIS_HOST);
@@ -52,8 +51,8 @@ app.use(logger("combined"));
 // app.use(cors());
 
 app.use("/api", settleRouter)
-app.use("/api/db/", orderRouter)
-app.use("/api/analytics", analyticsRouter)
+// app.use("/api/db/", orderRouter)
+// app.use("/api/analytics", analyticsRouter)
 app.use("/clientApis", router);
 app.use("/ondc/onboarding/", subscriberRoute);
 app.use(logErrors);
