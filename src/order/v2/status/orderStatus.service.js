@@ -16,6 +16,7 @@ import Fulfillments from "../db/fulfillments.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import OrderHistory from "../db/orderHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import { sendEmail } from "../../../shared/mailer.js";
 const bppOrderStatusService = new BppOrderStatusService();
 const bppUpdateService = new BppUpdateService();
 
@@ -133,6 +134,14 @@ class OrderStatusService {
                                 const orderSchema = dbResponse?.[0].toJSON();
 
                                 if(orderSchema.state!==onOrderStatusResponse?.message?.order?.state && onOrderStatusResponse?.message?.order?.state ==='Completed'){
+                                  await sendEmail({
+                                    userEmail,
+                                    orderId,
+                                    HTMLtemplate: "/template/orderDelivered.ejs",
+                                    userName: userName || "",
+                                    subject: "Order has been Delivered Successfully",
+                                  });
+                
                                     let billingContactPerson = orderSchema.billing.phone
                                     let provider = orderSchema.provider.descriptor.name
                                     orderSchema.settle_status = SETTLE_STATUS.CREDIT
