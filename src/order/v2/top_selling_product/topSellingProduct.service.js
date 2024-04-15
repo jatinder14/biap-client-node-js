@@ -1,14 +1,15 @@
 import OrderMongooseModel from '../../v1/db/order.js';
 
+
+import {protocolSearchItems} from "../../../utils/protocolApis/index.js"
 class TopSellingService {
-    async getTopOrderList(user) {
+    async getTopOrderList() {
         try {
+
             // Fetch all orders
             const allOrders = await OrderMongooseModel.find({});
-            
             // Flatten items from all orders into a single array
             const allItems = allOrders.flatMap(order => order.items);
-            
             // Filter items to include only those in the specified JSON format
             const filteredItems = allItems.filter(item => {
                 const product = item.product;
@@ -56,9 +57,24 @@ class TopSellingService {
             
             // Sort products by quantity count in descending order
             const sortedProducts = productsArray.sort((a, b) => b.quantityCount - a.quantityCount);
+            const productsIdsrray= sortedProducts.map(({product} ) => ( product.id));
+
             
-            // Return sorted products with quantity count
-            return sortedProducts.map(({product} ) => ( {product} ));
+            const response = await protocolSearchItems({});
+            const data=await response.data
+            // const itemDetails=data.map((item)=>{ 
+            //     item.item_details.id})
+                const matchedItemDetails = [];
+                productsIdsrray.forEach(productId => {
+
+                    const matchingItem = data.find(item => productId===item.item_details.id );
+                    if (matchingItem) {
+                        matchedItemDetails.push(matchingItem);
+                    }
+                });
+
+                return matchedItemDetails;            // Find the details of top selling products from searchRequest
+            
         } catch (error) {
             throw error;
         }

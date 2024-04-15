@@ -21,7 +21,7 @@ class TopSellingController {
 
         if(pageNumber > 0) {
             console.log("21>>>>>>>>>>>")
-            topSellingService.getTopOrderList(user, query).then(response => {
+            topSellingService.getTopOrderList().then(response => {
                 if(!response.error) {
                     res.send(response)
                 }
