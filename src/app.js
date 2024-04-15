@@ -58,6 +58,10 @@ app.use("/ondc/onboarding/", subscriberRoute);
 app.use(logErrors);
 // app.use(logger('dev'));
 
+app.get("/health", (req,res) => {
+    res.send("HEALTH CHECK - Server is Running")
+})
+
 app.get("*", (req, res) => {
     res.send("API NOT FOUND");
 });
