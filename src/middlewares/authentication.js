@@ -27,17 +27,13 @@ const authentication = (options) => async(req, res, next) => {
         req.user = { decodedToken: decodedToken, token: idToken };
         next();
       } else {
-        next(
-          new UnauthenticatedError(
-            MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID
-          )
-        );
+        // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
+        res.status(401).json({'success' : false, 'message': MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID })
       }
     });
   } else {
-    next(
-      new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID)
-    );
+    // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
+    res.status(401).json({'success' : false, 'message': MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID })
   }
 }catch(error){
  res.status(403).json({'success' : false, 'message':"Invalid Token Signature" })
