@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from './logger';
+import logger from './logger.js';
 
 /**
  * Used to communicate with server
@@ -33,7 +33,7 @@ class HttpRequest {
     
         try 
         {
-            logger.info(`ONDC API call - ${url} --> ${JSON.stringify(this.data)}`)
+            logger.info(`ONDC API call - ${this.url} --> ${JSON.stringify(this.data)}`)
             let headers = {
                 ...this.headers, 
                 ...(this.method.toLowerCase() != "get" && {'Content-Type': 'application/json'})
@@ -71,7 +71,7 @@ class HttpRequest {
 
             if (err.response) {
                 // The client was given an error response (5xx, 4xx)
-                logger.info(`ONDC API call - ${url} --> ${JSON.stringify(err.response)}`)
+                logger.info(`ONDC API call - ${this.url} --> ${JSON.stringify(err.response)}`)
                 console.log('Error response',err,'\n', err.response);
             } else if (err.request) {
                 // The client never received a response, and the request was never left
