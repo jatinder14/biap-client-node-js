@@ -30,6 +30,8 @@ const authentication = (options) => async(req, res, next) => {
         // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
         return res.status(401).json({'success' : false, 'message': "Invalid token" })
       }
+    }).catch(err => {  
+      return res.status(401).json({'success' : false, 'message': "Invalid token", error: err?.message })
     });
   } else {
     // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));

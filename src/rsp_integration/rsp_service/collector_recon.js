@@ -245,7 +245,6 @@ export const initiateRsp = async () => {
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
         } catch (error) {
-          console.log("httpRequest Error------------>", error);
           return { success: false };
         }
         await recordCollectorReconStatus(orderIds)
