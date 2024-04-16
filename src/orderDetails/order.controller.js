@@ -19,7 +19,7 @@ export async function getOrdersHandler(req, res) {
         const skip = (pageValue - 1) * limitValue;
 
         const orderCount = await OrderModel.countDocuments({})
-        const allOrders = await OrderModel.find({}).skip(skip).limit(limitValue);
+        const allOrders = await OrderModel.find({}).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
 
         let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
@@ -40,6 +40,7 @@ export async function getOrdersHandler(req, res) {
                     return { agent_name: fulfillment?.agent?.name || "", vehicle: fulfillment?.vehicle?.registration || "" }
                 }
             }) || {}
+            console.log("customer -------------", customer);
 
             const orderItem = {
                 id: id || _id,
