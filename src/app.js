@@ -11,6 +11,7 @@ import mongoSanitize from 'express-mongo-sanitize'
 import subscriberRoute from './utils/subscribe.js'
 import { schedulerEachDay } from './rsp_integration/rsp_service/crons.js'
 import settleRouter from "./settlement/settle.routes.js"
+import lokiLogger from './utils/logger';
 // import analyticsRouter from "./utils/analytics/router.js"
 const app = express();
 // import Redis from 'ioredis';
@@ -84,6 +85,7 @@ dbConnect()
         console.log("Database connection successful");
         schedulerEachDay()
         app.listen(port, () => {
+            lokiLogger.info(`Connected successfully on port ${port}`)
             console.log(`Listening on port ${port}`);
         });
     })

@@ -45,7 +45,8 @@
     "underscore": "^1.13.6",
     "uuid": "^8.3.2",
     "uuidv4": "^6.2.13",
-    "winston": "^3.8.1"
+    "winston": "^3.8.1",
+    "winston-loki": "^6.1.1"
   },
   "scripts": {
     "debug": "NODE_ENV=development nodemon --exec babel-node src/app.js --trace-deprecation",
