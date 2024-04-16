@@ -93,8 +93,11 @@ class OrderStatusService {
             // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse.fulfillments);
             console.log("protocolOrderStatusResponse------------>",JSON.stringify(protocolOrderStatusResponse));
 
-            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length)
+            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length){
+                
                 return protocolOrderStatusResponse?.[0];
+            }
+            
             else {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -117,13 +120,13 @@ class OrderStatusService {
     * on multiple order status
     * @param {String} messageIds
     */
-    async onOrderStatusV2(messageIds) {
+    async onOrderStatusV2(messageIds,userEmail,userName) {
         try {
             const onOrderStatusResponse = await Promise.all(
                 messageIds.map(async messageId => {
                     try {
                         const onOrderStatusResponse = await this.onOrderStatus(messageId);
-
+                        const orderId=onOrderStatusResponse.message.order.id
                         if(!onOrderStatusResponse.error) {
                             const dbResponse = await OrderMongooseModel.find({
                                 transactionId: onOrderStatusResponse?.context?.transaction_id,
@@ -132,7 +135,7 @@ class OrderStatusService {
 
                             if ((dbResponse && dbResponse.length)) {
                                 const orderSchema = dbResponse?.[0].toJSON();
-
+                                
                                 if(orderSchema.state!==onOrderStatusResponse?.message?.order?.state && onOrderStatusResponse?.message?.order?.state ==='Completed'){
                                   await sendEmail({
                                     userEmail,
