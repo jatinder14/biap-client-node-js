@@ -1,5 +1,6 @@
 import BadRequestParameterError from '../../lib/errors/bad-request-parameter.error.js';
 import { addSSEConnection } from '../../utils/sse.js';
+import logger from '../../utils/logger.js';
 
 import SseProtocol from './sseProtocol.service.js';
 import ConfigureSse from "./configureSse.service.js";
@@ -48,7 +49,7 @@ class SseController {
     */
     onCancel(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_cancel --> ${JSON.stringify(response)}`)
         sseProtocolService.onCancel(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -65,7 +66,7 @@ class SseController {
     */
     onConfirm(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_confirm --> ${JSON.stringify(response)}`)
         sseProtocolService.onConfirm(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -82,7 +83,7 @@ class SseController {
     */
     onInit(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_init --> ${JSON.stringify(response)}`)
         sseProtocolService.onInit(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -99,6 +100,7 @@ class SseController {
     */
     onSearch(req, res, next) {
         const { body: response } = req;
+        logger.info(`ONDC API call - on_search --> ${JSON.stringify(response)}`)
         sseProtocolService.onSearch(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -115,7 +117,7 @@ class SseController {
     */
     onQuote(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_select --> ${JSON.stringify(response)}`)
         sseProtocolService.onQuote(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -132,7 +134,7 @@ class SseController {
     */
     onStatus(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_status --> ${JSON.stringify(response)}`)
         sseProtocolService.onStatus(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -149,7 +151,7 @@ class SseController {
     */
     onSupport(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_support --> ${JSON.stringify(response)}`)
         sseProtocolService.onSupport(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -166,7 +168,7 @@ class SseController {
     */
     onTrack(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_track --> ${JSON.stringify(response)}`)
         sseProtocolService.onTrack(response).then(result => {
             res.json(result);
         }).catch((err) => {
@@ -176,7 +178,7 @@ class SseController {
 
     onUpdate(req, res, next) {
         const { body: response } = req;
-
+        logger.info(`ONDC API call - on_update --> ${JSON.stringify(response)}`)
         sseProtocolService.onUpdate(response).then(result => {
             res.json(result);
         }).catch((err) => {
