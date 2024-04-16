@@ -224,6 +224,13 @@ class ConfirmOrderService {
                         areaCode: orderSchema.billing.address.area_code
                     }
                 };
+                orderSchema.customer = {
+                    person: { name: orderSchema.billing?.name },
+                    contact: {
+                        phone: orderSchema.billing?.phone,
+                        email: orderSchema.billing?.email
+                    }
+                };
 
                 if (orderSchema.fulfillment) {
                     orderSchema.fulfillments = [orderSchema.fulfillment];
