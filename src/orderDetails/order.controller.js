@@ -68,7 +68,7 @@ export async function getOrdersHandler(req, res) {
                 settle_status,
                 fulfillment_state: fulfillment_state?.state || 'Pending',
                 customer: {
-                    id: customer._id,
+                    id: customer?._id,
                     person: {
                         name: customer?.person?.name || "",
                         gender: customer?.person?.gender || "",
