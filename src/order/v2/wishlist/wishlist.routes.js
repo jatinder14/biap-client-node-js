@@ -10,7 +10,7 @@ const wishListController = new WishlistController();
 
 
 rootRouter.post(
-    '/v2/wishlist:userId/:itemId',wishListController.addItem
+    '/v2/wishlist/:userId',wishListController.addItem
 );
 
 // rootRouter.get(

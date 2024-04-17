@@ -1,5 +1,6 @@
 import WishListService from './wishlist.service.js';
 
+
 const wishlistService = new WishListService();
 
 class WishlistController {

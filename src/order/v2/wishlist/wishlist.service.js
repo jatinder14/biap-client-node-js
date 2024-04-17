@@ -1,48 +1,38 @@
  
     import WishList from '../db/wishlist.js';
+    import WishlistItem from "../db/wishlistItem.js"
 
     class WishListService {
-        async addItem(req, res, next) {
-            console.log("8>>>>>>>>>>>>")
-
-            try {
-                let cart;
-                if (data.cart_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-                  cart = await WishList.findOne({ cart_key: data.cart_key });
-                } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
-                  cart = await WishList.findOne({ userId: data.userId });
-                }
-                if (cart) {
-                //Can be implement further
-                //    // Check if the cart belongs to a guest user and is now being accessed by a logged-in user
-                //   if (cart.userId !== data.userId && data.userId !== "guestUser") {
-                //     // Delete cart items for guest users
-                //     await CartItem.deleteMany({ cart: cart._id });
-                // }
-          
-                  let cartItem = new CartItem();
-                  cartItem.cart = cart?._id;
-                  cartItem.item = data;
-                  return await cartItem.save();
-                } else {
-                  //create a new cart
-                  let cart = {};
-                  if (data.cart_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-                    cart = await new Cart({
-                      cart_key: data.cart_key,
-                    }).save();
-                  } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
-                    cart = await new Cart({ userId: data.userId, cart_key: data.cart_key,}).save();
-                  }
-                  let cartItem = new CartItem();
-                  cartItem.cart = cart._id;
-                  cartItem.item = data;
-                  return await cartItem.save();
-                }
-              } catch (err) {
-                throw err;
-              }
+      async addItem(data) {
+        try {
+          let wishlist;
+          if (data.userId && (data.userId !== "undefined" && data.userId !== "guestUser")) {
+            wishlist = await WishList.findOne({ wishlist_key: data.userId });
+          }else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
+            cart = await Cart.findOne({ userId: data.userId });
+          }
+      
+          if (wishlist) {
+            // Wishlist exists for the user, add item to the wishlist
+            let wishlistItem = new WishlistItem();
+            wishlistItem.wishlist = wishlist._id;
+            wishlistItem.item = data.item; // Assuming 'item' contains the details of the item to be added
+            return await wishlistItem.save();
+          } else {
+            // Create a new wishlist for the user
+            let newWishlist = await new WishList({ userId: data.userId }).save();
+            
+            // Add item to the newly created wishlist
+            let wishlistItem = new WishlistItem();
+            wishlistItem.wishlist = newWishlist._id;
+            wishlistItem.item = data.item;
+            return await wishlistItem.save();
+          }
+        } catch (err) {
+          throw err;
         }
+      }
+      
     }
 
 
