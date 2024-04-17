@@ -18,6 +18,8 @@ import cartRoutesv2 from "../order/v2/cart/v2/cart.routes.js";
 import sseRoutesv2 from "../sse/v2/sse.routes.js";
 import razorPayv2 from "../razorPay/razorpay.routes.js";
 import rspRoutes from "../rsp_integration/rsp_routes/rsfRoutes.js"
+import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
+
 const router = new Router();
 //v1
 router.use(accountRoutes);
@@ -38,6 +40,7 @@ router.use(trackRoutesv2);
 router.use(cartRoutesv2);
 router.use(sseRoutesv2);
 router.use(razorPayv2);
+router.use(wishlistRoutes);
 
 
 export default router;
