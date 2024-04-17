@@ -87,7 +87,8 @@ export async function getSettlementsHandler(req, res) {
 
         completedOrders.forEach(({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
-            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code  }) => {
+            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
+            updatedQuote, payment  }) => {
             
             const settlementItem = {
                 id: id || _id,
@@ -112,10 +113,11 @@ export async function getSettlementsHandler(req, res) {
                 updated_at: updatedAt,
                 collector_recon_sent: false,
                 on_collector_recon_received: false,
-                order_amount: quote?.price?.value , // Apply optional chaining
+                order_amount: quote?.price?.value,
                 settle_status,
-                // order_amount: 529,
-
+                quote, 
+                updatedQuote, 
+                payment,
                 items: items.map(({ id, title, price, quantity,product }) => ({
                     sku: id,
                     name: product?.descriptor?.name,

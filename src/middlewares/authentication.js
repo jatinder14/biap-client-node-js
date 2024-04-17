@@ -28,16 +28,40 @@ const authentication = (options) => async(req, res, next) => {
         next();
       } else {
         // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header(
+          "Access-Control-Allow-Headers",
+          "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+        );
+        res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
         return res.status(401).json({'success' : false, 'message': "Invalid token" })
       }
-    }).catch(err => {  
+    }).catch(err => { 
+      res.header("Access-Control-Allow-Origin", "*");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+      );
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE"); 
       return res.status(401).json({'success' : false, 'message': "Invalid token", error: err?.message })
     });
   } else {
     // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    );
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
     return res.status(401).json({'success' : false, 'message': "Invalid token" })
   }
 }catch(error){
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
   return res.status(403).json({'success' : false, 'message':"Invalid Token Signature" })
 }
 };
