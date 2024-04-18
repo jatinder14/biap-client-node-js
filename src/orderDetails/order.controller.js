@@ -20,7 +20,7 @@ export async function getOrdersHandler(req, res) {
 
         const orderCount = await OrderModel.countDocuments({})
         const allOrders = await OrderModel.find({}).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
-
+      
         let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer,
@@ -106,17 +106,46 @@ export async function getOrdersHandler(req, res) {
                 return_logistics_id: null,
                 replaced_order_details: null
             };
-
+           
             return orderItem;
         });
-
+       
+        
         orderData = await Promise.all(orderData)
+        const {state} = req.query;
+        if (state &&  state=== "Accepted") {
+        const filteredData = orderData.filter((data) => data.order_status === "Accepted");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+} else if(state &&  state=== "Created"){
+    const filteredData = orderData.filter((data) => data.order_status === "Created");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
+else if(state &&  state=== "In-progress"){
+    const filteredData = orderData.filter((data) => data.order_status === "In-progress");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
 
-        res.send({
-            success: true,
-            data: orderData,
-            count: orderCount,
-        });
+else {
+    res.send({
+        success: true,
+        data: orderData,
+        count: orderCount,
+    });
+}
+
+        
     } catch (error) {
         console.error("Error fetching settlements:", error);
         res.status(500).send({ success: false, message: "Error fetching settlements" });
