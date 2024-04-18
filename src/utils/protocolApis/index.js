@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 
 import HttpRequest from "../HttpRequest.js";
 import PROTOCOL_API_URLS from "./routes.js";
+import logger from '../../utils/logger.js';
 
 /**
  * order confirm
@@ -53,6 +54,7 @@ const onOrderConfirm = async (messageId) => {
 
     const result = await apiCall.send();
     console.log("onOrderConfirm--->",result.data)
+    logger.info(`ONDC API call - on_confirm --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -89,6 +91,7 @@ const onOrderCancel = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_cancel --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -125,6 +128,7 @@ const onOrderInit = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_init --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -167,7 +171,7 @@ const protocolSearchItems = async (data) => {
     );
 
     const result = await apiCall.send();
-
+    // logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
     return result.data;
 }
 
@@ -386,6 +390,7 @@ const onSearch = async (query) => {
     );
 
     const result = await apiCall.json();
+    // logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
     return result;
 };
 
@@ -493,6 +498,7 @@ const onOrderStatus = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_status --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -527,6 +533,7 @@ const onUpdateStatus = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_update --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -564,6 +571,7 @@ const onOrderSelect = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_select --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
