@@ -93,7 +93,7 @@ export async function getOrdersHandler(req, res) {
                     quantity: quantity?.count,
                     product_id: product?.id,
                     variant_id: 'Variant ID',
-                    return_window: '@ondc/org/return_window',
+                    return_window: product["@ondc/org/return_window"] || '',
                     variant_title: 'Variant Title'
                 })),
                 return_window: '@ondc/org/return_window',

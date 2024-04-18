@@ -115,8 +115,11 @@ export const initiateRsp = async () => {
 
             const settlementAmount= paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
             paymentObj.params.amount - buyerPercentage - withHoldAmount
-            : paymentObj.params.amount - paymentObj['@ondc/org/withholding_amount']
+            : paymentObj.params.amount - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - paymentObj['@ondc/org/withholding_amount']
 
+            const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
+            buyerPercentage + withHoldAmount
+            : Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount'])
             const response = {
               id: objectId,
               invoice_no: uuidv4(),
@@ -209,7 +212,7 @@ export const initiateRsp = async () => {
               },
               deduction_by_collector: {
                 currency: "INR",
-                value: paymentObj["@ondc/org/buyer_app_finder_fee_amount"],
+                value: buyer_take.toFixed(2),
               },
               payerdetails: {
                 payer_name:

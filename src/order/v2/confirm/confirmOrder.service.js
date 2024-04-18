@@ -230,6 +230,7 @@ class ConfirmOrderService {
                         email: orderSchema.billing?.email
                     }
                 };
+                orderSchema.is_order_confirmed = true;
 
                 if (orderSchema.fulfillment) {
                     orderSchema.fulfillments = [orderSchema.fulfillment];
