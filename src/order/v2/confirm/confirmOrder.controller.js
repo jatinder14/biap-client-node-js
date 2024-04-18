@@ -88,6 +88,7 @@ class ConfirmOrderController {
                 Notification.create({
                event_type: 'order_creation',
                 details: `Order has been Accepted with id: ${orderId}`,
+                name:userName
               }).then(notification => {
           console.log('Notification created:', notification);
         }).catch(error => {
