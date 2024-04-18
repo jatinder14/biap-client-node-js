@@ -54,4 +54,4 @@ export function parseDuration(duration) {
 
   
 
-export { getRandomString, parseDuration };
+export { getRandomString };
