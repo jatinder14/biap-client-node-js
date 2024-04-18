@@ -16,7 +16,7 @@ class WishlistController {
                    }
     }
 
-    async getWishlistItem(req, res, next) {
+async getWishlistItem(req, res, next) {
         try {
             const wishlistItem=await wishlistService.getWishlistItem({...req.query,...req.params })
             // req.body.responseData = wishlistItem;
@@ -28,7 +28,7 @@ class WishlistController {
             next(err);
         }
     }
-    async clearWishlist(req, res, next) {
+async clearWishlist(req, res, next) {
         try {
             return  res.send(await wishlistService.clearWishlist({ ...req.params }));
         }
