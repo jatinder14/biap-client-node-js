@@ -6,8 +6,8 @@
       async addItem(data) {
         try {
           let wishlist;
-          if (data.userId && (data.userId !== "undefined" && data.userId !== "guestUser")) {
-            wishlist = await WishList.findOne({ wishlist_key: data.userId });
+          if (data.wishlist_key && (!data.userId == "undefined" && data.userId == "guestUser")) {
+            wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
           }else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
             wishlist = await WishList.findOne({ userId: data.userId });
           }
@@ -16,8 +16,9 @@
             // Wishlist exists for the user, add item to the wishlist
             let wishlistItem = new WishlistItem();
             wishlistItem.wishlist = wishlist._id;
-            wishlistItem.item = data.item; // Assuming 'item' contains the details of the item to be added
-            return await wishlistItem.save();
+            wishlistItem.item = data; // Assuming 'item' contains the details of the item to be added
+            const saveData=await wishlistItem.save();
+            return  saveData
           } else {
             // Create a new wishlist for the user
             let wishlist = {};
@@ -25,14 +26,18 @@
               wishlist = await new WishList({
                 wishlist_key: data.wishlist_key,
               }).save();
+
             } 
             else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
               wishlist = await new WishList({ userId: data.userId, wishlist_key: data.wishlist_key,}).save();
+
             }
             let wishlistItem = new WishlistItem();
             wishlistItem.wishlist = wishlist._id;
             wishlistItem.item = data;
-            return await wishlistItem.save();
+            let wishlistdata=await wishlistItem.save();
+            return wishlistdata
+
           }
         } catch (err) {
           throw err;
@@ -44,11 +49,13 @@
             if (data.wishlist_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
                 wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
             } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
-              
                 wishlist = await WishList.findOne({ userId: data.userId });
+
             }
             if (data.wishlist_key) {
+
                 wishlist2 = await WishList.findOne({ wishlist_key: data.wishlist_key });
+
             }
     
             let wishlist1Item = [];
