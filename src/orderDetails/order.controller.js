@@ -23,7 +23,8 @@ export async function getOrdersHandler(req, res) {
 
         let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
-            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer }) => {
+            counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer,
+            updatedQuote, payment }) => {
             // const fulfillment_state = fulfillments.map(fulfillment => {
             //     if (fulfillment.state) {
             //         return fulfillment?.state?.descriptor?.code;
@@ -40,7 +41,6 @@ export async function getOrdersHandler(req, res) {
                     return { agent_name: fulfillment?.agent?.name || "", vehicle: fulfillment?.vehicle?.registration || "" }
                 }
             }) || {}
-            console.log("customer -------------", customer);
 
             const orderItem = {
                 id: id || _id,
@@ -62,6 +62,9 @@ export async function getOrdersHandler(req, res) {
                 receiver_settlement_message_code: receiver_settlement_message_code,
                 created_at: createdAt,
                 order_status: state || "Accepted",
+                quote: quote,
+                updatedQuote: updatedQuote,
+                payment: payment,
                 updated_at: updatedAt,
                 collector_recon_sent: false,
                 on_collector_recon_received: false,

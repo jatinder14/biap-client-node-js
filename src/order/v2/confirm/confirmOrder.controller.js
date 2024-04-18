@@ -2,6 +2,7 @@ import ConfirmOrderService from './confirmOrder.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 // import  Notification from "../../v1/db/notification.js"
 import {sendEmail} from "../../../shared/mailer.js"
+import Notification from "../../v2/db/notification.js";
 
 
 const confirmOrderService = new ConfirmOrderService();
@@ -83,6 +84,15 @@ class ConfirmOrderController {
                 const userEmail=req.user.decodedToken.email
                 const userName=req.user.decodedToken.name
                 const orderId=orders[0].message.order.id
+                console.log('notifications has been created')
+                Notification.create({
+               event_type: 'order_creation',
+                details: `Order has been Accepted with id: ${orderId}`,
+              }).then(notification => {
+          console.log('Notification created:', notification);
+        }).catch(error => {
+          console.error('Error creating notification:', error);
+        });
                 await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
                 userName: userName || '',
                 subject: 'Order has been placed'

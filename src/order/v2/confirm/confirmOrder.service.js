@@ -181,7 +181,6 @@ class ConfirmOrderService {
     async processOnConfirmResponse(response = {}) {
         try {
 
-            console.log("processOnConfirmResponse------------------------------>", JSON.stringify(response))
             const newDataInstance = new OnConfirmData({
                 message: {
                     order: {

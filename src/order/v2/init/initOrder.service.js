@@ -40,7 +40,7 @@ class InitOrderService {
             const providerDetails = {
                 id: provider.local_id,
                 descriptor:provider.descriptor,
-                locations: provider.locations.map(location => {
+                locations: provider?.locations?.map(location => {
                     return { id: location.local_id };
                 })
             };
