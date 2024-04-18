@@ -143,14 +143,59 @@ export async function getSettlementsHandler(req, res) {
             settlementData.push(settlementItem);
         });
 
+        const {state} = req.query;
+        if (state &&  state=== "Accepted") {
+        const filteredData = settlementData.filter((data) => data.order_status === "Accepted");
         res.send({
             success: true,
-            data: settlementData,
+            data: filteredData,
             count: orderCount,
             sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
             sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
             orderAnalysis: orderAnalysis
         });
+} else if(state &&  state=== "Created"){
+    const filteredData = settlementData.filter((data) => data.order_status === "Created");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: orderCount,
+        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        orderAnalysis: orderAnalysis
+    });
+}
+else if(state &&  state=== "In-progress"){
+    const filteredData = settlementData.filter((data) => data.order_status === "In-progress");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: orderCount,
+        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        orderAnalysis: orderAnalysis
+    });
+}
+
+else {
+    res.send({
+        success: true,
+        data: settlementData,
+        count: orderCount,
+        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        orderAnalysis: orderAnalysis
+    });
+}
+
+
+
+
+
+
+
+
+        
     } catch (error) {
         console.error("Error fetching settlements:", error);
         res.status(500).send({ success: false, message: "Error fetching settlements" });
