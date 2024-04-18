@@ -142,6 +142,7 @@ class OrderStatusService {
                                   Notification.create({
                                     event_type: 'order_delivery',
                                     details: `Order has been Delivered with id: ${orderId}`,
+                                    name:userName
                                      }).then(notification => {
                                  console.log('Notification created:', notification);
                                 }).catch(error => {
