@@ -19,7 +19,7 @@ export async function getOrdersHandler(req, res) {
 
         const skip = (pageValue - 1) * limitValue;
 
-        const orderCount = await OrderModel.countDocuments({})
+        const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
         const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
       
         let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,

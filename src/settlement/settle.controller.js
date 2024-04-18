@@ -20,11 +20,11 @@ export async function getSettlementsHandler(req, res) {
          const skip = (pageValue - 1) * limitValue;
  
          // Fetch completed orders with pagination
-         const completedOrders = await OrderModel.find({}).sort({createdAt:-1})
+         const completedOrders = await OrderModel.find({ is_order_confirmed: true }).sort({createdAt:-1})
              .limit(limitValue)
              .skip(skip);
 
-        const orderCount = await OrderModel.countDocuments({})
+        const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
 
         const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({createdAt:-1}).lean()
 
@@ -143,7 +143,7 @@ export async function getSettlementsHandler(req, res) {
                 payment,
                 buyer_take: buyer_take?.toFixed(2), 
                 seller_take: seller_take?.toFixed(2),
-                settlement_amount: settlementAmount,
+                settlement_amount: seller_take?.toFixed(2),
                 items: items.map(({ id, title, price, quantity,product }) => ({
                     sku: id,
                     name: product?.descriptor?.name,
