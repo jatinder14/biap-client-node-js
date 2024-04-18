@@ -1,6 +1,7 @@
 import OrderModel from "../order/v1/db/order.js";
 import ConfirmModel from "../order/v1/db/onConfirmDump.js";
 import { SETTLE_STATUS } from "../utils/constants.js";
+import { parseDuration } from "../utils/stringHelper.js";
 
 export async function getSettlementsHandler(req, res) {
     try {
@@ -25,10 +26,11 @@ export async function getSettlementsHandler(req, res) {
 
         const orderCount = await OrderModel.countDocuments({})
 
-        const allOrders = await OrderModel.find({}).sort({createdAt:-1}).lean()
+        const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({createdAt:-1}).lean()
 
         let sumCompletedOrderAmount = 0;
         let sumPendingOrderAmount = 0;
+        let sumTodayOrderAmount = 0;
 
         const orderAnalysis = {
             year: {},
@@ -57,6 +59,11 @@ export async function getSettlementsHandler(req, res) {
                 sumCompletedOrderAmount += parseFloat(quote?.price?.value) || 0;
             } else {
                 sumPendingOrderAmount += parseFloat(quote?.price?.value) || 0;
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (createdAt >= today) {
+                    sumTodayOrderAmount += parseFloat(quote?.price?.value) || 0;
+                }
             }
 
             // Group by year
@@ -95,17 +102,17 @@ export async function getSettlementsHandler(req, res) {
                 },
             });
             const paymentObj = on_confirm?.message?.order?.payment ? JSON.parse(on_confirm?.message?.order?.payment): {};
-            const buyerPercentage = (paymentObj.params.amount * Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount'])) / 100
-            const withHoldAmount = paymentObj['@ondc/org/withholding_amount']== undefined ? 0 : paymentObj['@ondc/org/withholding_amount']
+            const buyerPercentage = Number(paymentObj.params.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+            const withHoldAmount = !paymentObj['@ondc/org/withholding_amount'] ? 0 : paymentObj['@ondc/org/withholding_amount']
 
             const settlementAmount = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
-            paymentObj.params.amount - buyerPercentage - withHoldAmount
-            : paymentObj.params.amount - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - paymentObj['@ondc/org/withholding_amount']
+            Number(paymentObj.params.amount) - Number(buyerPercentage) - Number(withHoldAmount)
+            : Number(paymentObj.params.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
             const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
-            : Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount'])
-            const seller_take = quote?.price?.value ? Number(quote?.price?.value) - buyer_take : 0
+            : Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
+            const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
             const settlementItem = {
                 id: id || _id,
                 order_id: _id,
@@ -147,7 +154,7 @@ export async function getSettlementsHandler(req, res) {
                     quantity: quantity?.count,
                     product_id: product?.id,
                     variant_id: 'Variant ID',
-                    return_window: product["@ondc/org/return_window"] || '',
+                    return_window: parseDuration(product["@ondc/org/return_window"]) || '',
                     variant_title: 'Variant Title'
                 })),
                 return_window: '@ondc/org/return_window',
@@ -171,6 +178,7 @@ export async function getSettlementsHandler(req, res) {
             count: orderCount,
             sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
             sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+            sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
             orderAnalysis: orderAnalysis
         });
 } else if(state &&  state=== "Created"){
@@ -181,6 +189,7 @@ export async function getSettlementsHandler(req, res) {
         count: orderCount,
         sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
         sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
         orderAnalysis: orderAnalysis
     });
 }
@@ -192,6 +201,7 @@ else if(state &&  state=== "In-progress"){
         count: orderCount,
         sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
         sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
         orderAnalysis: orderAnalysis
     });
 }
@@ -203,6 +213,7 @@ else {
         count: orderCount,
         sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
         sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
         orderAnalysis: orderAnalysis
     });
 }
