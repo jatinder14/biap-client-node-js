@@ -171,7 +171,7 @@ const protocolSearchItems = async (data) => {
     );
 
     const result = await apiCall.send();
-    logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
+    // logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
     return result.data;
 }
 
@@ -390,7 +390,7 @@ const onSearch = async (query) => {
     );
 
     const result = await apiCall.json();
-    logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
+    // logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
     return result;
 };
 
