@@ -170,8 +170,8 @@ export async function getSettlementsHandler(req, res) {
         }));
 
         const {state} = req.query;
-        if (state &&  state=== "Accepted") {
-        const filteredData = settlementData.filter((data) => data.order_status === "Accepted");
+        if (state &&  state=== "Pending") {
+        const filteredData = settlementData.filter((data) => data.settlement_type === "Pending");
         res.send({
             success: true,
             data: filteredData,
@@ -181,8 +181,8 @@ export async function getSettlementsHandler(req, res) {
             sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
             orderAnalysis: orderAnalysis
         });
-} else if(state &&  state=== "Created"){
-    const filteredData = settlementData.filter((data) => data.order_status === "Created");
+} else if(state &&  state=== "Debit"){
+    const filteredData = settlementData.filter((data) => data.settlement_type === "Debit");
     res.send({
         success: true,
         data: filteredData,
@@ -193,8 +193,19 @@ export async function getSettlementsHandler(req, res) {
         orderAnalysis: orderAnalysis
     });
 }
-else if(state &&  state=== "In-progress"){
-    const filteredData = settlementData.filter((data) => data.order_status === "In-progress");
+else if(state &&  state=== "Credit"){
+    const filteredData = settlementData.filter((data) => data.settlement_type === "Credit");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: orderCount,
+        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+        orderAnalysis: orderAnalysis
+    });
+}
+else if(state &&  state=== "Settle"){
+    const filteredData = settlementData.filter((data) => data.settlement_type === "Settle");
     res.send({
         success: true,
         data: filteredData,
@@ -205,7 +216,6 @@ else if(state &&  state=== "In-progress"){
         orderAnalysis: orderAnalysis
     });
 }
-
 else {
     res.send({
         success: true,
