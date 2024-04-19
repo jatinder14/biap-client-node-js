@@ -1,5 +1,6 @@
 import OrderModel from "../order/v1/db/order.js";
 import FulfillmentHistory from "../order/v2/db/fulfillmentHistory.js"
+import { parseDuration } from "../utils/stringHelper.js";
 
 export async function getOrdersHandler(req, res) {
     console.log("Insidssd")
@@ -18,8 +19,8 @@ export async function getOrdersHandler(req, res) {
 
         const skip = (pageValue - 1) * limitValue;
 
-        const orderCount = await OrderModel.countDocuments({})
-        const allOrders = await OrderModel.find({}).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
+        const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
+        const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
       
         let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
             settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
@@ -93,7 +94,7 @@ export async function getOrdersHandler(req, res) {
                     quantity: quantity?.count,
                     product_id: product?.id,
                     variant_id: 'Variant ID',
-                    return_window: product["@ondc/org/return_window"] || '',
+                    return_window: parseDuration(product["@ondc/org/return_window"]) || '',
                     variant_title: 'Variant Title'
                 })),
                 return_window: '@ondc/org/return_window',

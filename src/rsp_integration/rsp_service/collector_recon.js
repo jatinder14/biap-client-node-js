@@ -110,12 +110,12 @@ export const initiateRsp = async () => {
             let bap_id = seller.context.bap_id;
             let bap_uri = seller.context.bap_uri;
             const objectId = detail?.id.toString();
-            const buyerPercentage = (paymentObj.params.amount * Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount'])) / 100
-            const withHoldAmount = paymentObj['@ondc/org/withholding_amount']== undefined ? 0 : paymentObj['@ondc/org/withholding_amount']
+            const buyerPercentage = Number(paymentObj.params.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+            const withHoldAmount = !paymentObj['@ondc/org/withholding_amount'] ? 0 : Number(paymentObj['@ondc/org/withholding_amount'])
 
             const settlementAmount= paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
-            paymentObj.params.amount - buyerPercentage - withHoldAmount
-            : paymentObj.params.amount - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - paymentObj['@ondc/org/withholding_amount']
+            Number(paymentObj.params.amount) - buyerPercentage - withHoldAmount
+            : Number(paymentObj.params.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - withHoldAmount
 
             const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
             buyerPercentage + withHoldAmount
