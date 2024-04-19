@@ -80,7 +80,7 @@ class InitOrderService {
                 let selectitem = {
                     id: item?.local_id?.toString(),
                     quantity: item?.quantity,
-                    location_id: provider.locations[0].local_id?.toString()
+                    location_id: provider?.locations[0].local_id?.toString()
                 }
                 let tag=undefined
                 if(item.tags && item.tags.length>0){
