@@ -3,7 +3,9 @@ import WishList from "./wishlist.js";
 const  WishListItemSchema = new mongoose.Schema(
     {
         item: { type: Object },
-        wishlist:{type:String, ref:'WishList'}
+        wishlist:{type:String, ref:'WishList'},
+        added: { type: Boolean, default: false } // Added field to indicate if the item was added
+
     },
     { _id: true, timestamps: true }
 );

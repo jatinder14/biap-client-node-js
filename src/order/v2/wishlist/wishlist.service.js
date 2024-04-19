@@ -14,11 +14,21 @@
       
           if (wishlist) {
             // Wishlist exists for the user, add item to the wishlist
-            let wishlistItem = new WishlistItem();
-            wishlistItem.wishlist = wishlist._id;
-            wishlistItem.item = data; // Assuming 'item' contains the details of the item to be added
-            const saveData=await wishlistItem.save();
-            return  saveData
+            const existingItem = await WishlistItem.findOne({"item.id": data.id,"wishlist": wishlist._id});
+          if(existingItem){
+           const itemId = existingItem.item.id;
+  
+           console.log("Item ID:", itemId);
+           return { status: "error", message: "Item already exists in wishlist" };
+          } 
+  else{
+    let wishlistItem = new WishlistItem();
+    wishlistItem.wishlist = wishlist._id;
+    wishlistItem.item = data; // Assuming 'item' contains the details of the item to be added
+    wishlistItem.added=true
+    const saveData=await wishlistItem.save();
+    return  saveData  }
+            
           } else {
             // Create a new wishlist for the user
             let wishlist = {};
@@ -32,12 +42,23 @@
               wishlist = await new WishList({ userId: data.userId, wishlist_key: data.wishlist_key,}).save();
 
             }
-            let wishlistItem = new WishlistItem();
-            wishlistItem.wishlist = wishlist._id;
-            wishlistItem.item = data;
-            let wishlistdata=await wishlistItem.save();
-            return wishlistdata
+            // const existingItem = await WishlistItem.findOne({"item.id": data.id,"wishlist": wishlist._id});
+          if(existingItem){
+           const itemId = existingItem.item.id;
+  
+           console.log("Item ID:", itemId);
+           return { status: "error", message: "Item already exists in wishlist" };
+          } else{
+      let wishlistItem = new WishlistItem();
+      wishlistItem.wishlist = wishlist._id;
+      wishlistItem.item = data;
+      wishlistItem.added=true
 
+      let wishlistdata=await wishlistItem.save();
+      return wishlistdata
+
+     }
+            
           }
         } catch (err) {
           throw err;
