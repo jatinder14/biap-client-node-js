@@ -18,6 +18,7 @@ class DashboardController {
           const thisYearEnd = new Date(currDate.getFullYear() + 1, 0, 0);
 
           const customerDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: { $gte: prevYearStart, $lt: thisYearEnd },
           }).select({ createdAt: 1, userId: 1 });
 
@@ -51,6 +52,7 @@ class DashboardController {
           }
 
           const customerDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: new Date(lastYear, lastMonth, 0),
               $lt: new Date(
@@ -118,6 +120,7 @@ class DashboardController {
             0
           );
           const customerDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: prevWeekStart,
               $lt: weekEnd,
@@ -164,7 +167,7 @@ class DashboardController {
       let data = {};
       switch (filter) {
         case "overall": {
-          const orderDetails = await OrderMongooseModel.find().select({
+          const orderDetails = await OrderMongooseModel.find({ is_order_confirmed: true }).select({
             items: 1,
             _id: 0,
           });
@@ -173,6 +176,7 @@ class DashboardController {
         }
         case "yearly": {
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: new Date(currDate.getFullYear(), 0, 0),
               $lt: new Date(currDate.getFullYear() + 1, 0, 0),
@@ -186,6 +190,7 @@ class DashboardController {
         }
         case "monthly": {
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: new Date(currDate.getFullYear(), currDate.getMonth(), 0),
               $lt: new Date(currDate.getFullYear(), currDate.getMonth() + 1, 0),
@@ -218,6 +223,7 @@ class DashboardController {
             0
           );
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: { $gte: weekStart, $lt: weekEnd },
           }).select({
             items: 1,
@@ -283,6 +289,11 @@ class DashboardController {
       const currentYear = new Date().getFullYear();
       const filter = req.query.filter ? String(req.query.filter) : "weekly";
       const fetchData = await OrderMongooseModel.aggregate([
+        // {
+        //   $match: {
+        //     is_order_confirmed: true
+        //   }
+        // },
         {
           $project: {
             order_year: { $year: "$createdAt" },
