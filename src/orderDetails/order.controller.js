@@ -113,30 +113,95 @@ export async function getOrdersHandler(req, res) {
         
         orderData = await Promise.all(orderData)
         const {state} = req.query;
-        if (state &&  state=== "Accepted") {
-        const filteredData = orderData.filter((data) => data.order_status === "Accepted");
+        if (state &&  state=== "Pending") {
+        const filteredData = orderData.filter((data) => data.fulfillment_state === "Pending");
     res.send({
         success: true,
         data: filteredData,
         count: filteredData.length,
     });
-} else if(state &&  state=== "Created"){
-    const filteredData = orderData.filter((data) => data.order_status === "Created");
-    res.send({
-        success: true,
-        data: filteredData,
-        count: filteredData.length,
-    });
-}
-else if(state &&  state=== "In-progress"){
-    const filteredData = orderData.filter((data) => data.order_status === "In-progress");
+} else if(state &&  state=== "Packed"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Packed");
     res.send({
         success: true,
         data: filteredData,
         count: filteredData.length,
     });
 }
-
+else if(state &&  state=== "Agent-assigned"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Agent-assigned");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
+else if(state &&  state=== "Out-for-pickup"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Out-for-pickup");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
+else if(state &&  state=== "Pickup-failed"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Pickup-failed");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "Order-picked-up"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Order-picked-up");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "In-transit"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "In-transit");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "At-destination-hub"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "At-destination-hub");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "Out-for-delivery"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Out-for-delivery");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "Delivery-failed"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Delivery-failed");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
+else if(state &&  state=== "Order-delivered"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Order-delivered");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}else if(state &&  state=== "Cancelled"){
+    const filteredData = orderData.filter((data) => data.fulfillment_state === "Cancelled");
+    res.send({
+        success: true,
+        data: filteredData,
+        count: filteredData.length,
+    });
+}
 else {
     res.send({
         success: true,
