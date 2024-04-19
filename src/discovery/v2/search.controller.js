@@ -1,6 +1,7 @@
 import SearchService from "./search.service.js";
 import BadRequestParameterError from "../../lib/errors/bad-request-parameter.error.js";
 import NoRecordFoundError from "../../lib/errors/no-record-found.error.js";
+import WishlistItem from "../../order/v2/db/wishlistItem.js"
 import { SSE_CONNECTIONS } from "../../utils/sse.js";
 
 const searchService = new SearchService();
@@ -27,13 +28,41 @@ class SearchController {
         {
             targetLanguage = undefined
         }
-        searchService.search(searchRequest,targetLanguage).then(response => {
+        searchService.search(searchRequest,targetLanguage).then(async response => {
             if(!response || response === null)
                 throw new NoRecordFoundError("No result found");
             else
                 // res.json(response);
-                req.body.responseData = response;
-                next()
+               {
+               
+                try{
+                  const userId=req.params.userId
+                  console.log("userId:",userId)
+                  const findWishlistItem = await WishlistItem.find({
+                    "item.userId": userId
+                });       
+                const itemids = findWishlistItem.map((item) => {
+                  return item.item.id; // Assuming the id is nested inside the item object
+              });
+              
+              const itemDetaildata = response.response.data;
+
+              response.response.data.forEach((item) => {
+    if (itemids.includes(item.id)) {
+        console.log("Matched item id:", item.id);
+        item.wishlistAdded = true;
+    }
+});
+              req.body.responseData = response;
+            next()                  }
+                  catch(e){
+                  console.log(e)
+                  }
+                  
+                
+                // req.body.responseData = response;
+                // next()
+              }
         }).catch((err) => {
             next(err);
         });
