@@ -81,27 +81,40 @@ class OrderStatusController {
             const userName=req.user.decodedToken.name
 
             orderStatusService.onOrderStatusV2(messageIdsArray,userEmail,userName).then(async orders => {
-
-                console.log("orders>>>>>>>>>>>",JSON.stringify(orders[0].message.order.fulfillments[0].state.descriptor.code))
-                if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
-                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
-                    userName: userName || '',
-                    subject: 'Order has been placed'
-                });
-                }else if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
-                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
-                    userName: userName || '',
-                    subject: 'Order has been placed'
-                });
-                }
-                else if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
-                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
-                    userName: userName || '',
-                    subject: 'Order has been placed'
-                });
+                console.log("auth???????????",JSON.stringify(req.user))
+                console.log("orders>>>>>>>>>>>",JSON.stringify(orders))
+                const userName=req.user.name;
+                const userEmail=req.user.email;
+                const orderId=orders[0].message.order.id
+                if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
+                    await sendEmail({
+                        userEmail,
+                        orderId,
+                        HTMLtemplate: '/template/outForDelivery.ejs',
+                        userName: userName || '',
+                        subject: 'Order is out for delivery'
+                    });
+                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order Picked Up") {
+                    await sendEmail({
+                        userEmail,
+                        orderId,
+                        HTMLtemplate: '/template/orderPickedup.ejs',
+                        userName: userName || '',
+                        subject: 'Order has been picked up'
+                    });
+                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
+                    await sendEmail({
+                        userEmail,
+                        orderId,
+                        HTMLtemplate: '/template/agentAssigned.ejs',
+                        userName: userName || '',
+                        subject: 'Agent has been assigned'
+                    });
                 }
                 
                 res.json(orders);
+
+                
             }).catch((err) => {
                 next(err);
             });
