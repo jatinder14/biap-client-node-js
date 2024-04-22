@@ -1,6 +1,7 @@
 import OrderStatusService from './orderStatus.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
-
+import {sendEmail} from "../../../shared/mailer.js"
+ 
 const orderStatusService = new OrderStatusService();
 
 class OrderStatusController {
@@ -70,7 +71,7 @@ class OrderStatusController {
     * @param {*} next   Callback argument to the middleware function
     * @return {callback}
     */
-    onOrderStatusV2(req, res, next) {
+     onOrderStatusV2(req, res, next) {
         const { query } = req;
         const { messageIds } = query;
         
@@ -79,7 +80,27 @@ class OrderStatusController {
             const userEmail=req.user.decodedToken.email
             const userName=req.user.decodedToken.name
 
-            orderStatusService.onOrderStatusV2(messageIdsArray,userEmail,userName).then(orders => {
+            orderStatusService.onOrderStatusV2(messageIdsArray,userEmail,userName).then(async orders => {
+
+                console.log("orders>>>>>>>>>>>",JSON.stringify(orders[0].message.order.fulfillments[0].state.descriptor.code))
+                if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
+                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
+                    userName: userName || '',
+                    subject: 'Order has been placed'
+                });
+                }else if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
+                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
+                    userName: userName || '',
+                    subject: 'Order has been placed'
+                });
+                }
+                else if(orders[0].message.order.fulfillments[0].state.descriptor.code==="Out-for-delivery"){
+                    await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
+                    userName: userName || '',
+                    subject: 'Order has been placed'
+                });
+                }
+                
                 res.json(orders);
             }).catch((err) => {
                 next(err);
