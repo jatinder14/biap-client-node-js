@@ -16,9 +16,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // Function to send notification
-export async function sendEmail({ userEmail, orderId, HTMLtemplate,userName ,subject}) {
+export async function sendEmail({ userEmail, orderId, HTMLtemplate,userName ,subject,itemName,itemQuantity,itemPrice,estimatedDelivery}) {
     try {
-  console.log("templatePath>>>>>>>>",userEmail)
+  console.log("templatePath>>>>>>>>",itemName,itemQuantity,itemPrice,estimatedDelivery)
         // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
         const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
         console.log("24>>>>>>>>>>",templatePath)
@@ -29,7 +29,7 @@ export async function sendEmail({ userEmail, orderId, HTMLtemplate,userName ,sub
       
 
         // Render the EJS template
-        const html = ejs.render(template, { orderId, userName });
+        const html = ejs.render(template, { orderId, userName ,itemName,itemQuantity,itemPrice,estimatedDelivery});
 
         // Email options
         const mailOptions = {
