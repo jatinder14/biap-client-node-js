@@ -16,8 +16,6 @@ import Fulfillments from "../db/fulfillments.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import OrderHistory from "../db/orderHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
-import { sendEmail } from "../../../shared/mailer.js";
-import Notification from "../../v2/db/notification.js";
 
 const bppOrderStatusService = new BppOrderStatusService();
 const bppUpdateService = new BppUpdateService();
@@ -128,7 +126,6 @@ class OrderStatusService {
                 messageIds.map(async messageId => {
                     try {
                         const onOrderStatusResponse = await this.onOrderStatus(messageId);
-                        const orderId=onOrderStatusResponse.message.order.id
                         if(!onOrderStatusResponse.error) {
                             const dbResponse = await OrderMongooseModel.find({
                                 transactionId: onOrderStatusResponse?.context?.transaction_id,
@@ -139,22 +136,7 @@ class OrderStatusService {
                                 const orderSchema = dbResponse?.[0].toJSON();
                                 
                                 if(orderSchema.state!==onOrderStatusResponse?.message?.order?.state && onOrderStatusResponse?.message?.order?.state ==='Completed'){
-                                  Notification.create({
-                                    event_type: 'order_delivery',
-                                    details: `Order has been Delivered with id: ${orderId}`,
-                                    name:userName
-                                     }).then(notification => {
-                                 console.log('Notification created:', notification);
-                                }).catch(error => {
-                             console.error('Error creating notification:', error);
-                               });
-                                  await sendEmail({
-                                    userEmail,
-                                    orderId,
-                                    HTMLtemplate: "/template/orderDelivered.ejs",
-                                    userName: userName || "",
-                                    subject: "Order has been Delivered Successfully",
-                                  });
+                             
                 
                                     let billingContactPerson = orderSchema.billing.phone
                                     let provider = orderSchema.provider.descriptor.name
