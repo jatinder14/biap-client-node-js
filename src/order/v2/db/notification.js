@@ -12,7 +12,7 @@ const notificationSchema = new mongoose.Schema({
   event_type: {
     type: String,
     required: true,
-    enum: ['order_creation', 'order_delivery', 'igm_status','issue_created','issue_closed'],
+    enum: ['order_creation', 'order_delivery', 'igm_status','issue_created','issue_closed','agent-assigned','out-for-delivery','order-picked-up'],
   },
   details: {
     type: String,
