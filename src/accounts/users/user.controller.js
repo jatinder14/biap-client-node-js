@@ -35,7 +35,7 @@ class UserController{
     }
 };
 
- async verifyOTP (req, res) {
+ async  verifyOTP (req, res) {
     const { phone, otp } = req.body;
   
     try {
@@ -47,7 +47,7 @@ class UserController{
         return res.status(400).json({ success: false, message: 'Invalid OTP' });
       }
 
-      const token = createJwtToken({ userId: user._id, uid: user._id });
+      const token = createJwtToken({ userId: user._id, uid: user._id, phone: phone });
   
       user.phone_otp = "";
       await user.save();
@@ -66,8 +66,62 @@ class UserController{
     }
   }
 
-  
+  async userProfile(req,res){
+    const { body: request, user} = req;
+    console.log('user :>> ', user);
+    let phone =user.decodedToken.phone
+    console.log('phone :>> ', phone);
+    let email=user?.decodedToken?.email
+    console.log('email :>> ', email);
+    // const phone =user?.decodedToken?.phone
 
+    // if(!phone){
+    //   const existingUser = await User.findOne({ $or: [{ phone }, { email }] });
+    // }
+    const existingUser = await User.findOne({ $or: [{ phone:phone  }, { email:email }] });
+    console.log('existingUser :>>---------------------', existingUser);
+    if (existingUser) {
+      // User already exists, update their profile
+      existingUser.userName = user?.decodedToken?.name;
+      existingUser.phone = user?.decodedToken?.phone;
+      existingUser.email = user?.decodedToken?.email;
+      existingUser.userImage = user?.decodedToken?.picture;
+      existingUser.delivery_address=user?.delivery_address
+      await existingUser.save();
+      res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
+  } else {
+      // User does not exist, create a new profile
+      const newUser = new User({
+          userName:user?.decodedToken?.name||null,
+          phone:user?.decodedToken?.phone||null,
+          email:user?.decodedToken?.email||null,
+          userImage:user?.decodedToken?.picture||null,
+          delivery_address:user?.decodedToken?.picture||null
+      });
+      await newUser.save();
+      res.status(201).json({ message: 'New user profile created', data: newUser });
+  }
+
+
+    // res.status(200).json({request:request,user:user,existingUser:existingUser})
+
+
+    // res.status(200).json({request:request,user:user})
+  }
+
+
+  async getUserProfile(req,res){
+    const { id } = params;
+    try {
+      const userDetails = await User.find({
+        _id: id,
+      });
+
+      return userDetails;
+    } catch (err) {
+      throw err;
+    }
+  }
   
 }
 

@@ -10,5 +10,7 @@ const rootRouter = new Router();
 router.post('/sendotp', sendOTP);
   
 router.post('/verifyotp', verifyOTP);
+
+
   
 export default rootRouter;
