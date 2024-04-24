@@ -23,6 +23,7 @@ const DescriptorSchema = new mongoose.Schema(
     {
         name: String,
         phone: { type: String, default: null },
+        userName:{ type: String, default: null },
         email: { type: String, default: null },
         code: { type: String, default: null },
         symbol: { type: String, default: null },
