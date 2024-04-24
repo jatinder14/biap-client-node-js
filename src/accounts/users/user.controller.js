@@ -109,6 +109,19 @@ class UserController{
     // res.status(200).json({request:request,user:user})
   }
 
+
+  async getUserProfile(req,res){
+    const { id } = params;
+    try {
+      const userDetails = await User.find({
+        _id: id,
+      });
+
+      return userDetails;
+    } catch (err) {
+      throw err;
+    }
+  }
   
 }
 
