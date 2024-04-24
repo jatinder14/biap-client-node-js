@@ -20,8 +20,8 @@ import { parseDuration } from "../utils/stringHelper.js";
             const skip = (pageValue - 1) * limitValue;
 
             const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
-            const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({ createdAt: -1 }).skip(skip).limit(limitValue);
-        
+            const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({ createdAt: -1 })
+
             let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
                 settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
                 counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer,
@@ -110,36 +110,42 @@ import { parseDuration } from "../utils/stringHelper.js";
             
                 return orderItem;
             });
-        
-            
+           
             orderData = await Promise.all(orderData)
             const {state} = req.query;
-    
+            
 
             if (state) {
                 const states = state.split(','); // Split the input state string into an array
-                console.log("states>>>>",states)
                 // Define an array to store filtered data for each state combination
                 const filteredDataArray = states.map(state => {
                     const filteredData =orderData.filter(data => data.fulfillment_state === state);
-                    console.log("125>>>>>",filteredData)
                     return filteredData
                 });
-                console.log("filteredDataArray>>>>",JSON.stringify(filteredDataArray))
 
                 // Combine filtered data for each state combination
                 const combinedData = filteredDataArray.reduce((acc, curr) => acc.concat(curr), []);
-                console.log("combinedData>>>>>>",JSON.stringify(combinedData))
-            
+                const startIndex = (pageValue - 1) * limitValue;
+                const endIndex = startIndex + limitValue;
+                const paginatedData = combinedData.slice(startIndex, endIndex);
+
+
+
+
                 res.send({
                     success: true,
-                    data: combinedData,
+                    data: paginatedData,
                     count: combinedData.length,
                 });
             } else {
+                // Apply pagination to the settlement data
+            const startIndex = (pageValue - 1) * limitValue;
+            const endIndex = startIndex + limitValue;
+            const paginatedData = orderData.slice(startIndex, endIndex);
+
                 res.send({
                     success: true,
-                    data: orderData,
+                    data: paginatedData,
                     count: orderCount,
                 });
             }
