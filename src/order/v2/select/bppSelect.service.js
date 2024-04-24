@@ -94,7 +94,7 @@ class BppSelectService {
       console.log("select request", selectRequest);
 
       const hasInvalidAreaCode = fulfillments.some((fulfillment) => {
-        const hasEndKey=fulfillment?.end
+        let hasEndKey=fulfillment?.end
         const areaCode = fulfillment?.end?.location?.address?.area_code;
         const gps = fulfillment?.end?.location?.gps;
         if (hasEndKey !== undefined) {
@@ -119,6 +119,7 @@ class BppSelectService {
           message: "Validation error: Fulfillment end area code is required.",
         };
       }
+      console.log('hasInvalidAreaCode-=----------------');
       const response = await protocolSelect(selectRequest);
 
       return { context: context, message: response.message };

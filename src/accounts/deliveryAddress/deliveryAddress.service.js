@@ -9,7 +9,7 @@ class DeliveryAddressService {
    * @param {Object} request
    * @param {Object} user
    */
-  async deliveryAddress(request = {}, user = {}) {
+  async   deliveryAddress(request = {}, user = {}) {
     try {
       const deliveryAddressSchema = {
         userId: user?.decodedToken?.uid,
