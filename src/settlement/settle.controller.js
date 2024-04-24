@@ -170,64 +170,39 @@ export async function getSettlementsHandler(req, res) {
         }));
 
         const {state} = req.query;
-        if (state &&  state=== "Pending") {
-        const filteredData = settlementData.filter((data) => data.settlement_type === "Pending");
-        res.send({
-            success: true,
-            data: filteredData,
-            count: orderCount,
-            sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
-            sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
-            sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
-            orderAnalysis: orderAnalysis
-        });
-} else if(state &&  state=== "Debit"){
-    const filteredData = settlementData.filter((data) => data.settlement_type === "Debit");
-    res.send({
-        success: true,
-        data: filteredData,
-        count: orderCount,
-        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
-        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
-        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
-        orderAnalysis: orderAnalysis
-    });
-}
-else if(state &&  state=== "Credit"){
-    const filteredData = settlementData.filter((data) => data.settlement_type === "Credit");
-    res.send({
-        success: true,
-        data: filteredData,
-        count: orderCount,
-        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
-        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
-        orderAnalysis: orderAnalysis
-    });
-}
-else if(state &&  state=== "Settle"){
-    const filteredData = settlementData.filter((data) => data.settlement_type === "Settle");
-    res.send({
-        success: true,
-        data: filteredData,
-        count: orderCount,
-        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
-        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
-        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
-        orderAnalysis: orderAnalysis
-    });
-}
-else {
-    res.send({
-        success: true,
-        data: settlementData,
-        count: orderCount,
-        sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
-        sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
-        sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
-        orderAnalysis: orderAnalysis
-    });
-}
+        if (state) {
+            const states = state.split(','); // Split the input state string into an array
+        
+            // Define an array to store filtered data for each state combination
+            const filteredDataArray = states.map(state => {
+                return settlementData.filter(data => data.settlement_type === state);
+            });
+        
+            // Combine filtered data for each state combination
+            const combinedData = filteredDataArray.reduce((acc, curr) => acc.concat(curr), []);
+            const orderCount = combinedData.length;
 
+            res.send({
+                success: true,
+                data: combinedData,
+                count: orderCount,
+                sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+                sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+                sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
+                orderAnalysis: orderAnalysis
+            });
+        } else {
+            res.send({
+                success: true,
+                data: settlementData,
+                count: orderCount,
+                sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
+                sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
+                sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
+                orderAnalysis: orderAnalysis
+            });
+        }
+        
 
 
 
