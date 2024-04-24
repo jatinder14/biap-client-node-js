@@ -62,7 +62,7 @@ rootRouter.get('/v2/on_cancel_order', authentication(), cancelOrderController.on
 
 //#region order history
 rootRouter.get('/v2/orders', authentication(), orderHistoryController.getOrdersList, bhashiniTranslator);
-rootRouter.get('/v2/top_selling_order', topSellingController.topSellingProduct);
+rootRouter.get('/v2/top_selling_order/:userId', topSellingController.topSellingProduct);
 
 //#endregion
 
