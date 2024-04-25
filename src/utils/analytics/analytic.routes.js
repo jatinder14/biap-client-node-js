@@ -14,4 +14,6 @@ rootRouter.get('/order-analysis', dashboardController.orderSummary)
 
 rootRouter.get('/earning-analysis', dashboardController.earningSummary)
 
+rootRouter.get('/totalOrder-analysis', dashboardController.totalOrderSummary)
+
 export default rootRouter

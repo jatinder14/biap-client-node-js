@@ -289,14 +289,14 @@ class DashboardController {
       const currentYear = new Date().getFullYear();
       const filter = req.query.filter ? String(req.query.filter) : "weekly";
 
-      if(filter === "total"){
-        const totalCount = await OrderMongooseModel.count()
-        return res.status(200).json({
-          success: true,
-          message: "Data fetched successfully",
-          totalCount,
-        });
-      }
+      // if(filter === "total"){
+      //   const totalCount = await OrderMongooseModel.count()
+      //   return res.status(200).json({
+      //     success: true,
+      //     message: "Data fetched successfully",
+      //     totalCount,
+      //   });
+      // }
       
       const fetchData = await OrderMongooseModel.aggregate([
         // {
@@ -422,6 +422,162 @@ class DashboardController {
           throw new Error("Invalid Filter");
       }
 
+      return res.status(200).json({
+        success: true,
+        message: "Data fetched successfully",
+        data,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  async totalOrderSummary(req,res,next){
+    try {
+      const filter = req.query.filter ? String(req.query.filter) : "weekly";
+      const data = {};
+
+      switch (filter) {
+        case "overall": {
+          const orderCount = await OrderMongooseModel.count()
+          data["overall"] = orderCount;
+          break;
+        }
+        case "yearly": {
+          const currDate = new Date();
+          const prevYearStart = new Date(currDate.getFullYear() - 1, 0, 0);
+          const thisYearEnd = new Date(currDate.getFullYear() + 1, 0, 0);
+
+          const orderDetails = await OrderMongooseModel.find({
+            createdAt: { $gte: prevYearStart, $lt: thisYearEnd },
+          }).select({ createdAt: 1});
+
+          let prevCount = 0
+          let currCount = 0
+          orderDetails.forEach((item) => {
+            if (item.createdAt >= new Date(currDate.getFullYear(), 0, 0)) {
+              currCount +=1 
+            } else {
+              prevCount +=1
+            }
+          });
+          data["currentCount"] = currCount
+          data["prevCount"] = prevCount
+          data["change"] = percentageChange(
+            data.prevCount,
+            data.currentCount
+          );
+          break;
+        }
+        case "monthly": {
+          const currDate = new Date();
+          let lastMonth;
+          let lastYear;
+          if (currDate.getMonth() == 1) {
+            lastMonth = 11; //0-indexed
+            lastYear = currDate.getFullYear() - 1;
+          } else {
+            lastMonth = currDate.getMonth() - 1;
+            lastYear = currDate.getFullYear();
+          }
+
+          const orderDetails = await OrderMongooseModel.find({
+            createdAt: {
+              $gte: new Date(lastYear, lastMonth, 0),
+              $lt: new Date(
+                currDate.getFullYear(),
+                currDate.getMonth() + 1,
+                0,
+                0,
+                0,
+                0,
+                0
+              ),
+            },
+          }).select({ createdAt: 1});
+
+          let prevCount = 0
+          let currCount = 0
+
+          orderDetails.forEach((item) => {
+            if (
+              item.createdAt >=
+              new Date(currDate.getFullYear(), currDate.getMonth(), 1)
+            ) {
+              currCount +=1
+            } else {
+              prevCount +=1
+            }
+          });
+
+          data["currentCount"] = currCount
+          data["prevCount"] = prevCount
+          data["change"] = percentageChange(
+            data.prevCount,
+            data.currentCount
+          );
+          break;
+        }
+        case "weekly": {
+          const currDate = new Date();
+          const currDay = currDate.getDay();
+          const weekStart = new Date(
+            currDate.getFullYear(),
+            currDate.getMonth(),
+            currDate.getDate() - currDay + 1,
+            0,
+            0,
+            0,
+            0
+          );
+          const prevWeekStart = new Date(
+            currDate.getFullYear(),
+            currDate.getMonth(),
+            currDate.getDate() - currDay - 6,
+            0,
+            0,
+            0,
+            0
+          );
+          const weekEnd = new Date(
+            currDate.getFullYear(),
+            currDate.getMonth(),
+            currDate.getDate() - currDay + 8,
+            0,
+            0,
+            0,
+            0
+          );
+          const orderDetails = await OrderMongooseModel.find({
+            createdAt: {
+              $gte: prevWeekStart,
+              $lt: weekEnd,
+            },
+          }).select({ createdAt: 1});
+
+          let prevCount = 0
+          let currCount = 0
+          orderDetails.forEach((item) => {
+            if (item.createdAt >= weekStart) {
+              currCount += 1
+            } else {
+              prevCount += 1
+            }
+          });
+          data["currentCount"] = currCount;
+          data["prevCount"] = prevCount
+          data["change"] = percentageChange(
+            data.prevCount,
+            data.currentCount
+          );
+          break;
+        }
+        default:
+          throw new Error("Invalid Filter");
+      }
       return res.status(200).json({
         success: true,
         message: "Data fetched successfully",
