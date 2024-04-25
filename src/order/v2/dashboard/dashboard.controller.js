@@ -458,7 +458,7 @@ class DashboardController {
               data.all += parseFloat(item.quote.price.value);
             }
 
-            if (item.state === "Inprogress") {
+            if (item.state === "Inprogress" || item.state === "Accepted") {
               data.pending += parseFloat(item.quote.price.value);
             }
 
