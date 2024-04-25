@@ -288,6 +288,16 @@ class DashboardController {
     try {
       const currentYear = new Date().getFullYear();
       const filter = req.query.filter ? String(req.query.filter) : "weekly";
+
+      if(filter === "total"){
+        const totalCount = await OrderMongooseModel.count()
+        return res.status(200).json({
+          success: true,
+          message: "Data fetched successfully",
+          totalCount,
+        });
+      }
+      
       const fetchData = await OrderMongooseModel.aggregate([
         // {
         //   $match: {
