@@ -69,7 +69,7 @@ export const initiateRsp = async () => {
           action: baseUrl,
           core_version: rsp_constants.CORE_VERSION,
           bap_id: process.env.BAP_ID,
-          bap_uri: process.env.CLIENT_WEBHOOK_ENDPOINT + "v2",
+          bap_uri: process.env.CLIENT_WEBHOOK_ENDPOINT + "/v2",
 
           bpp_id: process.env.RSP_ID,
           bpp_uri: process.env.RSP_URI,

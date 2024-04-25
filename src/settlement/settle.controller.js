@@ -15,17 +15,15 @@ export async function getSettlementsHandler(req, res) {
          // Parse limit and page to integers
          const limitValue = parseInt(limit);
          const pageValue = parseInt(page);
- 
+        
          // Calculate skip value based on page number and limit
          const skip = (pageValue - 1) * limitValue;
- 
+         const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
+
          // Fetch completed orders with pagination
          const completedOrders = await OrderModel.find({ is_order_confirmed: true }).sort({createdAt:-1})
-             .limit(limitValue)
-             .skip(skip);
 
-        const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
-
+             
         const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({createdAt:-1}).lean()
 
         let sumCompletedOrderAmount = 0;
@@ -168,7 +166,7 @@ export async function getSettlementsHandler(req, res) {
 
             return settlementItem;
         }));
-
+       
         const {state} = req.query;
         if (state) {
             const states = state.split(','); // Split the input state string into an array
@@ -177,25 +175,32 @@ export async function getSettlementsHandler(req, res) {
             const filteredDataArray = states.map(state => {
                 return settlementData.filter(data => data.settlement_type === state);
             });
-        
-            // Combine filtered data for each state combination
-            const combinedData = filteredDataArray.reduce((acc, curr) => acc.concat(curr), []);
-            const orderCount = combinedData.length;
+            const combinedFilteredData = filteredDataArray.reduce((acc, curr) => acc.concat(curr), []);
+            const startIndex = (pageValue - 1) * limitValue;
+            const endIndex = startIndex + limitValue;
+            const paginatedData = combinedFilteredData.slice(startIndex, endIndex);
+
 
             res.send({
                 success: true,
-                data: combinedData,
+                data: paginatedData,
                 count: orderCount,
+                filterCount:combinedFilteredData.length,
                 sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
                 sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
                 sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
                 orderAnalysis: orderAnalysis
             });
         } else {
+            const startIndex = (pageValue - 1) * limitValue;
+            const endIndex = startIndex + limitValue;
+            const paginatedData = settlementData.slice(startIndex, endIndex);
+
             res.send({
                 success: true,
-                data: settlementData,
+                data: paginatedData,
                 count: orderCount,
+                filterCount:orderCount,
                 sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
                 sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
                 sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
@@ -203,13 +208,6 @@ export async function getSettlementsHandler(req, res) {
             });
         }
         
-
-
-
-
-
-
-
         
     } catch (error) {
         console.error("Error fetching settlements:", error);
