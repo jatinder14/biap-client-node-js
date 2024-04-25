@@ -185,7 +185,7 @@ export async function getSettlementsHandler(req, res) {
                 success: true,
                 data: paginatedData,
                 count: orderCount,
-                filterCount:paginatedData.length,
+                filterCount:combinedFilteredData.length,
                 sumCompletedOrderAmount: sumCompletedOrderAmount.toFixed(2),
                 sumPendingOrderAmount: sumPendingOrderAmount.toFixed(2),
                 sumTodayOrderAmount: sumTodayOrderAmount.toFixed(2),
