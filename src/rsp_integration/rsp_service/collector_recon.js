@@ -11,7 +11,8 @@ import {PAYERDETAIL} from '../../utils/constants.js'
 import { validate_schema_collector_recon_NTS10_for_json } from "../../shared/schemaValidator.js";
 // Import Underscore.js in a JavaScript module environment
 import _ from "underscore";
-
+import Notification from "../../order/v2/db/notification.js"
+import {sendEmail} from "../../shared/mailer.js"
 // import { logger } from "../../shared/logger";
 // const uuid = uuidv4();
 
@@ -58,6 +59,28 @@ export const initiateRsp = async () => {
     let orderIds = []
     const groupedData = groupedByBapId(orderDetails);
     const arrayOfArrays = Object.values(groupedData);
+    const onConfirmWholeData = await OnConfirmData.find({});
+// Map orderDetailsData
+const orderDetailsData = orderDetails.map(data => ({
+  BPPID: data.bppId,
+  ORDERID: data.id
+}));
+
+// Filter matchedOnConfirmData based on conditions
+const matchedOnConfirmData = onConfirmWholeData.filter(onConfirm =>
+  orderDetailsData.some(orderData =>
+      orderData.BPPID === onConfirm.context.bpp_id && orderData.ORDERID === onConfirm.message.order.id
+  )
+);
+
+// Map matchedEmails
+let matchedEmails = matchedOnConfirmData.map(onConfirm => ({
+  email: onConfirm.message.order.fulfillments[0].start.contact.email,
+}));
+let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
+  orderId: onConfirm.message.order.id
+}));
+
     await Promise.all(
       arrayOfArrays.map(async (el) => {
         const request_body = {};
@@ -245,6 +268,22 @@ export const initiateRsp = async () => {
         console.log('`${rsp_uri}/${baseUrl}`', `${rsp_uri}/${baseUrl}`)
         console.log('typeof request_body', typeof request_body)
         try {
+         
+          console.log('notifications has been created')
+        //   Notification.create({
+        //   event_type: 'collector-recon',
+        //   details: `settlement is send to the RSP`,
+        //   // name:userName
+        //   }).then(notification => {
+        //   console.log('Notification created:', notification);
+        //  }).catch(error => {
+        //  console.error('Error creating notification:', error);
+        // });
+        // matchedEmails="jritu961@gmail.com"
+          await sendEmail({userEmails:matchedEmails,orderIds:matchedOrderIds,HTMLtemplate: '/template/collector.ejs',
+          userName: '',
+          subject: 'settlement is send to the RSP',
+      });
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
         } catch (error) {
