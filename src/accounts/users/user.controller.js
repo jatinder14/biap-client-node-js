@@ -67,24 +67,15 @@ class UserController{
   }
 
   async userProfile(req,res){
-    const { body: request, user} = req;
-    console.log('user :>> ', user);
+    try{ const { body: request, user} = req;
     let phone =user.decodedToken.phone
-    console.log('phone :>> ', phone);
     let email=user?.decodedToken?.email
-    console.log('email :>> ', email);
-    // const phone =user?.decodedToken?.phone
-
-    // if(!phone){
-    //   const existingUser = await User.findOne({ $or: [{ phone }, { email }] });
-    // }
     const existingUser = await User.findOne({ $or: [{ phone:phone  }, { email:email }] });
-    console.log('existingUser :>>---------------------', existingUser);
     if (existingUser) {
       // User already exists, update their profile
-      existingUser.userName = user?.decodedToken?.name;
-      existingUser.phone = user?.decodedToken?.phone;
-      existingUser.email = user?.decodedToken?.email;
+      existingUser.userName = user?.decodedToken?.name|| request.userName;
+      existingUser.phone = user?.decodedToken?.phone||request.phone;
+      existingUser.email = user?.decodedToken?.email||request.email;
       existingUser.userImage = user?.decodedToken?.picture;
       existingUser.delivery_address=user?.delivery_address
       await existingUser.save();
@@ -100,24 +91,25 @@ class UserController{
       });
       await newUser.save();
       res.status(201).json({ message: 'New user profile created', data: newUser });
-  }
-
-
-    // res.status(200).json({request:request,user:user,existingUser:existingUser})
-
-
-    // res.status(200).json({request:request,user:user})
+  }}
+    catch(error){
+      res.status(500).json({
+        error:true,
+        message:error.message
+      })
+    }
+   
   }
 
 
   async getUserProfile(req,res){
-    const { id } = params;
+    const {id:userId} = req.params;
     try {
       const userDetails = await User.find({
-        _id: id,
+        _id: userId,
       });
 
-      return userDetails;
+      res.status(200).json(userDetails);
     } catch (err) {
       throw err;
     }

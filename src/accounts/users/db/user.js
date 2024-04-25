@@ -31,10 +31,8 @@ const  UserSchema = new mongoose.Schema(
         phone_otp : {type : String},
         email : {type : String},
         phone_otp_expiry_date : {type : String},
-        email_otp_expiry_date : {type : String},
-        delivery_address:{ type: AddressSchema, default: null }
-
-    },
+        email_otp_expiry_date : {type : String}
+},
     { _id: true, timestamps: true }
 );
 // UserSchema.index({ phone_otp: 1 }, { expireAfterSeconds: 10 });
