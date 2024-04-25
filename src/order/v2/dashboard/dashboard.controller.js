@@ -498,7 +498,7 @@ class DashboardController {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -516,7 +516,7 @@ class DashboardController {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
@@ -589,7 +589,7 @@ class DashboardController {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -607,7 +607,7 @@ class DashboardController {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
@@ -688,7 +688,7 @@ class DashboardController {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -706,7 +706,7 @@ class DashboardController {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress") {
+              if (item.state === "Inprogress"|| item.state === "Accepted") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
