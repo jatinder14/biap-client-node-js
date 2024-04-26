@@ -68,92 +68,123 @@ class UserController{
     }
   }
 
-  async userProfile(req,res){
-    try{ const { body: request, user} = req;
-    let phone =user.decodedToken.phone
-    let email=user?.decodedToken?.email
-    const existingUser = await User.findOne({ $or: [{ phone:phone  }, { email:email }] });
-    if (existingUser) {
-      // User already exists, update their profile
-     
-      existingUser.userName = user?.decodedToken?.name|| request.userName;
-      existingUser.phone = user?.decodedToken?.phone||request.phone;
-      existingUser.email = user?.decodedToken?.email||request.email;
-      existingUser.userImage = user?.decodedToken?.picture;
-      existingUser.address=user?.delivery_address||request.address
-      const existingDefaultAddress= await DeliveryAddress.findOne({
-        userId:existingUser._id
-      })
-    await existingUser.save();
-
-      if(!existingDefaultAddress){
-
-        let defalutAdress= new DeliveryAddress({
-          id:uuidv4(),
-          userId:existingUser._id,
-          address:request.address
-        })
-        await defalutAdress.save();
-      }
-     
-      res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
-  } else {
-      // User does not exist, create a new profile
-      const newUser = new User({
-          userName:user?.decodedToken?.name||null,
-          phone:user?.decodedToken?.phone||null,
-          email:user?.decodedToken?.email||null,
-          userImage:user?.decodedToken?.picture||null,
-          delivery_address:user?.decodedToken?.address||null
-      });
-      
-      await newUser.save();
-      res.status(201).json({ message: 'New user profile created', data: newUser });
-  }}
-    catch(error){
-      res.status(500).json({
-        error:true,
-        message:error.message
-      })
-    }
-   
-  }
-  
-  async getUserProfile(req, res) {
-    const { id: userId } = req.params;
+  async userProfile(req, res) {
     try {
-        const userDetails = await User.findOne({
-            _id: userId,
-        });
-        console.log('userDetails :>> ', userDetails);
+      const { body: request, user } = req;
+      let phone = user?.decodedToken?.phone
+      let email = user?.decodedToken?.email
+      let user_id = user?.decodedToken?.user_id || uuidv4()
+      const existingUser = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
+      if (existingUser) {
+        // User already exists, update their profile
 
-        if (userDetails) {
-            // User found, return user details
-            return res.status(200).json({
-                success: true,
-                message: {
-                    userImage: userDetails.userImage,
-                    userName: userDetails.userName,
-                    email: userDetails.email,
-                    phone: userDetails.phone,
-                    address:userDetails.address
-                },
-            });
-        } else {
-            // User not found, return custom error message
-            return res.status(404).json({
-                success: false,
-                message: 'User not found',
-            });
+        existingUser.userName = user?.decodedToken?.name || request.userName;
+        existingUser.phone = user?.decodedToken?.phone || request.phone;
+        existingUser.email = user?.decodedToken?.email || request.email;
+        existingUser.userImage = user?.decodedToken?.picture;
+        existingUser.address = user?.delivery_address || request.address
+        existingUser.user_id = user_id
+        const existingDefaultAddress = await DeliveryAddress.findOne({
+          userId: existingUser._id
+        })
+        await existingUser.save();
+
+        if (!existingDefaultAddress) {
+
+          let defalutAdress = new DeliveryAddress({
+            id: uuidv4(),
+            userId: existingUser._id,
+            address: request.address
+          })
+          await defalutAdress.save();
         }
-    } catch (err) {
-        // Handle other errors (e.g., database connection error)
-        return res.status(500).json({
-            success: false,
-            message: 'Internal server error',
+
+        res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
+      } else {
+        // User does not exist, create a new profile
+        const newUser = new User({
+          userName: user?.decodedToken?.name || null,
+          phone: user?.decodedToken?.phone || null,
+          email: user?.decodedToken?.email || null,
+          userImage: user?.decodedToken?.picture || null,
+          delivery_address: user?.decodedToken?.address || null,
+          user_id
         });
+
+        await newUser.save();
+        res.status(201).json({ message: 'New user profile created', data: newUser });
+      }
     }
-}
+    catch (error) {
+      res.status(500).json({
+        error: true,
+        message: error.message
+      })
+    }
+
+  }
+
+
+  // async getUserProfile(req,res){
+  //   const {id:userId} = req.params;
+  //   try {
+  //     const userDetails = await User.findOne({
+  //       _id: userId,
+  //     });
+
+  //     if (!userDetails) {
+  //       // User not found, return custom error message
+  //       return res.status(404).json({
+  //           success: false,
+  //           message: 'User not found',
+  //       });
+  //   }
+
+  //     console.log('userDetails-------------------- :>> ', userDetails);
+  //     res.status(200).json({
+  //       success:true,
+  //       message:{
+  //       userImage:userDetails.userImage,
+  //       userName:userDetails.userName,
+  //       email:userDetails.email,
+  //       phone:userDetails.phone
+  //       }
+  //     });
+  //   } catch (err) {
+  //     res.status(500).json({success:false,
+  //     message:err.message
+  //     })
+  //   }
+  // }
+
+  async getUserProfile(req, res) {
+    const { user } = req;
+    console.log("decodedToken =================", user?.decodedToken);
+    let phone = user?.decodedToken?.phone
+    let email = user?.decodedToken?.email
+    let user_id = user?.decodedToken?.user_id
+    try {
+      const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }, { user_id: user_id }] });
+      console.log('userDetails :>> ', userDetails);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          userImage: userDetails?.userImage || "",
+          userName: userDetails?.userName || "",
+          email: userDetails?.email || "",
+          phone: userDetails?.phone || "",
+          address: userDetails?.address || "",
+          user_id: userDetails?.user_id || ""
+        },
+      });
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
 
 }
 
