@@ -11,7 +11,7 @@ import SelectOrderController from './select/selectOrder.controller.js';
 import UpdateOrderController from './update/updateOrder.controller.js';
 import ComplaintOrderController from './complaint/complaintOrder.controller.js';
 import UploadController from '../upload/upload.controller.js';
-
+import OrderFeedbackController from './feedback/feedback.controller.js';
 const rootRouter = new Router();
 
 const cancelOrderController = new CancelOrderController();
@@ -24,6 +24,7 @@ const selectOrderController = new SelectOrderController();
 const updateOrderController = new UpdateOrderController();
 const complaintOrderController = new ComplaintOrderController();
 const uploadController = new UploadController();
+const orderFeedbackController = new OrderFeedbackController();
 
 //#region confirm order
 
@@ -147,6 +148,7 @@ rootRouter.get('/v2/on_update', authentication(), updateOrderController.onUpdate
 rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), uploadController.upload);
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
+rootRouter.post('/v2/feedback/:orderId',  orderFeedbackController.feedback);
 
 //#endregion
 
