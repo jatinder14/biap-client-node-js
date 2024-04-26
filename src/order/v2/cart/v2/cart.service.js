@@ -18,7 +18,16 @@ class CartService {
       //     // Delete cart items for guest users
       //     await CartItem.deleteMany({ cart: cart._id });
       // }
-
+      let existingItem = await CartItem.findOneAndUpdate(
+        {"item.id": data.id, "cart": cart._id},
+        { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
+        { new: true } // Return the updated document
+    );
+    
+    if (existingItem) {
+        return { status: "success", data: existingItem };
+    } 
+    
         let cartItem = new CartItem();
         cartItem.cart = cart?._id;
         cartItem.item = data;
@@ -33,10 +42,23 @@ class CartService {
         } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
           cart = await new Cart({ userId: data.userId, cart_key: data.cart_key,}).save();
         }
-        let cartItem = new CartItem();
-        cartItem.cart = cart._id;
-        cartItem.item = data;
-        return await cartItem.save();
+        let existingItem = await CartItem.findOneAndUpdate(
+          {"item.id": data.id, "cart": cart._id},
+          { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
+          { new: true } // Return the updated document
+      );
+      
+      if (existingItem) {
+          return { status: "success", data: existingItem };
+      } 
+      
+         else{
+          let cartItem = new CartItem();
+          cartItem.cart = cart._id;
+          cartItem.item = data;
+          return await cartItem.save();
+         }
+        
       }
     } catch (err) {
       throw err;
