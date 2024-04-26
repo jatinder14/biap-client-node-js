@@ -331,28 +331,29 @@ class UpdateOrderService {
 
                     if (!(dbResponse || dbResponse.length))
                         throw new NoRecordFoundError();
-                    else {
-                    }
                 }
-                const dbResponse = await OrderMongooseModel.find({
-                    transactionId: protocolUpdateResponse.context.transaction_id,
-                    id: protocolUpdateResponse.message.order.id
-                });
-                dbResponse.fulfillments=protocolUpdateResponse.message.order.fulfillments
+                if (protocolUpdateResponse?.context?.transaction_id && protocolUpdateResponse?.message?.order?.fulfillments?.length) {
+                    const dbResponse = await OrderMongooseModel.findOne({
+                        transactionId: protocolUpdateResponse.context.transaction_id,
+                        id: protocolUpdateResponse.message.order.id
+                    });
+                    dbResponse.fulfillments = protocolUpdateResponse.message.order.fulfillments
 
-                const  latestFullfilementIndex =protocolUpdateResponse.message.order.fulfillments.length-1
+                    const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
-                const latestFullfilement =protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
+                    const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
 
-                const fullfillmentHistory=new FulfillmentHistory({
-                    id:dbResponse.id,
-                    type:latestFullfilement.type,
-                    state:latestFullfilement.state.descriptor.code,
-                    orderId:protocolUpdateResponse.message.order.id
-})
-                
-                dbResponse.save()
-                fullfillmentHistory.save()
+                    const fullfillmentHistory = new FulfillmentHistory({
+                        id: dbResponse.id,
+                        type: latestFullfilement.type,
+                        state: latestFullfilement.state.descriptor.code,
+                        orderId: protocolUpdateResponse.message.order.id
+                    })
+
+                    dbResponse.save()
+                    fullfillmentHistory.save()
+                }
+
                 return protocolUpdateResponse;
             }
         }
