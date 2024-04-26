@@ -82,15 +82,15 @@ class ConfirmOrderController {
             const messageIdArray = messageIds.split(",");
 
             confirmOrderService.onConfirmMultipleOrder(messageIdArray).then(async orders => {
-                console.log("orders>>>>>>>>>>",JSON.stringify(orders))
-                const userEmail=req.user.decodedToken.email
+                // console.log("orders>>>>>>>>>>",JSON.stringify(orders))
+                const userEmails=req.user.decodedToken.email
                 const userName=req.user.decodedToken.name
-                const orderId=orders[0].message.order.id
+                const orderIds=orders[0].message.order.id
                 const itemName=orders[0].message.order.quote.breakup[0].title
                 const itemQuantity=orders[0].message.order.items[0].quantity.count
                 const itemPrice=orders[0].message.order.quote.price.value
                 const estimatedDelivery=orders[0].message.order.fulfillments[0]['@ondc/org/TAT']
-
+                
 // Parse the duration using moment.js
 const duration = moment.duration(estimatedDelivery);
 
@@ -109,14 +109,16 @@ else{
                 console.log('notifications has been created',itemName,itemQuantity,itemPrice,estimatedDelivery)
                 Notification.create({
                event_type: 'order_creation',
-                details: `Order has been Accepted with id: ${orderId}`,
+                details: `Order has been Accepted with id: ${orderIds}`,
                 name:userName
               }).then(notification => {
           console.log('Notification created:', notification);
         }).catch(error => {
           console.error('Error creating notification:', error);
         });
-                await sendEmail({userEmail,orderId,HTMLtemplate: '/template/acceptedOrder.ejs',
+   
+
+                await sendEmail({userEmails,orderIds,HTMLtemplate: '/template/acceptedOrder.ejs',
                 userName: userName || '',
                 subject: 'Order has been placed',
                 itemName:itemName,
