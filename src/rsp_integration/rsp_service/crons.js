@@ -5,7 +5,7 @@ const isRedisEnabled = process.env.REDIS_SERVICE_ENABLED === "true";
 
 export const schedulerEachDay = () => {
   new CronJob(
-    "*/2 * * * * *", // Modified cron expression to run every 10 seconds
+    "*/2 * * * *", // Modified cron expression to run every 10 seconds
     async () => {
       console.log(`Inside schedulerEachDay`);
       await initiateRsp();
