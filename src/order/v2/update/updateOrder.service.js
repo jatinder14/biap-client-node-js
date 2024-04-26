@@ -339,7 +339,20 @@ class UpdateOrderService {
                     id: protocolUpdateResponse.message.order.id
                 });
                 dbResponse.fulfillments=protocolUpdateResponse.message.order.fulfillments
+
+                const  latestFullfilementIndex =protocolUpdateResponse.message.order.fulfillments.length-1
+
+                const latestFullfilement =protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
+
+                const fullfillmentHistory=new FulfillmentHistory({
+                    id:dbResponse.id,
+                    type:latestFullfilement.type,
+                    state:latestFullfilement.state.descriptor.code,
+                    orderId:protocolUpdateResponse.message.order.id
+})
+                
                 dbResponse.save()
+                fullfillmentHistory.save()
                 return protocolUpdateResponse;
             }
         }
