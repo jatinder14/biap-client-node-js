@@ -96,8 +96,8 @@ class OrderStatusController {
                    });
            
                     await sendEmail({
-                        userEmail,
-                        orderId,
+                        userEmails:userEmail,
+                        orderIds:orderId,
                         HTMLtemplate: '/template/outForDelivery.ejs',
                         userName: userName || '',
                         subject: 'Order is out for delivery'
@@ -116,8 +116,8 @@ class OrderStatusController {
                    });
            
                     await sendEmail({
-                        userEmail,
-                        orderId,
+                        userEmails:userEmail,
+                        orderIds:orderId,
                         HTMLtemplate: '/template/orderPickedup.ejs',
                         userName: userName || '',
                         subject: 'Order has been picked up'
@@ -138,8 +138,8 @@ class OrderStatusController {
                    });
            
                     await sendEmail({
-                        userEmail,
-                        orderId,
+                        userEmails:userEmail,
+                        orderIds:orderId,
                         HTMLtemplate: '/template/agentAssigned.ejs',
                         userName: userName || '',
                         subject: 'Agent has been assigned'
@@ -160,21 +160,21 @@ class OrderStatusController {
                  console.error('Error creating notification:', error);
                    });
                     await sendEmail({
-                        userEmail,
-                        orderId,
+                        userEmails:userEmail,
+                        orderIds:orderId,
                         HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
                         userName: userName || "",
                         subject: "Your order has been successfully delivered",
                     });
                     setTimeout(async () => {
                         await sendEmail({
-                            userEmail,
-                            orderId,
+                            userEmails:userEmail,
+                        orderIds:orderId,
                             HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                             userName: userName || "",
                             subject: "We'd love to hear your feedback on your recent order",
                         });
-                    }, 1800000); // 15 seconds delay before sending the feedback email
+                    }, 180000); // 15 seconds delay before sending the feedback email
 
                     console.log("orders3",orders)
 

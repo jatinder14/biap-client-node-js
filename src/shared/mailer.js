@@ -18,6 +18,8 @@
     // Function to send notification
     export async function sendEmail({ userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
         try {
+            console.log("userEmails",userEmails)
+            console.log("orderIds",orderIds)
 
             // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
             const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
