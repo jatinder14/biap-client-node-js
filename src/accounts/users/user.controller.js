@@ -1,8 +1,10 @@
 import { createJwtToken, verifyJwtToken } from '../../utils/token.utils.js';
+import { v4 as uuidv4 } from "uuid";
 
 import User from './db/user.js';
 import sendOTPUtil from  '../../utils/otp.js';
 import validateToken from '../../lib/firebase/validateToken.js';
+import DeliveryAddress from '../deliveryAddress/db/deliveryAddress.js';
 const JWT_SECRET = 'secret_token';
 // const {randomInt} = require('crypto');
 
@@ -73,12 +75,27 @@ class UserController{
     const existingUser = await User.findOne({ $or: [{ phone:phone  }, { email:email }] });
     if (existingUser) {
       // User already exists, update their profile
+     
       existingUser.userName = user?.decodedToken?.name|| request.userName;
       existingUser.phone = user?.decodedToken?.phone||request.phone;
       existingUser.email = user?.decodedToken?.email||request.email;
       existingUser.userImage = user?.decodedToken?.picture;
-      existingUser.delivery_address=user?.delivery_address
-      await existingUser.save();
+      existingUser.address=user?.delivery_address||request.address
+      const existingDefaultAddress= await DeliveryAddress.findOne({
+        userId:existingUser._id
+      })
+    await existingUser.save();
+
+      if(!existingDefaultAddress){
+
+        let defalutAdress= new DeliveryAddress({
+          id:uuidv4(),
+          userId:existingUser._id,
+          address:request.address
+        })
+        await defalutAdress.save();
+      }
+     
       res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
   } else {
       // User does not exist, create a new profile
@@ -87,8 +104,9 @@ class UserController{
           phone:user?.decodedToken?.phone||null,
           email:user?.decodedToken?.email||null,
           userImage:user?.decodedToken?.picture||null,
-          delivery_address:user?.decodedToken?.picture||null
+          delivery_address:user?.decodedToken?.address||null
       });
+      
       await newUser.save();
       res.status(201).json({ message: 'New user profile created', data: newUser });
   }}
@@ -140,6 +158,7 @@ class UserController{
         const userDetails = await User.findOne({
             _id: userId,
         });
+        console.log('userDetails :>> ', userDetails);
 
         if (userDetails) {
             // User found, return user details
@@ -150,6 +169,7 @@ class UserController{
                     userName: userDetails.userName,
                     email: userDetails.email,
                     phone: userDetails.phone,
+                    address:userDetails.address
                 },
             });
         } else {
