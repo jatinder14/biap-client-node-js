@@ -118,39 +118,6 @@ class UserController{
     }
    
   }
-
-
-  // async getUserProfile(req,res){
-  //   const {id:userId} = req.params;
-  //   try {
-  //     const userDetails = await User.findOne({
-  //       _id: userId,
-  //     });
-
-  //     if (!userDetails) {
-  //       // User not found, return custom error message
-  //       return res.status(404).json({
-  //           success: false,
-  //           message: 'User not found',
-  //       });
-  //   }
-
-  //     console.log('userDetails-------------------- :>> ', userDetails);
-  //     res.status(200).json({
-  //       success:true,
-  //       message:{
-  //       userImage:userDetails.userImage,
-  //       userName:userDetails.userName,
-  //       email:userDetails.email,
-  //       phone:userDetails.phone
-  //       }
-  //     });
-  //   } catch (err) {
-  //     res.status(500).json({success:false,
-  //     message:err.message
-  //     })
-  //   }
-  // }
   
   async getUserProfile(req, res) {
     const { id: userId } = req.params;

@@ -304,7 +304,7 @@ class UpdateOrderService {
     async onUpdate(messageId) {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-
+            
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -334,6 +334,12 @@ class UpdateOrderService {
                     else {
                     }
                 }
+                const dbResponse = await OrderMongooseModel.find({
+                    transactionId: protocolUpdateResponse.context.transaction_id,
+                    id: protocolUpdateResponse.message.order.id
+                });
+                dbResponse.fulfillments=protocolUpdateResponse.message.order.fulfillments
+                dbResponse.save()
                 return protocolUpdateResponse;
             }
         }

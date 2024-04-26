@@ -102,20 +102,25 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
 };
 
 const getOrderById = async (orderId) => {
-    let order = await OrderMongooseModel.find({
-        id: orderId
-    }).lean();
-
-    if (!(order || order.length))
-        throw new NoRecordFoundError();
-    else{
-        // order = order.toJSON();
-        let orderHistory =await OrderHistory.find({orderId:orderId})
-        let fulfillmentHistory =await FulfillmentHistory.find({orderId:orderId})
-        order[0].orderHistory = orderHistory
-        order[0].fulfillmentHistory = fulfillmentHistory
-        console.log({orderHistory,fulfillmentHistory})
-        return order;
+    try{
+        let order = await OrderMongooseModel.find({
+            id: orderId
+        }).lean();
+    
+        if (!(order || order.length))
+            throw new NoRecordFoundError();
+        else{
+            // order = order.toJSON();
+            let orderHistory =await OrderHistory.find({orderId:orderId})
+            let fulfillmentHistory =await FulfillmentHistory.find({orderId:orderId})
+            order[0].orderHistory = orderHistory
+            order[0].fulfillmentHistory = fulfillmentHistory
+            console.log({orderHistory,fulfillmentHistory})
+            return order;
+        }
+    }
+    catch(error){
+return error
     }
 
 };
