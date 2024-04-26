@@ -36,7 +36,7 @@ rootRouter.post('/userProfile', authentication(), userController.userProfile);
 
 rootRouter.get('/getUserProfile',authentication(), userController.getUserProfile);
 
-
+  
 //I have to work on this route once cart issue will merge i will work on refresh token
 // rootRouter.post('/refreshToken', userController.genRefreshToken);
 
