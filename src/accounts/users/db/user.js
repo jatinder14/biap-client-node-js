@@ -24,6 +24,7 @@ const AddressSchema = new mongoose.Schema(
 const  UserSchema = new mongoose.Schema(
     {
         userId: { type: String },
+        user_id: { type: String },
         userName:{ type: String, default: null },
         userImage:{ type: String, default: null },
         phone: { type: String},

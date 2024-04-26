@@ -280,10 +280,10 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         //  console.error('Error creating notification:', error);
         // });
         // matchedEmails="jritu961@gmail.com"
-          await sendEmail({userEmails:matchedEmails,orderIds:matchedOrderIds,HTMLtemplate: '/template/collector.ejs',
-          userName: '',
-          subject: 'settlement is send to the RSP',
-      });
+          // await sendEmail({userEmails:matchedEmails,orderIds:matchedOrderIds,HTMLtemplate: '/template/collector.ejs',
+          //   userName: '',
+          //   subject: 'settlement is send to the RSP',
+          // });
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
         } catch (error) {

@@ -28,11 +28,13 @@ import { v4 as uuidv4 } from 'uuid';
     //TODO: Use Axios to send http request
     try {
         const myKey = data.path + '/' + uuidv4() + data.fileType.replace(/^\.?/, '.');
+        console.log("myKey------>",myKey)
         const params = {
             Bucket: myBucket,
             Key: myKey,
             Expires: signedUrlExpireSeconds
         };
+        console.log("params------>",params)
         return await new Promise(
             (resolve, reject) => s3.getSignedUrl('putObject', params, function (err, url) {
                 if (err) {
