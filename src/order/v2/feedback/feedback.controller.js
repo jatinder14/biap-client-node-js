@@ -6,15 +6,16 @@ const orderFeedbackSevice =new OrderFeedbackSevice()
 class OrderFeedbackController {
   async feedback(req,res,next){
     try{
-        const OrderId=req.params.OrderId
-        orderFeedbackSevice.orderFeedback(OrderId).then(response => {
+        const OrderId=req.params.orderId
+        const {message}=req.body
+        console.log("OrderId>>>>>>",OrderId) 
+        orderFeedbackSevice.orderFeedback(OrderId,message).then(response => {
             console.log("response>>",response)
             res.send(response)
         })
     }
     catch(e){
-        next(err);
-    }
+  res.status(500).json("Internal Server Error")    }
   }
 
 

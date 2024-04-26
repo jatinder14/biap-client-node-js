@@ -282,7 +282,7 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         // matchedEmails="jritu961@gmail.com"
           await sendEmail({userEmails:matchedEmails,orderIds:matchedOrderIds,HTMLtemplate: '/template/collector.ejs',
           userName: '',
-          subject: 'settlement is send to the RSP',
+          subject: 'Payment Reconcillation',
       });
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)

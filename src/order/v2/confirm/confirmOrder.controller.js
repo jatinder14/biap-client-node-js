@@ -120,7 +120,7 @@ else{
 
                 await sendEmail({userEmails,orderIds,HTMLtemplate: '/template/acceptedOrder.ejs',
                 userName: userName || '',
-                subject: 'Order has been placed',
+                subject: 'Order Accepted',
                 itemName:itemName,
                 itemQuantity:itemQuantity,
                 itemPrice:itemPrice,
