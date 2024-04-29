@@ -5,21 +5,31 @@ import WishlistItem from "../db/wishlistItem.js"
 class WishListService {
   async addItem(data) {
     try {
-      let wishlist;
-      if (data.wishlist_key && (!data.userId == "undefined" && data.userId == "guestUser")) {
+      let wishlist, wishlist_ids = [], device_wishlist, login_wishlist;
+      if (data.wishlist_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
         wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
-      } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
+        if (wishlist?._id) {
+          wishlist_ids.push(wishlist?._id)
+          device_wishlist = wishlist?._id
+        }
+
+      } 
+      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
         wishlist = await WishList.findOne({ userId: data.userId });
+        if (wishlist?._id) {
+          wishlist_ids.push(wishlist?._id)
+          login_wishlist = wishlist?._id
+        }
       }
 
-      if (wishlist) {
+      if (wishlist_ids.length) {
         // Wishlist exists for the user, add item to the wishlist
-        const existingItem = await WishlistItem.findOne({ "item.id": data.id, "wishlist": wishlist._id });
+        const existingItem = await WishlistItem.findOne({ "item.id": data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
         if (existingItem) {
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
           let wishlistItem = new WishlistItem();
-          wishlistItem.wishlist = wishlist._id;
+          wishlistItem.wishlist = device_wishlist ? device_wishlist : login_wishlist;
           wishlistItem.item = data;
           wishlistItem.added = true
           const saveData = await wishlistItem.save();
@@ -34,24 +44,18 @@ class WishListService {
             wishlist_key: data.wishlist_key,
           }).save();
 
-        }
-        else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
+        } else if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
           wishlist = await new WishList({ userId: data.userId, wishlist_key: data.wishlist_key, }).save();
 
         }
         
-        if (existingItem) {
-          return { status: "error", message: "Item already exists in wishlist" };
-        } else {
-          let wishlistItem = new WishlistItem();
-          wishlistItem.wishlist = wishlist._id;
-          wishlistItem.item = data;
-          wishlistItem.added = true
+        let wishlistItem = new WishlistItem();
+        wishlistItem.wishlist = wishlist._id;
+        wishlistItem.item = data;
+        wishlistItem.added = true
 
-          let wishlistdata = await wishlistItem.save();
-          return wishlistdata
-
-        }
+        let wishlistdata = await wishlistItem.save();
+        return wishlistdata
 
       }
     } catch (err) {
@@ -62,26 +66,22 @@ class WishListService {
   async getWishlistItem(data) {
     try {
       let wishlist, wishlist2;
+      console.log("data.wishlist_key -------", data.wishlist_key);
+      console.log("data.userId -------", data.userId);
       if (data.wishlist_key) {
         wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
       } 
       if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
+      let wishlistIds = []
+      if (wishlist?._id) wishlistIds.push(wishlist?._id)
+      if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
+      console.log("data.wishlist2 -------", wishlistIds);
+      let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
+      console.log("data.wishlistData -------", wishlistData);
 
-      let wishlist1Item = [];
-      let newWishlist = [];
-      if (wishlist) {
-        wishlist1Item = await WishlistItem.find({ wishlist: wishlist._id });
-        newWishlist = [...wishlist1Item];
-      }
-
-      if (wishlist2) {
-        let wishlist2Item = await WishlistItem.find({ wishlist: wishlist2._id });
-        newWishlist = [...newWishlist, ...wishlist2Item];
-      }
-
-      return newWishlist;
+      return wishlistData;
     } catch (err) {
       throw err;
     }

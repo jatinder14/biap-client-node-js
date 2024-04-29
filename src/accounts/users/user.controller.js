@@ -71,8 +71,8 @@ class UserController{
   async userProfile(req, res) {
     try {
       const { body: request, user } = req;
-      let phone = user?.decodedToken?.phone
-      let email = user?.decodedToken?.email
+      let phone = user?.decodedToken?.phone || ""
+      let email = user?.decodedToken?.email || ""
       let user_id = user?.decodedToken?.user_id || uuidv4()
       const existingUser = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       if (existingUser) {
@@ -160,9 +160,9 @@ class UserController{
   async getUserProfile(req, res) {
     const { user } = req;
     console.log("decodedToken =================", user?.decodedToken);
-    let phone = user?.decodedToken?.phone
-    let email = user?.decodedToken?.email
-    let user_id = user?.decodedToken?.user_id
+    let phone = user?.decodedToken?.phone || ""
+    let email = user?.decodedToken?.email || ""
+    let user_id = user?.decodedToken?.user_id || ""
     try {
       const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       console.log('userDetails :>> ', userDetails);
