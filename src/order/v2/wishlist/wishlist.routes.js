@@ -19,7 +19,7 @@ rootRouter.get(
 );
 
 rootRouter.delete(
-    '/v2/wishlist/:userId/:cart_key',
+    '/v2/all/wishlist/:userId/:cart_key',
     wishListController.clearWishlist,
 );
 

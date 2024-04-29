@@ -35,8 +35,8 @@ class InitOrderService {
      */
     async createOrder(response, userId = null, orderRequest) {
         if (response) {
-            const provider = orderRequest?.items?.[0]?.provider || {};
-
+            const provider = orderRequest?.items?.[0]?.provider || [];
+            
             const providerDetails = {
                 id: provider.local_id,
                 descriptor:provider.descriptor,

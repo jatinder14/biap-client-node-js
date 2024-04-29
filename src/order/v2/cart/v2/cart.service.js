@@ -6,27 +6,20 @@ class CartService {
     // return data
     try {
       let cart;
-      if (data.cart_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
+      if (data.cart_key && (!data.userId || data.userId != "null" || data.userId == "undefined" || data.userId == "guestUser")) {
         cart = await Cart.findOne({ cart_key: data.cart_key });
-      } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
+      } else if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
       if (cart) {
-      //Can be implement further
-      //    // Check if the cart belongs to a guest user and is now being accessed by a logged-in user
-      //   if (cart.userId !== data.userId && data.userId !== "guestUser") {
-      //     // Delete cart items for guest users
-      //     await CartItem.deleteMany({ cart: cart._id });
-      // }
-      let existingItem = await CartItem.findOneAndUpdate(
-        {"item.id": data.id, "cart": cart._id},
-        { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
-        { new: true } // Return the updated document
-    );
+        let existingItem = await CartItem.findOneAndUpdate(
+          {"item.id": data.id, "cart": cart._id},
+          { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
+          { new: true });
     
-    if (existingItem) {
-        return { status: "success", data: existingItem };
-    } 
+        if (existingItem) {
+            return { status: "success", data: existingItem };
+        } 
     
         let cartItem = new CartItem();
         cartItem.cart = cart?._id;
@@ -40,24 +33,23 @@ class CartService {
             cart_key: data.cart_key,
           }).save();
         } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
-          cart = await new Cart({ userId: data.userId, cart_key: data.cart_key,}).save();
+          cart = await new Cart({ 
+            userId: data.userId, cart_key: data.cart_key,
+          }).save();
         }
         let existingItem = await CartItem.findOneAndUpdate(
           {"item.id": data.id, "cart": cart._id},
           { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
-          { new: true } // Return the updated document
-      );
+          { new: true });
       
-      if (existingItem) {
-          return { status: "success", data: existingItem };
-      } 
-      
-         else{
+        if (existingItem) {
+            return { status: "success", data: existingItem };
+        } else {
           let cartItem = new CartItem();
           cartItem.cart = cart._id;
           cartItem.item = data;
           return await cartItem.save();
-         }
+        }
         
       }
     } catch (err) {
@@ -85,14 +77,19 @@ class CartService {
 
   async clearCart(data) {
     try {
-      let cart = {}
-      if (data.cart_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-        cart = await Cart.findOne({ cart_key: data.cart_key });
-      } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
+      let cart, cart2;
+ 
+      if (data.cart_key) {
+        cart2 = await Cart.findOne({ cart_key: data.cart_key });
+      } 
+      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
-      await CartItem.deleteMany({ cart: cart?._id });
-      return await Cart.deleteOne({ _id: cart?._id }); 
+      let cartIds = []
+      if (cart?._id) cartIds.push(cart?._id)
+      if (cart2?._id) cartIds.push(cart2?._id)
+      await CartItem.deleteMany({ cart: { $in: cartIds } });
+      return await Cart.deleteOne({ _id: { $in: cartIds } }); 
     } catch (err) {
       throw err;
     }
@@ -116,15 +113,15 @@ class CartService {
   async getCartItem(data) {
     try {
       let cart, cart2;
-      if (data.cart_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-        cart = await Cart.findOne({ cart_key: data.cart_key });
-      } else if (data.userId && (data.userId != "undefined" || data.userId != "guestUser")) {
-        cart = await Cart.findOne({ userId: data.userId });
-      }
+ 
       if (data.cart_key) {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
+      } 
+      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+        cart = await Cart.findOne({ userId: data.userId });
       }
-
+      console.log("data.cart_key, cart2 -------------", data.cart_key, cart2);
+      console.log("data.userId, cart -------------", data.userId, cart);
       let cart1Item = [];
       let newCart = [];
       if (cart) {
@@ -136,6 +133,7 @@ class CartService {
         let cart2Item = await CartItem.find({ cart: cart2._id });
         newCart = [...newCart, ...cart2Item];
       }
+      console.log("newCart -------------", newCart?.length);
 
       return newCart;
     } catch (err) {
