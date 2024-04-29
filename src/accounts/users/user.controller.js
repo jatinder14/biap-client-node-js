@@ -79,8 +79,8 @@ class UserController{
         // User already exists, update their profile
 
         if (request.userName) existingUser.userName = request.userName;
-        if (request.phone) existingUser.phone = request.phone;
-        if (request.email) existingUser.email = request.email;
+        if (request.phone && !existingUser.phone) existingUser.phone = request.phone;
+        if (request.email && !existingUser.email) existingUser.email = request.email;
         if (request.picture || user?.decodedToken?.picture) existingUser.userImage = request.picture || user?.decodedToken?.picture;
         if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
         if (request.userId) existingUser.userId = request.userId
@@ -107,8 +107,8 @@ class UserController{
         // User does not exist, create a new profile
         const newUser = new User({
           userName: request.userName || user?.decodedToken?.name,
-          phone: request.phone || user?.decodedToken?.phone,
-          email: request.email || user?.decodedToken?.email,
+          phone: user?.decodedToken?.phone || request.phone,
+          email: user?.decodedToken?.email || request.email,
           userImage: user?.decodedToken?.picture || null,
           delivery_address: request.address || user?.decodedToken?.address,
           userId: request.userId || "",
