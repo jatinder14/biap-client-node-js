@@ -6,7 +6,7 @@ class WishListService {
   async addItem(data) {
     try {
       let wishlist, wishlist_ids = [], device_wishlist, login_wishlist;
-      if (data.wishlist_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
+      if (data.wishlist_key && data.wishlist_key != "undefined") {
         wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
         if (wishlist?._id) {
           wishlist_ids.push(wishlist?._id)
@@ -14,7 +14,7 @@ class WishListService {
         }
 
       } 
-      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist = await WishList.findOne({ userId: data.userId });
         if (wishlist?._id) {
           wishlist_ids.push(wishlist?._id)
@@ -23,6 +23,7 @@ class WishListService {
       }
 
       if (wishlist_ids.length) {
+        console.log("wishlist_ids ----------------------", wishlist_ids);
         // Wishlist exists for the user, add item to the wishlist
         const existingItem = await WishlistItem.findOne({ "item.id": data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
         if (existingItem) {
@@ -40,17 +41,24 @@ class WishListService {
         // Create a new wishlist for the user
         let wishlist = {};
         if (data.wishlist_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-          wishlist = await new WishList({
+          wishlist = { ...wishlist,
             wishlist_key: data.wishlist_key,
-          }).save();
-
-        } else if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
-          wishlist = await new WishList({ userId: data.userId, wishlist_key: data.wishlist_key, }).save();
+          }
 
         }
+        if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
+          wishlist = { ...wishlist,
+            userId: data.userId,
+          }
+
+        }
+
+        const saved_wishlist = await new WishList({
+          wishlist_key: data.wishlist_key,
+        }).save();
         
         let wishlistItem = new WishlistItem();
-        wishlistItem.wishlist = wishlist._id;
+        wishlistItem.wishlist = saved_wishlist._id;
         wishlistItem.item = data;
         wishlistItem.added = true
 
@@ -71,7 +79,7 @@ class WishListService {
       if (data.wishlist_key) {
         wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
       } 
-      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
       let wishlistIds = []
@@ -79,7 +87,7 @@ class WishListService {
       if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
       console.log("data.wishlist2 -------", wishlistIds);
       let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
-      console.log("data.wishlistData -------", wishlistData);
+      console.log("data.wishlistData -------", wishlistData?.length);
 
       return wishlistData;
     } catch (err) {
@@ -102,7 +110,7 @@ class WishListService {
       if (data.wishlist_key) {
         wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
       } 
-      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
       let wishlistIds = []

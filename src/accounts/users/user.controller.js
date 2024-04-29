@@ -78,11 +78,14 @@ class UserController{
       if (existingUser) {
         // User already exists, update their profile
 
-        existingUser.userName = user?.decodedToken?.name || request.userName;
-        existingUser.phone = user?.decodedToken?.phone || request.phone;
-        existingUser.email = user?.decodedToken?.email || request.email;
-        existingUser.userImage = user?.decodedToken?.picture;
-        existingUser.address = user?.delivery_address || request.address
+        if (request.userName) existingUser.userName = request.userName;
+        if (request.phone) existingUser.phone = request.phone;
+        if (request.email) existingUser.email = request.email;
+        if (request.picture || user?.decodedToken?.picture) existingUser.userImage = request.picture || user?.decodedToken?.picture;
+        if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
+        if (request.userId) existingUser.userId = request.userId
+        if (request.cart_key) existingUser.cart_key = request.cart_key
+        if (request.wishlist_key) existingUser.wishlist_key = request.wishlist_key
         existingUser.user_id = user_id
         const existingDefaultAddress = await DeliveryAddress.findOne({
           userId: existingUser._id
@@ -103,11 +106,14 @@ class UserController{
       } else {
         // User does not exist, create a new profile
         const newUser = new User({
-          userName: user?.decodedToken?.name || null,
-          phone: user?.decodedToken?.phone || null,
-          email: user?.decodedToken?.email || null,
+          userName: request.userName || user?.decodedToken?.name,
+          phone: request.phone || user?.decodedToken?.phone,
+          email: request.email || user?.decodedToken?.email,
           userImage: user?.decodedToken?.picture || null,
-          delivery_address: user?.decodedToken?.address || null,
+          delivery_address: request.address || user?.decodedToken?.address,
+          userId: request.userId || "",
+          cart_key: request.cart_key || "",
+          wishlist_key: request.wishlist_key || "",
           user_id
         });
 

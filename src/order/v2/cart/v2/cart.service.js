@@ -1,16 +1,25 @@
 import Cart from "../../db/cart.js";
 import CartItem from "../../db/items.js";
+import User from '../../../../accounts/users/db/user.js';
 
 class CartService {
   async addItem(data) {
     // return data
     try {
       let cart;
-      if (data.cart_key && (!data.userId || data.userId != "null" || data.userId == "undefined" || data.userId == "guestUser")) {
+      if (data.cart_key && (!data.userId || data.userId == "null" || data.userId == "undefined" || data.userId == "guestUser")) {
         cart = await Cart.findOne({ cart_key: data.cart_key });
-      } else if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      } else if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
+
+      if (data.cart_key && data.userId && data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser") {
+        await User.findOneAndUpdate(
+          { userId: data.userId },
+          { $set: { cart_key: data.cart_key } },
+          { new: true, upsert: true });
+      }
+
       if (cart) {
         let existingItem = await CartItem.findOneAndUpdate(
           {"item.id": data.id, "cart": cart._id},
@@ -31,7 +40,7 @@ class CartService {
         if (data.cart_key && data.cart_key != "undefined") {
           cart = { ...cart, cart_key: data.cart_key }
         }
-        if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+        if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
           cart = { ...cart, userId: data.userId }
         }
         let saved_cart = await new Cart({ ...cart }).save();
@@ -66,17 +75,23 @@ class CartService {
 
   async clearCart(data) {
     try {
-      let cart, cart2;
+      let cart, cart2, cart3;
  
       if (data.cart_key) {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
       } 
-      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
+        const userDetails = await User.findOne({ userId: data.userId });
+        if (userDetails?.cart_key) {
+          cart3 = await Cart.findOne({ cart_key: userDetails.cart_key });
+        }
       }
+      console.log("cart ---------------", cart);
       let cartIds = []
       if (cart?._id) cartIds.push(cart?._id)
       if (cart2?._id) cartIds.push(cart2?._id)
+      if (cart3?._id) cartIds.push(cart3?._id)
       await CartItem.deleteMany({ cart: { $in: cartIds } });
       return await Cart.deleteOne({ _id: { $in: cartIds } }); 
     } catch (err) {
@@ -106,7 +121,7 @@ class CartService {
       if (data.cart_key) {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
       } 
-      if (data.userId && (data.userId != "null" || data.userId != "undefined" || data.userId != "guestUser")) {
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
       console.log("data.cart_key, cart2 -------------", data.cart_key, cart2);
