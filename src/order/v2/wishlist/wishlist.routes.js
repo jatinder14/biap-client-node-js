@@ -10,16 +10,16 @@ const wishListController = new WishlistController();
 
 
 rootRouter.post(
-    '/v2/wishlist/:userId',wishListController.addItem
+    '/v2/wishlist/:userId/:cart_key',wishListController.addItem
 );
 
 rootRouter.get(
-    '/v2/wishlist/:userId',
+    '/v2/wishlist/:userId/:cart_key',
     wishListController.getWishlistItem
 );
 
 rootRouter.delete(
-    '/v2/wishlist/:userId',
+    '/v2/wishlist/:userId/:cart_key',
     wishListController.clearWishlist,
 );
 

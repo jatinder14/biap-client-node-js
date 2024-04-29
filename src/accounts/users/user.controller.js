@@ -164,7 +164,7 @@ class UserController{
     let email = user?.decodedToken?.email
     let user_id = user?.decodedToken?.user_id
     try {
-      const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }, { user_id: user_id }] });
+      const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       console.log('userDetails :>> ', userDetails);
 
       return res.status(200).json({
