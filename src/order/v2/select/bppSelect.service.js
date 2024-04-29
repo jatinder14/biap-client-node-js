@@ -101,7 +101,6 @@ class BppSelectService {
 
       console.log("select request", selectRequest);
 
-      return {selectRequest}
 
       const hasInvalidAreaCode = fulfillments.some((fulfillment) => {
         let hasEndKey=fulfillment?.end
