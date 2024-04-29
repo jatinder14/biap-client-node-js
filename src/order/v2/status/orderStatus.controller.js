@@ -100,7 +100,7 @@ class OrderStatusController {
                         orderIds:orderId,
                         HTMLtemplate: '/template/outForDelivery.ejs',
                         userName: userName || '',
-                        subject: 'Order is out for delivery'
+                        subject: 'Order Update | Your Order is out for delivery'
                     });
                     res.json(orders);
 
@@ -120,7 +120,7 @@ class OrderStatusController {
                         orderIds:orderId,
                         HTMLtemplate: '/template/orderPickedup.ejs',
                         userName: userName || '',
-                        subject: 'Order has been picked up'
+                        subject: 'Order Update | Your Order has been picked up'
                     });
                     console.log("orders2",orders)
 
@@ -142,7 +142,7 @@ class OrderStatusController {
                         orderIds:orderId,
                         HTMLtemplate: '/template/agentAssigned.ejs',
                         userName: userName || '',
-                        subject: 'Agent has been assigned'
+                        subject: 'Order Update | Agent has been assigned for Your Order'
                     });
                     console.log("orders3",orders)
 
@@ -164,7 +164,7 @@ class OrderStatusController {
                         orderIds:orderId,
                         HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
                         userName: userName || "",
-                        subject: "Your order has been successfully delivered",
+                        subject: "Order Confirmation | Your order has been successfully delivered",
                     });
                     setTimeout(async () => {
                         await sendEmail({
@@ -172,7 +172,7 @@ class OrderStatusController {
                         orderIds:orderId,
                             HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                             userName: userName || "",
-                            subject: "We'd love to hear your feedback on your recent order",
+                            subject: "Order Feedback: Tell us about your experience",
                         });
                     }, 180000); // 15 seconds delay before sending the feedback email
 
