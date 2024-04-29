@@ -14,7 +14,7 @@ class BppSelectService {
 
       const provider = cart?.items?.[0]?.provider || {};
 
-      //check if item has customisation present
+     //Check if the location is not present
       if(!(order.cart.items[0].provider.locations)){
         return  {error:true,
           errorType:"Validation Error",
@@ -22,6 +22,7 @@ class BppSelectService {
         }
       }
 
+ //check if item has customisation present
       let items = [];
       let locationSet = new Set();
       for (let [index, item] of cart.items.entries()) {
