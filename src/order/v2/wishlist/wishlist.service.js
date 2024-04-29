@@ -39,11 +39,8 @@ class WishListService {
           wishlist = await new WishList({ userId: data.userId, wishlist_key: data.wishlist_key, }).save();
 
         }
-        // const existingItem = await WishlistItem.findOne({"item.id": data.id,"wishlist": wishlist._id});
+        
         if (existingItem) {
-          const itemId = existingItem.item.id;
-
-          console.log("Item ID:", itemId);
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
           let wishlistItem = new WishlistItem();

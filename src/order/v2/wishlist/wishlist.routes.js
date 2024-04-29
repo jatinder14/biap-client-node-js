@@ -6,20 +6,20 @@ import WishlistController from './wishlist.controller.js';
 const rootRouter = new Router();
 
 const wishListController = new WishlistController();
-// -- /:cart_key
+// -- /:wishlist_key
 
 
 rootRouter.post(
-    '/v2/wishlist/:userId/:cart_key',wishListController.addItem
+    '/v2/wishlist/:userId/:wishlist_key',wishListController.addItem
 );
 
 rootRouter.get(
-    '/v2/wishlist/:userId/:cart_key',
+    '/v2/wishlist/:userId/:wishlist_key',
     wishListController.getWishlistItem
 );
 
 rootRouter.delete(
-    '/v2/all/wishlist/:userId/:cart_key',
+    '/v2/all/wishlist/:userId/:wishlist_key',
     wishListController.clearWishlist,
 );
 
