@@ -99,7 +99,7 @@ const PersonSchema = new mongoose.Schema(
         dob: { type: Date },
         gender: { type: String },
         cred: { type: String },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -182,7 +182,7 @@ const ContactSchema = new mongoose.Schema(
     {
         phone: { type: String },
         email: { type: String },
-        tags: { type: Map }
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -227,7 +227,7 @@ const FulfillmentSchema = new mongoose.Schema(
         end: { type: FulfillmentEndSchema },
         purpose: { type: String },
         customer: { type: CustomerSchema },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );

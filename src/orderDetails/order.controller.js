@@ -3,7 +3,6 @@ import FulfillmentHistory from "../order/v2/db/fulfillmentHistory.js"
 import { parseDuration } from "../utils/stringHelper.js";
 
     export async function getOrdersHandler(req, res) {
-        console.log("Insidssd")
         try {
             const apiKey = req.headers['wil-api-key'];
 

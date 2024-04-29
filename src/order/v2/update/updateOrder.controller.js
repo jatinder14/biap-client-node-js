@@ -23,9 +23,9 @@ class UpdateOrderController {
                     return await cancelOrderService.update(order);
                 } catch (err) {
 
-                    console.log("update orders---------err------>",err);
+                    console.log("update orders---------err------>",err?.response);
 
-                    return err.response.data;
+                    return err?.response?.data;
                     // throw err;
                 }
             })

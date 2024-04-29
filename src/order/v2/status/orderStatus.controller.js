@@ -166,17 +166,17 @@ class OrderStatusController {
                         userName: userName || "",
                         subject: "Order Confirmation | Your order has been successfully delivered",
                     });
-                    // setTimeout(async () => {
-                    //     await sendEmail({
-                    //         userEmails:userEmail,
-                    //     orderIds:orderId,
-                    //         HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
-                    //         userName: userName || "",
-                    //         subject: "We'd love to hear your feedback on your recent order",
-                    //     });
-                    // }, 180000); // 15 seconds delay before sending the feedback email
+                    setTimeout(async () => {
+                        await sendEmail({
+                            userEmails:userEmail,
+                        orderIds:orderId,
+                            HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
+                            userName: userName || "",
+                            subject: "Order Feedback: Tell us about your experience",
+                        });
+                    }, 180000); // 15 seconds delay before sending the feedback email
 
-                    // console.log("orders3",orders)
+                    console.log("orders3",orders)
 
                     res.json(orders);
 

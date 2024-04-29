@@ -299,11 +299,11 @@ class DashboardController {
       // }
       
       const fetchData = await OrderMongooseModel.aggregate([
-        // {
-        //   $match: {
-        //     is_order_confirmed: true
-        //   }
-        // },
+        {
+          $match: {
+            is_order_confirmed: true
+          }
+        },
         {
           $project: {
             order_year: { $year: "$createdAt" },
@@ -322,10 +322,26 @@ class DashboardController {
               order_week: "$order_week",
             },
             accepted_count: {
-              $sum: { $cond: [{ $eq: ["$state", "Accepted"] }, 1, 0] },
+              $sum: {
+                $cond: [
+                  {
+                    $in: ["$state", ["Accepted", "Packed", "Created", null]]
+                  },
+                  1,
+                  0
+                ]
+              }
             },
             inprogress_count: {
-              $sum: { $cond: [{ $eq: ["$state", "Inprogress"] }, 1, 0] },
+              $sum: {
+                $cond: [
+                  {
+                    $in: ["$state", ["Inprogress",  "In-progress", "In-Progress", "inprogress", "in-progress"]]
+                  },
+                  1,
+                  0
+                ]
+              }
             },
             completed_count: {
               $sum: { $cond: [{ $eq: ["$state", "Completed"] }, 1, 0] },
@@ -442,7 +458,7 @@ class DashboardController {
 
       switch (filter) {
         case "overall": {
-          const orderCount = await OrderMongooseModel.count()
+          const orderCount = await OrderMongooseModel.count({ is_order_confirmed: true })
           data["overall"] = orderCount;
           break;
         }
@@ -452,6 +468,7 @@ class DashboardController {
           const thisYearEnd = new Date(currDate.getFullYear() + 1, 0, 0);
 
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: { $gte: prevYearStart, $lt: thisYearEnd },
           }).select({ createdAt: 1});
 
@@ -485,6 +502,7 @@ class DashboardController {
           }
 
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: new Date(lastYear, lastMonth, 0),
               $lt: new Date(
@@ -552,6 +570,7 @@ class DashboardController {
             0
           );
           const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: prevWeekStart,
               $lt: weekEnd,
@@ -599,7 +618,7 @@ class DashboardController {
       let data = {};
       switch (filter) {
         case "overall": {
-          const earningDetails = await OrderMongooseModel.find().select({
+          const earningDetails = await OrderMongooseModel.find({ is_order_confirmed: true, }).select({
             state: 1,
             "quote.price.value": 1,
             _id: 0,
@@ -609,12 +628,13 @@ class DashboardController {
             if (
               item.state === "Accepted" ||
               item.state === "Inprogress" ||
-              item.state === "Completed"
+              item.state === "Completed" ||
+              item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
             ) {
               data.all += parseFloat(item.quote.price.value);
             }
 
-            if (item.state === "Inprogress" || item.state === "Accepted") {
+            if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
               data.pending += parseFloat(item.quote.price.value);
             }
 
@@ -627,6 +647,7 @@ class DashboardController {
           const prevYearStart = new Date(currDate.getFullYear() - 1, 0, 0);
           const thisYearEnd = new Date(currDate.getFullYear() + 1, 0, 0);
           const earningDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: prevYearStart,
               $lt: thisYearEnd,
@@ -649,12 +670,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -667,12 +689,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
@@ -707,6 +730,7 @@ class DashboardController {
             lastYear = currDate.getFullYear();
           }
           const earningDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: new Date(lastYear, lastMonth, 0),
               $lt: new Date(
@@ -740,12 +764,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -758,12 +783,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
@@ -823,6 +849,7 @@ class DashboardController {
             received: { currentCount: 0, prevCount: 0 },
           };
           const earningDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
             createdAt: {
               $gte: prevWeekStart,
               $lt: weekEnd,
@@ -839,12 +866,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
@@ -857,12 +885,13 @@ class DashboardController {
               if (
                 item.state === "Accepted" ||
                 item.state === "Inprogress" ||
-                item.state === "Completed"
+                item.state === "Completed" ||
+                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
               ) {
                 data.all.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Inprogress"|| item.state === "Accepted") {
+              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
