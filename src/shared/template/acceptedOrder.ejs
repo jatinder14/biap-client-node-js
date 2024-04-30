@@ -76,7 +76,7 @@
           <div style="padding: 40px">
             <div
               style="
-                font-size: 22px;
+                font-size: 18px;
                 font-weight: 600;
                 line-height: 32px;
                 color: #1d1d1d;
@@ -93,7 +93,7 @@
                 margin: 24px 0;
               "
             >
-            Your order for ORDER ID <%= orderId %> has been confirmed.
+            Your order for  <span style="font-weight:600"> Order ID <%= orderId %></span> has been confirmed.
 
             </div>
             <div
@@ -101,11 +101,11 @@
                 font-size: 14px;
                 font-weight: 400;
                 line-height: 22px;
-                color: #434343;
                 margin: 24px 0;
+                color:black
               "
             >
-            <div>Item Name: <%= itemName %></div>
+            Item Name: <%= itemName %>
             <div>Quantity: <%= itemQuantity %></div>
             <div>Price: <%= itemPrice %></div>
             <div>Estimated Delivery: <%= estimatedDelivery %> days</div>                     </div>
