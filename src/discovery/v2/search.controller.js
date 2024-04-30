@@ -37,8 +37,7 @@ class SearchController {
                
                 try{
                   const userId=req.params.userId
-                  const wishlistKey=req.params.wishlist_key
-
+                  const wishlistKey=req.query.wishlist_key
                   const findWishlistItem = await WishlistItem.find({
                     $and: [
                       { "item.userId": userId },
