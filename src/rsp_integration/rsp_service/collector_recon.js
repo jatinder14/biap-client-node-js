@@ -268,7 +268,8 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         console.log('`${rsp_uri}/${baseUrl}`', `${rsp_uri}/${baseUrl}`)
         console.log('typeof request_body', typeof request_body)
         try {
-         
+          const userEmails = matchedEmails.map(emailObj => emailObj.email);
+          const orderIds = matchedOrderIds.map(orderObj => orderObj.orderId);
           console.log('notifications has been created')
         //   Notification.create({
         //   event_type: 'collector-recon',
@@ -279,11 +280,19 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         //  }).catch(error => {
         //  console.error('Error creating notification:', error);
         // });
-        // matchedEmails="jritu961@gmail.com"
-          // await sendEmail({userEmails:matchedEmails,orderIds:matchedOrderIds,HTMLtemplate: '/template/collector.ejs',
-          //   userName: '',
-          //   subject: 'settlement is send to the RSP',
-          // });
+        // Convert matchedEmails and matchedOrderIds to arrays of strings
+
+console.log("userEmails",userEmails)
+console.log("orderIds",orderIds)
+
+await sendEmail({
+  userEmails: userEmails,
+  orderIds: orderIds,
+  HTMLtemplate: '/template/collector.ejs',
+  userName: '',
+  subject: 'settlement is send to the RSP',
+});
+
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
         } catch (error) {
