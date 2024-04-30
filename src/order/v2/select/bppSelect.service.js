@@ -7,14 +7,15 @@ class BppSelectService {
    * @param {Object} order
    * @returns
    */
-  async select(context, order = {}) {
+
+  async   select(context, order = {}) {
     try {
       const { cart = {}, fulfillments = [] } = order || {};
 
       const provider = cart?.items?.[0]?.provider || {};
 
-      //check if item has customisation present
 
+ //check if item has customisation present
       let items = [];
       let locationSet = new Set();
       for (let [index, item] of cart.items.entries()) {
@@ -92,6 +93,7 @@ class BppSelectService {
       };
 
       console.log("select request", selectRequest);
+
 
       const hasInvalidAreaCode = fulfillments.some((fulfillment) => {
         let hasEndKey=fulfillment?.end

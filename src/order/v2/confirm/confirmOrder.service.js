@@ -324,7 +324,7 @@ class ConfirmOrderService {
 
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
-
+                console.log("dbResponse.userId --------------------------------------- ", dbResponse.userId);
                 cartService.clearCart({ userId: dbResponse.userId });
             }
 

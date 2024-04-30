@@ -71,18 +71,21 @@ class UserController{
   async userProfile(req, res) {
     try {
       const { body: request, user } = req;
-      let phone = user?.decodedToken?.phone
-      let email = user?.decodedToken?.email
+      let phone = user?.decodedToken?.phone || ""
+      let email = user?.decodedToken?.email || ""
       let user_id = user?.decodedToken?.user_id || uuidv4()
       const existingUser = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       if (existingUser) {
         // User already exists, update their profile
 
-        existingUser.userName = user?.decodedToken?.name || request.userName;
-        existingUser.phone = user?.decodedToken?.phone || request.phone;
-        existingUser.email = user?.decodedToken?.email || request.email;
-        existingUser.userImage = user?.decodedToken?.picture;
-        existingUser.address = user?.delivery_address || request.address
+        if (request.userName) existingUser.userName = request.userName;
+        if (request.phone && !existingUser.phone) existingUser.phone = request.phone;
+        if (request.email && !existingUser.email) existingUser.email = request.email;
+        if (request.picture || user?.decodedToken?.picture) existingUser.userImage = request.picture || user?.decodedToken?.picture;
+        if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
+        if (request.userId) existingUser.userId = request.userId
+        if (request.cart_key) existingUser.cart_key = request.cart_key
+        if (request.wishlist_key) existingUser.wishlist_key = request.wishlist_key
         existingUser.user_id = user_id
         const existingDefaultAddress = await DeliveryAddress.findOne({
           userId: existingUser._id
@@ -103,11 +106,14 @@ class UserController{
       } else {
         // User does not exist, create a new profile
         const newUser = new User({
-          userName: user?.decodedToken?.name || null,
-          phone: user?.decodedToken?.phone || null,
-          email: user?.decodedToken?.email || null,
+          userName: request.userName || user?.decodedToken?.name,
+          phone: user?.decodedToken?.phone || request.phone,
+          email: user?.decodedToken?.email || request.email,
           userImage: user?.decodedToken?.picture || null,
-          delivery_address: user?.decodedToken?.address || null,
+          delivery_address: request.address || user?.decodedToken?.address,
+          userId: request.userId || "",
+          cart_key: request.cart_key || "",
+          wishlist_key: request.wishlist_key || "",
           user_id
         });
 
@@ -160,11 +166,11 @@ class UserController{
   async getUserProfile(req, res) {
     const { user } = req;
     console.log("decodedToken =================", user?.decodedToken);
-    let phone = user?.decodedToken?.phone
-    let email = user?.decodedToken?.email
-    let user_id = user?.decodedToken?.user_id
+    let phone = user?.decodedToken?.phone || ""
+    let email = user?.decodedToken?.email || ""
+    let user_id = user?.decodedToken?.user_id || ""
     try {
-      const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }, { user_id: user_id }] });
+      const userDetails = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       console.log('userDetails :>> ', userDetails);
 
       return res.status(200).json({

@@ -33,10 +33,7 @@ class DashboardController {
           });
           data["currentCount"] = thisYearCustomers.size;
           data["prevCount"] = prevYearCustomers.size;
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         case "monthly": {
@@ -83,10 +80,7 @@ class DashboardController {
 
           data["currentCount"] = thisMonthCustomers.size;
           data["prevCount"] = prevMonthCustomers.size;
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         case "weekly": {
@@ -138,10 +132,7 @@ class DashboardController {
           });
           data["currentCount"] = thisWeekCustomers.size;
           data["prevCount"] = prevWeekCustomers.size;
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         default:
@@ -155,7 +146,7 @@ class DashboardController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -167,7 +158,9 @@ class DashboardController {
       let data = {};
       switch (filter) {
         case "overall": {
-          const orderDetails = await OrderMongooseModel.find({ is_order_confirmed: true }).select({
+          const orderDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
+          }).select({
             items: 1,
             _id: 0,
           });
@@ -279,7 +272,7 @@ class DashboardController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -297,12 +290,12 @@ class DashboardController {
       //     totalCount,
       //   });
       // }
-      
+
       const fetchData = await OrderMongooseModel.aggregate([
         {
           $match: {
-            is_order_confirmed: true
-          }
+            is_order_confirmed: true,
+          },
         },
         {
           $project: {
@@ -325,26 +318,58 @@ class DashboardController {
               $sum: {
                 $cond: [
                   {
-                    $in: ["$state", ["Accepted", "Packed", "Created", null]]
+                    $or: [
+                      {
+                        $regexMatch: { input: "$state", regex: /^accepted$/i },
+                      },
+                      { $regexMatch: { input: "$state", regex: /^packed$/i } },
+                      { $regexMatch: { input: "$state", regex: /^created$/i } },
+                      { $eq: ["$state", null] },
+                    ],
                   },
                   1,
-                  0
-                ]
-              }
+                  0,
+                ],
+              },
             },
             inprogress_count: {
               $sum: {
                 $cond: [
                   {
-                    $in: ["$state", ["Inprogress",  "In-progress", "In-Progress", "inprogress", "in-progress"]]
+                    $or: [
+                      {
+                        $regexMatch: {
+                          input: "$state",
+                          regex: /^inprogress$/i,
+                        },
+                      },
+                      {
+                        $regexMatch: {
+                          input: "$state",
+                          regex: /^in-progress$/i,
+                        },
+                      },
+                    ],
                   },
                   1,
-                  0
-                ]
-              }
+                  0,
+                ],
+              },
             },
             completed_count: {
-              $sum: { $cond: [{ $eq: ["$state", "Completed"] }, 1, 0] },
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      {
+                        $regexMatch: { input: "$state", regex: /^completed$/i },
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
             },
           },
         },
@@ -446,19 +471,21 @@ class DashboardController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
 
-  async totalOrderSummary(req,res,next){
+  async totalOrderSummary(req, res, next) {
     try {
       const filter = req.query.filter ? String(req.query.filter) : "weekly";
       const data = {};
 
       switch (filter) {
         case "overall": {
-          const orderCount = await OrderMongooseModel.count({ is_order_confirmed: true })
+          const orderCount = await OrderMongooseModel.count({
+            is_order_confirmed: true,
+          });
           data["overall"] = orderCount;
           break;
         }
@@ -470,23 +497,20 @@ class DashboardController {
           const orderDetails = await OrderMongooseModel.find({
             is_order_confirmed: true,
             createdAt: { $gte: prevYearStart, $lt: thisYearEnd },
-          }).select({ createdAt: 1});
+          }).select({ createdAt: 1 });
 
-          let prevCount = 0
-          let currCount = 0
+          let prevCount = 0;
+          let currCount = 0;
           orderDetails.forEach((item) => {
             if (item.createdAt >= new Date(currDate.getFullYear(), 0, 0)) {
-              currCount +=1 
+              currCount += 1;
             } else {
-              prevCount +=1
+              prevCount += 1;
             }
           });
-          data["currentCount"] = currCount
-          data["prevCount"] = prevCount
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["currentCount"] = currCount;
+          data["prevCount"] = prevCount;
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         case "monthly": {
@@ -515,28 +539,25 @@ class DashboardController {
                 0
               ),
             },
-          }).select({ createdAt: 1});
+          }).select({ createdAt: 1 });
 
-          let prevCount = 0
-          let currCount = 0
+          let prevCount = 0;
+          let currCount = 0;
 
           orderDetails.forEach((item) => {
             if (
               item.createdAt >=
               new Date(currDate.getFullYear(), currDate.getMonth(), 1)
             ) {
-              currCount +=1
+              currCount += 1;
             } else {
-              prevCount +=1
+              prevCount += 1;
             }
           });
 
-          data["currentCount"] = currCount
-          data["prevCount"] = prevCount
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["currentCount"] = currCount;
+          data["prevCount"] = prevCount;
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         case "weekly": {
@@ -575,23 +596,20 @@ class DashboardController {
               $gte: prevWeekStart,
               $lt: weekEnd,
             },
-          }).select({ createdAt: 1});
+          }).select({ createdAt: 1 });
 
-          let prevCount = 0
-          let currCount = 0
+          let prevCount = 0;
+          let currCount = 0;
           orderDetails.forEach((item) => {
             if (item.createdAt >= weekStart) {
-              currCount += 1
+              currCount += 1;
             } else {
-              prevCount += 1
+              prevCount += 1;
             }
           });
           data["currentCount"] = currCount;
-          data["prevCount"] = prevCount
-          data["change"] = percentageChange(
-            data.prevCount,
-            data.currentCount
-          );
+          data["prevCount"] = prevCount;
+          data["change"] = percentageChange(data.prevCount, data.currentCount);
           break;
         }
         default:
@@ -605,7 +623,7 @@ class DashboardController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -618,30 +636,29 @@ class DashboardController {
       let data = {};
       switch (filter) {
         case "overall": {
-          const earningDetails = await OrderMongooseModel.find({ is_order_confirmed: true, }).select({
+          const earningDetails = await OrderMongooseModel.find({
+            is_order_confirmed: true,
+          }).select({
             state: 1,
             "quote.price.value": 1,
             _id: 0,
           });
           data = { all: 0, pending: 0, received: 0 };
           earningDetails.forEach((item) => {
+            data.all += parseFloat(item.quote.price.value);
             if (
-              item.state === "Accepted" ||
-              item.state === "Inprogress" ||
-              item.state === "Completed" ||
-              item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
+              item.state.toLowerCase() === "created" ||
+              item.state.toLowerCase() === "accepted" ||
+              item.state.toLowerCase() === "inprogress" ||
+              item.state.toLowerCase() === "in-progress"
             ) {
-              data.all += parseFloat(item.quote.price.value);
-            }
-
-            if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
               data.pending += parseFloat(item.quote.price.value);
             }
-
-            if (item.state === "Completed") {
+            if (item.state.toLowerCase() === "completed") {
               data.received += parseFloat(item.quote.price.value);
             }
           });
+          break;
         }
         case "yearly": {
           const prevYearStart = new Date(currDate.getFullYear() - 1, 0, 0);
@@ -667,39 +684,31 @@ class DashboardController {
 
           earningDetails.forEach((item) => {
             if (item.createdAt >= new Date(currDate.getFullYear(), 0, 1)) {
+              data.all.currentCount += parseFloat(item.quote.price.value);
               if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
               ) {
-                data.all.currentCount += parseFloat(item.quote.price.value);
-              }
-
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
-
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.currentCount += parseFloat(
                   item.quote.price.value
                 );
               }
             } else {
+              data.all.prevCount += parseFloat(item.quote.price.value);
               if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
               ) {
-                data.all.prevCount += parseFloat(item.quote.price.value);
-              }
-
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
-
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.prevCount += parseFloat(item.quote.price.value);
               }
             }
@@ -761,39 +770,34 @@ class DashboardController {
               item.createdAt >=
               new Date(currDate.getFullYear(), currDate.getMonth(), 0)
             ) {
+              data.all.currentCount += parseFloat(item.quote.price.value);
               if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
               ) {
-                data.all.currentCount += parseFloat(item.quote.price.value);
-              }
-
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.currentCount += parseFloat(
                   item.quote.price.value
                 );
               }
             } else {
-              if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
-              ) {
-                data.all.prevCount += parseFloat(item.quote.price.value);
-              }
+              data.all.prevCount += parseFloat(item.quote.price.value);
 
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
+              if (
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
+              ) {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.prevCount += parseFloat(item.quote.price.value);
               }
             }
@@ -863,39 +867,34 @@ class DashboardController {
 
           earningDetails.forEach((item) => {
             if (item.createdAt >= weekStart) {
+              data.all.currentCount += parseFloat(item.quote.price.value);
               if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
               ) {
-                data.all.currentCount += parseFloat(item.quote.price.value);
-              }
-
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
                 data.pending.currentCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.currentCount += parseFloat(
                   item.quote.price.value
                 );
               }
             } else {
-              if (
-                item.state === "Accepted" ||
-                item.state === "Inprogress" ||
-                item.state === "Completed" ||
-                item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress"
-              ) {
-                data.all.prevCount += parseFloat(item.quote.price.value);
-              }
+              data.all.prevCount += parseFloat(item.quote.price.value);
 
-              if (item.state === "Inprogress" || item.state === "In-progress" || item.state === "In-Progress"  || item.state === "in-progress" || item.state === "inprogress" || item.state === "Accepted" || item.state === "Created") {
+              if (
+                item.state.toLowerCase() === "created" ||
+                item.state.toLowerCase() === "accepted" ||
+                item.state.toLowerCase() === "inprogress" ||
+                item.state.toLowerCase() === "in-progress"
+              ) {
                 data.pending.prevCount += parseFloat(item.quote.price.value);
               }
 
-              if (item.state === "Completed") {
+              if (item.state.toLowerCase() === "completed") {
                 data.received.prevCount += parseFloat(item.quote.price.value);
               }
             }
@@ -927,7 +926,7 @@ class DashboardController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
