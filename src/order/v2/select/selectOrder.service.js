@@ -34,7 +34,7 @@ class SelectOrderService {
      */
     transform(response) {
 
-        let error =  response.error ? Object.assign({}, response.error, {
+        let error =  response?.error ? Object.assign({}, response.error, {
             message: response.error.message?response.error.message:RetailsErrorCode[response.error.code],
         }):null;
 
