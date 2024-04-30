@@ -18,7 +18,7 @@ rootRouter.get(
 );
 
 rootRouter.delete(
-    '/v2/cart/:userId/:cart_key',
+    '/v2/all/cart/:userId/:cart_key',
     cartController.clearCart,
 );
 

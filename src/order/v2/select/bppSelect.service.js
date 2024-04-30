@@ -14,13 +14,6 @@ class BppSelectService {
 
       const provider = cart?.items?.[0]?.provider || {};
 
-     //Check if the location is not present
-      if(!(order.cart.items[0].provider.locations)){
-        return  {error:true,
-          errorType:"Validation Error",
-        message:'Please provide the location under order/cart/item/provider/locations'
-        }
-      }
 
  //check if item has customisation present
       let items = [];
