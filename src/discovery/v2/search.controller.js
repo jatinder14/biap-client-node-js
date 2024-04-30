@@ -19,59 +19,60 @@ class SearchController {
 
     console.log({ searchRequest });
 
-        console.log({searchRequest})
-        const headers = req.headers;
+    console.log({ searchRequest })
+    const headers = req.headers;
 
-        let targetLanguage = headers['targetlanguage'];
+    let targetLanguage = headers['targetlanguage'];
 
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
+    }
+    searchService.search(searchRequest, targetLanguage).then(async response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else {
+
+        try {
+          const userId = req.params.userId
+          const wishlistKey = req.query.wishlist_key
+          console.log("userId ------------------------", userId);
+          console.log("wishlistKey ------------------------", wishlistKey);
+          let where = [], itemids = []
+          if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+            where = [ ...where, { "item.userId": userId }]
+          }
+          if (wishlistKey) {
+            where = [ ...where, { "item.wishlist_key": wishlistKey }]
+          }
+          console.log("where ------------------------", where);
+          if (where.length) {
+            const findWishlistItem = await WishlistItem.find({
+              $or: where
+            });
+  
+            itemids = findWishlistItem.map((item) => {
+              return item.item.id; // Assuming the id is nested inside the item object
+            });
+          }
+          
+          response.response.data.forEach((item) => {
+            if (itemids.includes(item.id)) {
+              console.log("Matched item id:", item.id);
+              item.wishlistAdded = true;
+            }
+          });
+          req.body.responseData = response;
+          next()
         }
-        searchService.search(searchRequest,targetLanguage).then(async response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                // res.json(response);
-               {
-               
-                try{
-                  const userId=req.params.userId
-                  const wishlistKey=req.query.wishlist_key
-                  const findWishlistItem = await WishlistItem.find({
-                    $and: [
-                      { "item.userId": userId },
-                      { "item.wishlist_key": wishlistKey }
-                  ]
-
-                });  
-                   
-                const itemids = findWishlistItem.map((item) => {
-                  return item.item.id; // Assuming the id is nested inside the item object
-              });
-              
-              const itemDetaildata = response.response.data;
-
-              response.response.data.forEach((item) => {
-    if (itemids.includes(item.id)) {
-        console.log("Matched item id:", item.id);
-        item.wishlistAdded = true;
-    }
-});
-              req.body.responseData = response;
-            next()                  }
-                  catch(e){
-                  console.log(e)
-                  }
-                  
-                
-                // req.body.responseData = response;
-                // next()
-              }
-        }).catch((err) => {
-            next(err);
-        });
-    }
+        catch (e) {
+          console.log(e)
+        }
+      }
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
     getProvideDetails(req, res, next) {
         const searchRequest = req.query;
