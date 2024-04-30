@@ -37,10 +37,16 @@ class SearchController {
                
                 try{
                   const userId=req.params.userId
-                  console.log("userId:",userId)
+                  const wishlistKey=req.params.wishlist_key
+
                   const findWishlistItem = await WishlistItem.find({
-                    "item.userId": userId
-                });       
+                    $and: [
+                      { "item.userId": userId },
+                      { "item.wishlist_key": wishlistKey }
+                  ]
+
+                });  
+                   
                 const itemids = findWishlistItem.map((item) => {
                   return item.item.id; // Assuming the id is nested inside the item object
               });

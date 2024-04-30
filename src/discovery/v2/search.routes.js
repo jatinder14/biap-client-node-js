@@ -10,7 +10,7 @@ const searchController = new SearchController();
 
 // search
 router.get(
-    '/v2/search/:userId',  
+    '/v2/search/:userId/:wishlist_key',  
     searchController.search,bhashiniTranslator
     
 );
