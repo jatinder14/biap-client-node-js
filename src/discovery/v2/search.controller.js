@@ -195,28 +195,6 @@ class SearchController {
         });
     }
 
-    /**
-    * get attributes
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    getAttributes(req, res, next) {
-        const searchRequest = req.query;
-
-        console.log({searchRequest})
-
-        searchService.getAttributes(searchRequest).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
-    }
-
     getItems(req, res, next) {
         const searchRequest = req.query;
 
