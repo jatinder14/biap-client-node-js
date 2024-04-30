@@ -371,6 +371,21 @@ class DashboardController {
                 ],
               },
             },
+            cancelled_count: {
+              $sum: {
+                $cond: [
+                  {
+                    $or: [
+                      {
+                        $regexMatch: { input: "$state", regex: /^cancelled$/i },
+                      },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
           },
         },
         {
@@ -391,11 +406,13 @@ class DashboardController {
               data[year].accepted_count += dataEntry.accepted_count;
               data[year].inprogress_count += dataEntry.inprogress_count;
               data[year].completed_count += dataEntry.completed_count;
+              data[year].cancelled_count += dataEntry.cancelled_count;
             } else {
               data[year] = {};
               data[year]["accepted_count"] = dataEntry.accepted_count;
               data[year]["inprogress_count"] = dataEntry.inprogress_count;
               data[year]["completed_count"] = dataEntry.completed_count;
+              data[year]["cancelled_count"] = dataEntry.cancelled_count;
             }
           });
           break;
@@ -409,11 +426,13 @@ class DashboardController {
                 data[month].accepted_count += dataEntry.accepted_count;
                 data[month].inprogress_count += dataEntry.inprogress_count;
                 data[month].completed_count += dataEntry.completed_count;
+                data[month].cancelled_count += dataEntry.cancelled_count;
               } else {
                 data[month] = {};
                 data[month]["accepted_count"] = dataEntry.accepted_count;
                 data[month]["inprogress_count"] = dataEntry.inprogress_count;
                 data[month]["completed_count"] = dataEntry.completed_count;
+                data[month]["cancelled_count"] = dataEntry.cancelled_count;
               }
             }
           });
@@ -428,11 +447,13 @@ class DashboardController {
                 data[week].accepted_count += dataEntry.accepted_count;
                 data[week].inprogress_count += dataEntry.inprogress_count;
                 data[week].completed_count += dataEntry.completed_count;
+                data[week].cancelled_count += dataEntry.cancelled_count;
               } else {
                 data[week] = {};
                 data[week]["accepted_count"] = dataEntry.accepted_count;
                 data[week]["inprogress_count"] = dataEntry.inprogress_count;
                 data[week]["completed_count"] = dataEntry.completed_count;
+                data[week]["cancelled_count"] = dataEntry.cancelled_count;
               }
             }
           });
@@ -446,13 +467,15 @@ class DashboardController {
             ) {
               if (data?.["01"]) {
                 data["01"].accepted_count += item.accepted_count;
-                data["01"].accepted_count += item.accepted_count;
-                data["01"].accepted_count += item.accepted_count;
+                data["01"].inprogress_count += item.inprogress_count;
+                data["01"].completed_count += item.completed_count;
+                data["01"].cancelled_count += item.cancelled_count;
               } else {
                 data["01"] = {};
                 data["01"].accepted_count = item.accepted_count;
-                data["01"].accepted_count = item.accepted_count;
-                data["01"].accepted_count = item.accepted_count;
+                data["01"].inprogress_count = item.inprogress_count;
+                data["01"].completed_count = item.completed_count;
+                data["01"].cancelled_count = item.cancelled_count;
               }
               return true;
             }
