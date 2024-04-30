@@ -4,7 +4,7 @@ import Order from "../../v1/db/order.js"
 import Feedback from "../db/feedback.js";
 
 class OrderFeedbackSevice{
-    async  orderFeedback(orderID, message, userId) {
+    async  orderFeedback(orderID, body) {
         try {
     
             
@@ -23,9 +23,17 @@ class OrderFeedbackSevice{
                 }
                 const createFeedback = await Feedback.create({
                     userId: user,
-                    message: message,
-                    orderID: orderID
+                    message: body.message,
+                    orderID: orderID,
+                    websiteDesign:body.websiteDesign,
+                    deliveryTime:body.deliveryTime,
+                    quality:body.quality,
+                    recommendWebsite:body.recommendWebsite,
+                    checkoutSatisfaction:body.checkoutSatisfaction
+
                 });
+
+                console.log("createFeedback>>>>>>",createFeedback)
                 return {
                     success:"True",
                     data:createFeedback

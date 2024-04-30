@@ -7,9 +7,9 @@ class OrderFeedbackController {
   async feedback(req,res,next){
     try{
         const OrderId=req.params.orderId
-        const {message}=req.body
-        console.log("OrderId>>>>>>",OrderId) 
-        orderFeedbackSevice.orderFeedback(OrderId,message).then(response => {
+        const body=req.body
+        console.log("body>>>>>>",body) 
+        orderFeedbackSevice.orderFeedback(OrderId,body).then(response => {
             console.log("response>>",response)
             res.send(response)
         })
