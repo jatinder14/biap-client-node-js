@@ -7,7 +7,7 @@ class TopSellingService {
         try {
 
             // Fetch all orders
-            const allOrders = await OrderMongooseModel.find({});
+            const allOrders = await OrderMongooseModel.find({ is_order_confirmed: true });
             // Flatten items from all orders into a single array
             const allItems = allOrders.flatMap(order => order.items);
             // Filter items to include only those in the specified JSON format
