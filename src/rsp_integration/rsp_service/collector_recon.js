@@ -290,7 +290,7 @@ await sendEmail({
   orderIds: orderIds,
   HTMLtemplate: '/template/collector.ejs',
   userName: '',
-  subject: 'settlement is send to the RSP',
+  subject: 'Payment Settlements | To the Seller',
 });
 
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
