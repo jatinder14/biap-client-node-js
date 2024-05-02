@@ -67,14 +67,16 @@ class ConfirmOrderService {
      * @param {Object} dbResponse 
      * @param {Object} confirmResponse 
      */
-    async updateOrder(dbResponse, confirmResponse, paymentType) {
+    async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {
+        console.log('razorpayPaymentId :>> ', razorpayPaymentId);
         let orderSchema = dbResponse?.toJSON() || {};
 
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
+            orderSchema.payment.razorpayPaymentId=razorpayPaymentId
 
-
+        console.log('orderSchema :>> ', orderSchema);
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
             { ...orderSchema }
@@ -88,6 +90,7 @@ class ConfirmOrderService {
      * @param {Boolean} confirmPayment
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
+        console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
         const {
             context: requestContext,
             message: order = {}
@@ -136,7 +139,7 @@ class ConfirmOrderService {
             // }else{
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
-
+           console.log('order------ :>> ', order);
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
                 { ...order, jusPayTransactionId: paymentStatus.txn_id },
@@ -146,7 +149,7 @@ class ConfirmOrderService {
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
 
             if (bppConfirmResponse?.message?.ack)
-                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type);
+                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
 
             return bppConfirmResponse;
 
@@ -341,6 +344,7 @@ class ConfirmOrderService {
     * @param {Object} orderRequest
     */
     async confirmOrder(orderRequest) {
+        
         try {
             const { context: requestContext, message: order = {} } = orderRequest || {};
 
@@ -400,7 +404,8 @@ class ConfirmOrderService {
      * confirm multiple orders
      * @param {Array} orders 
      */
-    async confirmMultipleOrder(orders) {
+    async confirmMultipleOrder(orders) {    
+        console.log('orders--------- :>> ', orders);
         let total = 0;
         orders.forEach(order => {
             total += order?.message?.payment?.paid_amount;
