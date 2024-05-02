@@ -20,33 +20,33 @@ class TopSellingController {
 
         const { pageNumber = 1 } = query;
 
-        if(pageNumber > 0) {
+        if (pageNumber > 0) {
             console.log("21>>>>>>>>>>>")
             topSellingService.getTopOrderList().then(async response => {
-                if(!response.error) {
-                    const userId=req.params.userId
-                    console.log("userId:",userId)
+                if (!response.error) {
+                    const userId = req.params.userId
+                    console.log("userId:", userId)
                     const findWishlistItem = await WishlistItem.find({
-                      "item.userId": userId
-                  });  
-                  console.log("findWishlistItem>>>",findWishlistItem)     
-                  const itemids = findWishlistItem.map((item) => {
-                    return item.item.id; // Assuming the id is nested inside the item object
-                });
-                console.log("itemids>>>",itemids)     
+                        "item.userId": userId
+                    });
+                    console.log("findWishlistItem>>>", findWishlistItem)
+                    const itemids = findWishlistItem.map((item) => {
+                        return item.item.id; // Assuming the id is nested inside the item object
+                    });
+                    console.log("itemids>>>", itemids)
 
-                
-                const itemDetaildata = response
-                console.log("itemDetaildata",itemDetaildata)     
 
-                response.forEach((item) => {
-      if (itemids.includes(item.id)) {
-          console.log("Matched item id:", item.id);
-          item.wishlistAdded = true;
-      }
-  });       
-  res.send(response)
-}
+                    const itemDetaildata = response
+                    console.log("itemDetaildata", itemDetaildata)
+
+                    response.forEach((item) => {
+                        if (itemids.includes(item.id)) {
+                            console.log("Matched item id:", item.id);
+                            item.wishlistAdded = true;
+                        }
+                    });
+                    res.send(response)
+                }
                 else
 
                     res.status(404).json(
@@ -62,7 +62,7 @@ class TopSellingController {
         }
         else
             throw new BadRequestParameterError();
-     }
+    }
   
 }
 

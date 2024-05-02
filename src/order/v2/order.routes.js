@@ -125,7 +125,7 @@ rootRouter.post(
 // select order v2
 rootRouter.post(
     '/v2/select',
-    authentication(),
+    // authentication(),
     selectOrderController.selectMultipleOrder,
 );
 
@@ -139,7 +139,7 @@ rootRouter.post(
 rootRouter.get('/v1/on_select', authentication(), selectOrderController.onSelectOrder);
 
 // on select order v2
-rootRouter.get('/v2/on_select', authentication(), selectOrderController.onSelectMultipleOrder);
+rootRouter.get('/v2/on_select', selectOrderController.onSelectMultipleOrder); // authentication(),
 
 rootRouter.post('/v2/update', authentication(), updateOrderController.update);
 
