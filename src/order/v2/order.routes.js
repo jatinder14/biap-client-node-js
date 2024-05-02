@@ -149,6 +149,7 @@ rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), uploadCont
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
 rootRouter.post('/v2/feedback/:orderId',  orderFeedbackController.feedback);
+rootRouter.post('/v2/contact', orderFeedbackController.contactUs);
 
 //#endregion
 
