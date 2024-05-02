@@ -19,11 +19,13 @@
     // Function to send notification
     export async function sendEmail({ userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
         try {
-            console.log("userEmails",userEmails)
-            console.log("orderIds",orderIds)
+      
+           
 
+            userName = userName.toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
             // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
             const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
+
 
             // Read the EJS template file
             const template = fs.readFileSync(templatePath, 'utf8');

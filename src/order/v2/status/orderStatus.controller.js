@@ -267,7 +267,7 @@ class OrderStatusController {
                             orderIds:orderId,
                                 HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                                 userName: nameWithoutNumber || "",
-                                subject: "Order Feedback: Tell us about your experience",
+                                subject: "Order Feedback | Tell us about your experience",
                             });
                         }, 180000); // 15 seconds delay before sending the feedback email
     
@@ -299,7 +299,7 @@ class OrderStatusController {
                             orderIds:orderId,
                                 HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                                 userName: userName || "",
-                                subject: "Order Feedback: Tell us about your experience",
+                                subject: "Order Feedback | Tell us about your experience",
                             });
                         }, 180000); // 15 seconds delay before sending the feedback email
     
