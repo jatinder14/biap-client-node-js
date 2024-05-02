@@ -125,12 +125,13 @@ class ConfirmOrderController {
             itemPrice,
             estimatedDelivery
           );
-          if(!userEmails && !userName){
-            console.log('userEmails>>>>', userEmails)
+          
+           if(emailWithoutNumber && nameWithoutNumber){
+
             Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
-                name: userName,
+                name: nameWithoutNumber,
               })
                 .then((notification) => {
                   console.log("Notification created:", notification);
@@ -140,10 +141,10 @@ class ConfirmOrderController {
                 });
            
               await sendEmail({
-                userEmails,
+                userEmails:emailWithoutNumber,
                 orderIds,
                 HTMLtemplate: "/template/acceptedOrder.ejs",
-                userName: userName || "",
+                userName: nameWithoutNumber || "",
                 subject: "Order Acceptance: Your Order has been Accepted",
                 itemName: itemName,
                 itemQuantity: itemQuantity,
@@ -152,10 +153,7 @@ class ConfirmOrderController {
               });
               res.json(orders);
 
-          }
-          else if(!emailWithoutNumber && !nameWithoutNumber){
-            console.log('emailWithoutNumber>>>>>>>>>>>>>>>>', emailWithoutNumber)
-
+          }else if(userEmails && userName){
             Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
@@ -183,7 +181,6 @@ class ConfirmOrderController {
 
           }
           else{
-            console.log('ritu>>>>>>>>>>>>>>>>')
 
             res.json(orders);
 
