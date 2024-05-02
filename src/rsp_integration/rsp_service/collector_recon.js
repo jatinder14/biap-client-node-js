@@ -282,16 +282,16 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         // });
         // Convert matchedEmails and matchedOrderIds to arrays of strings
 
-console.log("userEmails",userEmails)
-console.log("orderIds",orderIds)
+// console.log("userEmails",userEmails)
+// console.log("orderIds",orderIds)
 
-await sendEmail({
-  userEmails: userEmails,
-  orderIds: orderIds,
-  HTMLtemplate: '/template/collector.ejs',
-  userName: '',
-  subject: 'Payment Settlements | To the Seller',
-});
+// await sendEmail({
+//   userEmails: userEmails,
+//   orderIds: orderIds,
+//   HTMLtemplate: '/template/collector.ejs',
+//   userName: '',
+//   subject: 'Payment Settlements | To the Seller',
+// });
 
           let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
