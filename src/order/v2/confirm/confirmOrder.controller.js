@@ -200,7 +200,7 @@ class ConfirmOrderController {
     confirmOrderService
       .getOrderDetails(orderId)
       .then((orders) => {
-        // res.json(orders);
+        res.json(orders);
       })
       .catch((err) => {
         next(err);
