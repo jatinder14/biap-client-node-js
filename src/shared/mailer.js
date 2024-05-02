@@ -17,7 +17,7 @@
     });
 
     // Function to send notification
-    export async function sendEmail({ userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
+    export async function sendEmail({ fromEmail, userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
         try {
       
            
@@ -48,7 +48,7 @@
     
                 // Email options
                 const mailOptions = {
-                    from: user,
+                    from: fromEmail ? fromEmail : user,
                     to: userEmail,
                     subject: subject,
                     html: html
