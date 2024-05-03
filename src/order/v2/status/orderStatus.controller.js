@@ -135,7 +135,7 @@ class OrderStatusController {
 
                     }
                     
-                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-Picked-Up") {
+                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
 
                      if(emailWithoutNumber && nameWithoutNumber){
                         Notification.create({
