@@ -14,6 +14,7 @@ import JuspayService from "../../../payment/juspay.service.js";
 import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import lokiLogger from '../../../utils/logger.js';
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
 const juspayService = new JuspayService();
@@ -92,6 +93,7 @@ class ConfirmOrderService {
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
         console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
+        lokiLogger.info('confirmAndUpdateOrder>payment-------- :>>',orderRequest?.message?.payment)
         const {
             context: requestContext,
             message: order = {}
@@ -103,6 +105,9 @@ class ConfirmOrderService {
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
         console.log("dbResponse---------------->", dbResponse)
+
+        lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
+
 
         if (dbResponse?.paymentStatus === null) {
 
@@ -141,13 +146,18 @@ class ConfirmOrderService {
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
            console.log('order------ :>> ', order);
+
+           lokiLogger.info('dbResponse----------------> :>>' ,order)
+           
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
-                { ...order, jusPayTransactionId: paymentStatus.txn_id },
+                { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
                 dbResponse
             );
 
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
+            
+            lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
 
             if (bppConfirmResponse?.message?.ack)
                 await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
