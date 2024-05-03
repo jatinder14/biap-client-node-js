@@ -260,6 +260,7 @@ class BppConfirmService {
                             tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 "http/get":
                                 undefined,
+                            razorpayPaymentId:order.razorpayPaymentId,    
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",

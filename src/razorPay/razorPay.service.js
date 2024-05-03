@@ -111,6 +111,30 @@ class RazorPayService {
     }
   }
 
+async refundOrder(paymentId,paymentDetails){
+try{
+  
+  const instance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+
+instance.payments.refund(paymentId,{
+  "amount": "100",
+  "speed": "optimum",
+  "notes": {
+    "notes_key_1": "Beam me up Scotty.",
+    "notes_key_2": "Engage"
+  },
+  "receipt": "Receipt No. 31"
+})
+}
+catch(error){
+  throw err;
+
+}
+}
+
   /**
    * verify payment
    * @param {Object} data

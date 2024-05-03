@@ -143,7 +143,7 @@ class ConfirmOrderService {
            console.log('order------ :>> ', order);
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
-                { ...order, jusPayTransactionId: paymentStatus.txn_id },
+                { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
                 dbResponse
             );
 
