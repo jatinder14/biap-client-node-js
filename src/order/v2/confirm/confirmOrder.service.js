@@ -74,7 +74,8 @@ class ConfirmOrderService {
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
-            orderSchema.payment.razorpayPaymentId=razorpayPaymentId
+        
+        if (razorpayPaymentId) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
         console.log('orderSchema :>> ', orderSchema);
         await addOrUpdateOrderWithTransactionIdAndProvider(
