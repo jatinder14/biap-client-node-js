@@ -17,6 +17,7 @@ const LocationSchema = new Schema({
     country: String,
     areaCode: String
   }
+
 });
 
 const ContactSchema = new Schema({
@@ -134,6 +135,9 @@ const OrderSchema = new Schema({
       created_at: Date,
       id: String,
       state: String,
+      emailSendToSeller: {
+        type: Boolean,
+      },
       provider: {
         id: String,
         locations: [LocationSchema]

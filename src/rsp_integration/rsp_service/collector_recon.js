@@ -69,7 +69,7 @@ const orderDetailsData = orderDetails.map(data => ({
 // Filter matchedOnConfirmData based on conditions
 const matchedOnConfirmData = onConfirmWholeData.filter(onConfirm =>
   orderDetailsData.some(orderData =>
-      orderData.BPPID === onConfirm.context.bpp_id && orderData.ORDERID === onConfirm.message.order.id
+      orderData.BPPID === onConfirm.context.bpp_id && orderData.ORDERID === onConfirm.message.order.id && !onConfirm.message.order.emailSendToSeller
   )
 );
 
@@ -270,7 +270,6 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         try {
           const userEmails = matchedEmails.map(emailObj => emailObj.email);
           const orderIds = matchedOrderIds.map(orderObj => orderObj.orderId);
-          console.log('notifications has been created')
         //   Notification.create({
         //   event_type: 'collector-recon',
         //   details: `settlement is send to the RSP`,
@@ -281,21 +280,46 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
         //  console.error('Error creating notification:', error);
         // });
         // Convert matchedEmails and matchedOrderIds to arrays of strings
+       
 
-// console.log("userEmails",userEmails)
-// console.log("orderIds",orderIds)
+if(userEmails && userEmails.length>0 && orderIds && orderIds.length>0){
+  await sendEmail({
+  userEmails: userEmails,
+  orderIds: orderIds,
+  HTMLtemplate: '/template/collector.ejs',
+  userName: '',
+  subject: 'Payment Settlements | To the Seller',
+});
 
-// await sendEmail({
-//   userEmails: userEmails,
-//   orderIds: orderIds,
-//   HTMLtemplate: '/template/collector.ejs',
-//   userName: '',
-//   subject: 'Payment Settlements | To the Seller',
-// });
+for (let orderId of orderIds) {
+  try {
 
-          let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
+   const updatedOnConfirmData = await OnConfirmData.findOneAndUpdate(
+      {
+        "message.order.id": orderId,
+      },
+      {
+        $set: { "message.order.emailSendToSeller": true },
+      } ,
+      { new: true }
+    );
+    console.log("updatedOnConfirmData",updatedOnConfirmData)
+  } catch (error) {
+    console.error(
+      `Error updating OnConfirmData for orderId ${orderId}: ${error.message}`
+    );
+  }
+}
+
+
+let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
+console.log('axiosRes------->', axiosRes.data)
+}
+else{
+  let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
-        } catch (error) {
+    
+        }} catch (error) {
           return { success: false };
         }
         await recordCollectorReconStatus(orderIds)
