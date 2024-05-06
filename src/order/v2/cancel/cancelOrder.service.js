@@ -18,6 +18,8 @@ import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from "../../../utils/logger.js";
+import logger from "../../../utils/logger.js";
+
 
 
 const bppCancelService = new BppCancelService();
@@ -147,6 +149,8 @@ class CancelOrderService {
           });
 
           console.log("dbResponse----------------->", dbResponse);
+          
+          logger.info('dbResponseOnCancelOrderDbOperation----------------->',dbResponse)
 
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
@@ -172,6 +176,8 @@ class CancelOrderService {
               orderSchema.settle_status = SETTLE_STATUS.DEBIT;
             }
 
+
+
             await addOrUpdateOrderWithTransactionIdAndOrderId(
               protocolCancelResponse.context.transaction_id,
               protocolCancelResponse.message.order.id,
@@ -179,6 +185,7 @@ class CancelOrderService {
             );
           }
         }
+
 
         return protocolCancelResponse;
       }
