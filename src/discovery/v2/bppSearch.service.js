@@ -166,6 +166,7 @@ class BppSearchService {
         try {
 
             const response = await protocolGetProviders(searchRequest);
+            
 
             return { response };
         }

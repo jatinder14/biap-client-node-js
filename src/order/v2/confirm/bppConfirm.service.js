@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../utils/constants.js";
 import {protocolConfirm, protocolGetDumps} from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../../v1/db/order.js";
+import lokiLogger from '../../../utils/logger.js';
 
 class BppConfirmService {
 
@@ -298,7 +299,12 @@ class BppConfirmService {
 
 
             console.log({confirmRequest})
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmResponse)
+            
             let confirmResponse = await this.confirm(confirmRequest);
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseAfterConfirm',confirmResponse)
 
             if(confirmResponse.error){
                 //retrial attempt

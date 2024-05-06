@@ -79,6 +79,9 @@ class ConfirmOrderService {
         if (razorpayPaymentId) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
         console.log('orderSchema :>> ', orderSchema);
+
+        lokiLogger.info("orderSchema :>>",orderSchema)
+
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
             { ...orderSchema }

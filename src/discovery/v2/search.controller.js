@@ -276,7 +276,7 @@ class SearchController {
     * @return {callback}
     */
     getProviders(req, res, next) {
-        const searchRequest = req.query;
+      const searchRequest = req.query;
         const headers = req.headers;
 
         let targetLanguage = headers['targetlanguage'];
@@ -381,6 +381,7 @@ class SearchController {
         next(err);
       });
   }
+
   getLocation(req, res, next) {
     const searchRequest = req.query;
     const { id: locationId } = req.params;
@@ -494,6 +495,7 @@ class SearchController {
    * @return {callback}
    */
   getProviders(req, res, next) {
+
     const searchRequest = req.query;
 
     searchService
