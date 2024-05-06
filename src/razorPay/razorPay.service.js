@@ -119,7 +119,7 @@ try{
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
-instance.payments.refund(paymentId,{
+instance.payments.refund("pay_O78BsZ9VBuPpib",{
   "amount": "100",
   "speed": "optimum",
   "notes": {

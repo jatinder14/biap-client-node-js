@@ -3,6 +3,7 @@ import OrderMongooseModel from './order.js';
 import OrderRequestLogMongooseModel from "./orderRequestLog.js";
 import OrderHistory from "../../v2/db/orderHistory.js";
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
+import lokiLogger from '../../../utils/logger.js'
 
 /**
 * update order
@@ -106,7 +107,9 @@ const getOrderById = async (orderId) => {
         let order = await OrderMongooseModel.find({
             id: orderId
         }).lean();
-    
+        
+        lokiLogger.info('orderByID_dbService.js----------->',order)
+        
         if (!(order || order.length))
             throw new NoRecordFoundError();
         else{
@@ -116,6 +119,7 @@ const getOrderById = async (orderId) => {
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
             console.log({orderHistory,fulfillmentHistory})
+            lokiLogger.info('orderByID_FulfillmentHistoryAddedbService.js----------->',order)
             return order;
         }
     }
