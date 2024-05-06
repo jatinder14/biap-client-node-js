@@ -91,7 +91,7 @@ class CancelOrderService {
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
         }
-        if (protocolCancelResponse?.message?.order?.state == "Cancelled") {
+        if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
           const order=OrderMongooseModel.find({id:protocolCancelResponse?.message?.order?.id})
 
           lokiLogger.info("order_details_cancelOrder.service.js",order)
