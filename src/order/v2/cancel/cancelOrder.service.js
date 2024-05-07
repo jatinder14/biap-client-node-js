@@ -4,7 +4,7 @@ import {
   PROTOCOL_CONTEXT,
   SETTLE_STATUS,
 } from "../../../utils/constants.js";
-// import razorPayService from "../../../razorPay/razorPay.service.js";
+import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
   addOrUpdateOrderWithTransactionId,
   addOrUpdateOrderWithTransactionIdAndProvider,
@@ -23,6 +23,7 @@ import logger from "../../../utils/logger.js";
 
 
 const bppCancelService = new BppCancelService();
+const razorPayService = new RazorPayService()
 
 class CancelOrderService {
   /**
@@ -96,17 +97,26 @@ class CancelOrderService {
         if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
           const order=OrderMongooseModel.find({id:protocolCancelResponse?.message?.order?.id})
 
+          const razorpayPaymentId= order[0]?.payment?.razorpayPaymentId
+          let amount
+
+          if(protocolCancelResponse?.message?.payment?.amount == order?.payment.amount){
+            amount= protocolCancelResponse?.message?.payment?.amount
+          }
+
           lokiLogger.info("order_details_cancelOrder.service.js",order)
+          
           lokiLogger.info("protocolCancelResponse-----",protocolCancelResponse)
-            // razorPayService
-            // .createOrder(amount, currency)
-            // .then((user) => {
-            //   res.json({ data: user });
-            // })orderByID_FulfillmentHistoryAddedbService.js----------->
-            // .catch((err) => {
-            //   console.log("err", err);
-            //   next(err);
-            // });
+            
+          razorPayService
+            .refundOrder(razorpayPaymentId, amount)
+            .then((response) => {
+              lokiLogger.info('response>>>>>>>>>>',response)
+            })
+            .catch((err) => {
+              console.log("err", err);
+              lokiLogger.info('err>>>>>>>>>>',err)
+                     });
         }
 
         return protocolCancelResponse;
