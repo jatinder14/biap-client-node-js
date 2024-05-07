@@ -25,7 +25,19 @@ class BppSearchService {
         try {
 
             const response = await protocolSearchItems(searchRequest);
+            
+            if (!response) {
+            return { response: { 
+                count:0,
+                data: [],
+                pages:0
+            
+            } }; // Return blank response
 
+            }
+          if(searchRequest && searchRequest.categoryId){
+                response.data = response.data?.filter(item => item?.item_details?.category_id === searchRequest?.categoryId);
+           }
             return { response };
         }
         catch (err) {

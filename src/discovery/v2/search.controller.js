@@ -29,9 +29,15 @@ class SearchController {
       targetLanguage = undefined
     }
     searchService.search(searchRequest, targetLanguage).then(async response => {
-      if (!response || response === null)
-        throw new NoRecordFoundError("No result found");
-      else {
+      if (!response)
+        {
+          return { response: { 
+            count:0,
+            data: [],
+            pages:0
+        
+        } };
+        }    else {
 
         try {
           const userId = req.params.userId
