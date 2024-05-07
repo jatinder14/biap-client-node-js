@@ -67,7 +67,7 @@ class TopSellingService {
                 const matchedItemDetails = [];
                 productsIdsrray.forEach(productId => {
 
-                    const matchingItem = data.find(item => productId===item.item_details.id );
+                    const matchingItem = data?.find(item => productId===item.item_details.id );
                     if (matchingItem) {
                         matchedItemDetails.push(matchingItem);
                     }
