@@ -12,6 +12,7 @@ import {
     protocolProvideDetails, protocolGetLocationDetails,
     protocolGetItemDetails
 } from "../../utils/protocolApis/index.js";
+import NoRecordFoundError from "../../lib/errors/no-record-found.error.js";
 
 class BppSearchService {
 
@@ -25,6 +26,11 @@ class BppSearchService {
         try {
 
             const response = await protocolSearchItems(searchRequest);
+
+            if (!response || response==null) {
+                throw new NoRecordFoundError("No result found");
+
+            }
           if(searchRequest && searchRequest.categoryId){
                 response.data = response.data.filter(item => item?.item_details?.category_id === searchRequest?.categoryId);
            }
