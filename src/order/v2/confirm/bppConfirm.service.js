@@ -118,7 +118,7 @@ class BppConfirmService {
      * @param {Object} storedOrder 
      * @returns 
      */
-    async confirmV2(context, order = {}, storedOrder = {}) {
+    async confirmV2(context, order = {}, storedOrder = {}) {  
         try {
             storedOrder = storedOrder?.toJSON();
 
@@ -130,6 +130,8 @@ class BppConfirmService {
             //get TAT object from select request
 
             let on_select = await protocolGetDumps({type:"on_select",transaction_id:context.transaction_id})
+          console.log('order-???? :>> ', order);
+
 
             console.log("on_select------------->",on_select)
 
@@ -261,7 +263,7 @@ class BppConfirmService {
                             tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 "http/get":
                                 undefined,
-                            razorpayPaymentId:order.razorpayPaymentId,    
+                            razorpayPaymentId :order?.payment?.razorpayPaymentId,    
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",

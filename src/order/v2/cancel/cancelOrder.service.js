@@ -102,7 +102,7 @@ class CancelOrderService {
             // .createOrder(amount, currency)
             // .then((user) => {
             //   res.json({ data: user });
-            // })
+            // })orderByID_FulfillmentHistoryAddedbService.js----------->
             // .catch((err) => {
             //   console.log("err", err);
             //   next(err);
@@ -149,12 +149,12 @@ class CancelOrderService {
           });
 
           console.log("dbResponse----------------->", dbResponse);
-          
+
           logger.info('dbResponseOnCancelOrderDbOperation----------------->',dbResponse)
 
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
-          else {
+          else {  
             const orderSchema = dbResponse?.[0].toJSON();
             orderSchema.state = protocolCancelResponse?.message?.order?.state;
             if (
