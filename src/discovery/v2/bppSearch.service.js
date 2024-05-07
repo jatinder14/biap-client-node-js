@@ -25,7 +25,6 @@ class BppSearchService {
         try {
 
             const response = await protocolSearchItems(searchRequest);
-            // response === null
           if(searchRequest && searchRequest.categoryId){
                 response.data = response.data.filter(item => item.item_details.category_id === searchRequest.categoryId);
            }
