@@ -12,7 +12,6 @@ import {
     protocolProvideDetails, protocolGetLocationDetails,
     protocolGetItemDetails
 } from "../../utils/protocolApis/index.js";
-import NoRecordFoundError from "../../lib/errors/no-record-found.error.js";
 
 class BppSearchService {
 
