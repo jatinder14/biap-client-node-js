@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../utils/constants.js";
 import {protocolConfirm, protocolGetDumps} from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../../v1/db/order.js";
+import lokiLogger from '../../../utils/logger.js';
 
 class BppConfirmService {
 
@@ -117,7 +118,7 @@ class BppConfirmService {
      * @param {Object} storedOrder 
      * @returns 
      */
-    async confirmV2(context, order = {}, storedOrder = {}) {
+    async confirmV2(context, order = {}, storedOrder = {}) {  
         try {
             storedOrder = storedOrder?.toJSON();
 
@@ -129,6 +130,8 @@ class BppConfirmService {
             //get TAT object from select request
 
             let on_select = await protocolGetDumps({type:"on_select",transaction_id:context.transaction_id})
+          console.log('order-???? :>> ', order);
+
 
             console.log("on_select------------->",on_select)
 
@@ -260,7 +263,7 @@ class BppConfirmService {
                             tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 "http/get":
                                 undefined,
-                            razorpayPaymentId:order.razorpayPaymentId,    
+                            razorpayPaymentId :order?.payment?.razorpayPaymentId,    
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
@@ -298,7 +301,12 @@ class BppConfirmService {
 
 
             console.log({confirmRequest})
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmResponse)
+            
             let confirmResponse = await this.confirm(confirmRequest);
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseAfterConfirm',confirmResponse)
 
             if(confirmResponse.error){
                 //retrial attempt
