@@ -26,9 +26,14 @@ class BppSearchService {
         try {
 
             const response = await protocolSearchItems(searchRequest);
-
-            if (!response || response==null) {
-                throw new NoRecordFoundError("No result found");
+            
+            if (!response) {
+            return { response: { 
+                count:0,
+                data: [],
+                pages:0
+            
+            } }; // Return blank response
 
             }
           if(searchRequest && searchRequest.categoryId){
