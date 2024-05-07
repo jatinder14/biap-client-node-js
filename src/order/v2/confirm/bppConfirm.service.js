@@ -302,7 +302,7 @@ class BppConfirmService {
 
             console.log({confirmRequest})
 
-            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmResponse)
+            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmRequest)
             
             let confirmResponse = await this.confirm(confirmRequest);
 
