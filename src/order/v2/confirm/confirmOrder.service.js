@@ -69,7 +69,6 @@ class ConfirmOrderService {
      * @param {Object} confirmResponse 
      */
     async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {
-        console.log('razorpayPaymentId :>> ', razorpayPaymentId);
         let orderSchema = dbResponse?.toJSON() || {};
 
         orderSchema.messageId = confirmResponse?.context?.message_id;
@@ -107,10 +106,10 @@ class ConfirmOrderService {
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
-        console.log("dbResponse---------------->", dbResponse)
+        console.log("dbResponse??---------------->", dbResponse)
 
         lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
-
+        console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
 
         if (dbResponse?.paymentStatus === null) {
 
@@ -148,9 +147,9 @@ class ConfirmOrderService {
             // }else{
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
-           console.log('order------ :>> ', order);
+           console.log('dbResponse=============>  :>> ', order);
 
-           lokiLogger.info('dbResponse----------------> :>>' ,order)
+           lokiLogger.info('dbResponse=============> :>>' ,order)
            
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
