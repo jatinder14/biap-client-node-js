@@ -75,7 +75,7 @@ class ConfirmOrderService {
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
         
-        if (razorpayPaymentId) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
+        if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
         console.log('orderSchema :>> ', orderSchema);
 
@@ -437,7 +437,21 @@ class ConfirmOrderService {
                 }
                 catch (err) {
                     console.log("error confirmMultipleOrder ----", err)
-                    return err?.response?.data;
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while confirming this order with seller!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while confirming this order with seller!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -502,7 +516,22 @@ class ConfirmOrderService {
                         return await this.processOnConfirmResponse(protocolConfirmResponse);
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onConfirmMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while confirming this order with seller!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while confirming this order with seller!"
+                            }
+                        }
+                        
                     }
                 })
             );
@@ -510,7 +539,10 @@ class ConfirmOrderService {
             return onConfirmOrderResponse;
         }
         catch (err) {
-            throw err;
+            return {
+                success: false,
+                message: "We are encountering issue while confirming this order with seller!"
+            }
         }
     }
 }

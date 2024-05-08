@@ -5,7 +5,7 @@ export const onCollectorRecon = async (req)=> {
   console.log(" *========== Inside on_collector_recon ==============* ");
   console.log("req>>>>",JSON.stringify(req))
   try {
-    await Promise.all(
+    await Promise.allSettled(
        req.message.orderbook.orders.map(async (order) => {
 
         await OnConfirmData.updateMany({

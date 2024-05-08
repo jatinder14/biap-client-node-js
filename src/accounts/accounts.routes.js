@@ -29,6 +29,7 @@ rootRouter.get(
 
 
 rootRouter.post('/signup', userController.signUp);
+rootRouter.post('/resendOtp', userController.resendOtp);
   
 rootRouter.post('/verifyotp', userController.verifyOTP);
 

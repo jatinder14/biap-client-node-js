@@ -21,41 +21,36 @@ class TopSellingController {
         const { pageNumber = 1 } = query;
 
         if (pageNumber > 0) {
-            console.log("21>>>>>>>>>>>")
             topSellingService.getTopOrderList().then(async response => {
                 if (!response.error) {
                     const userId = req.params.userId
-                    console.log("userId:", userId)
-                    const findWishlistItem = await WishlistItem.find({
-                        "item.userId": userId
-                    });
-                    console.log("findWishlistItem>>>", findWishlistItem)
-                    const itemids = findWishlistItem.map((item) => {
-                        return item.item.id; // Assuming the id is nested inside the item object
-                    });
-                    console.log("itemids>>>", itemids)
-
-
-                    const itemDetaildata = response
-                    console.log("itemDetaildata", itemDetaildata)
-
-                    response.forEach((item) => {
-                        if (itemids.includes(item.id)) {
-                            console.log("Matched item id:", item.id);
-                            item.wishlistAdded = true;
-                        }
-                    });
+                    if (userId && userId != "null" && userId != "undefined") {
+                        const findWishlistItem = await WishlistItem.find({
+                            "item.userId": userId
+                        });
+                        const itemids = findWishlistItem.map((item) => {
+                            return item?.item?.id;
+                        });
+    
+                        response.forEach((item) => {
+                            if (itemids.includes(item.id)) {
+                                item.wishlistAdded = true;
+                            }
+                        });
+                    }
+                    
                     res.send(response)
                 }
-                else
-
-                    res.status(404).json(
+                else {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(
                         {
                             totalCount: 0,
                             orders: [],
                             error: response.error,
                         }
                     );
+                } 
             }).catch((err) => {
                 next(err);
             });

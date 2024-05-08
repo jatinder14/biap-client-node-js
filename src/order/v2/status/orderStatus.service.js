@@ -73,7 +73,22 @@ class OrderStatusService {
                     return orderResponse;
                 }
                 catch (err) {
-                    return err.response.data;
+                    console.log("error orderStatusV2 ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to fetch the order status!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to fetch the order status!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -331,7 +346,22 @@ class OrderStatusService {
                         
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onOrderStatusV2 ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!"
+                            }
+                        }
+                        
                     }
                 })
             );
@@ -464,7 +494,22 @@ class OrderStatusService {
                             return { ...onOrderStatusResponse };
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onOrderStatusDbOperation ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!"
+                            }
+                        }
+                        
                     }
                 })
             );

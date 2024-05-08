@@ -111,7 +111,22 @@ class SelectOrderService {
                     return response;
                 }
                 catch (err) {
-                    return err;
+                    console.log("error selectOrderResponse ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -161,7 +176,22 @@ class SelectOrderService {
                         return { ...onSelectResponse };
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onSelectMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!"
+                            }
+                        }
+                        
                     }
                 })
             );

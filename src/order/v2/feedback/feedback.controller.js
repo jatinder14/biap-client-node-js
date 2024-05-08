@@ -22,18 +22,21 @@ class OrderFeedbackController {
     try {
       const payload = req.body;
       if (!payload.email) {
+        res.header("Access-Control-Allow-Origin", "*");
         res.status(400).json({
           success: false,
           message: "Email is required!"
         });
       }
       if (!payload.message) {
+        res.header("Access-Control-Allow-Origin", "*");
         res.status(400).json({
           success: false,
           message: "Message is required!"
         });
       }
       if (!payload.subject) {
+        res.header("Access-Control-Allow-Origin", "*");
         res.status(400).json({
           success: false,
           message: "Subject is required!"
@@ -43,6 +46,7 @@ class OrderFeedbackController {
         res.send(response);
       });
     } catch (e) {
+      res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
         message: "Internal Server Error!"

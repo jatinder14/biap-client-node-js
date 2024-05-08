@@ -48,7 +48,13 @@ class InitOrderController {
                 });
             } else {
                 initOrderService.initMultipleOrder(orderRequests, user).then(response => {
-                    res.json(response);
+                    if (response?.some(el => el.success == false)) {
+                        res.header("Access-Control-Allow-Origin", "*");
+                        res.status(400).json(response);
+                    } else {
+                        res.json(response);
+                    }
+                    
                 }).catch((err) => {
                     next(err);
                 });
@@ -91,8 +97,13 @@ class InitOrderController {
         if (messageIds && messageIds.length && messageIds.trim().length) {
             const messageIdArray = messageIds.split(",");
 
-            initOrderService.onInitMultipleOrder(messageIdArray).then(orders => {
-                res.json(orders);
+            initOrderService.onInitMultipleOrder(messageIdArray).then(response => {
+                if (response?.some(el => el.success == false)) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });

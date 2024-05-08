@@ -35,7 +35,6 @@ class RazorPayController {
         res.json({ data: user });
       })
       .catch((err) => {
-        console.log("err", err);
         next(err);
       });
   }
@@ -74,6 +73,7 @@ class RazorPayController {
         });
     } catch (error) {
       console.log(error);
+      res.header("Access-Control-Allow-Origin", "*");
       return res.status(400).send(error);
     }
   }
@@ -83,6 +83,7 @@ class RazorPayController {
       res.json({ keyId: process.env.RAZORPAY_KEY_ID });
     } catch (error) {
       console.log(error);
+      res.header("Access-Control-Allow-Origin", "*");
       return res.status(400).send(error);
     }
   }
@@ -121,7 +122,7 @@ class RazorPayController {
             });
 
         } catch (error) {
-            console.log(error);
+            res.header("Access-Control-Allow-Origin", "*");
             return res.status(400).send(error)
         }
     }
@@ -130,7 +131,7 @@ class RazorPayController {
         try {
                 res.json({keyId:process.env.RAZORPAY_KEY_ID});
         } catch (error) {
-            console.log(error);
+            res.header("Access-Control-Allow-Origin", "*");
             return res.status(400).send(error)
         }
     }

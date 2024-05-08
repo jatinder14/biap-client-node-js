@@ -23,17 +23,19 @@ class OrderHistoryService {
                 limit = limit || 10,
                 orderId,
                 orderStatus,
-                pageNumber = pageNumber || 1,
+                pageNumber,
+                page,
                 parentOrderId,
                 state,
                 transactionId,
                 userId
             } = params;
+            let pageNo = pageNumber ? pageNumber: (page || 1)
 
 
             orderStatus = orderStatus??ORDER_STATUS.COMPLETED
             limit = parseInt(limit);
-            let skip = (pageNumber - 1) * limit;
+            let skip = (pageNo - 1) * limit;
             
             let clonedFilterObj = {};
 

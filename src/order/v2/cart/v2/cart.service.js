@@ -58,6 +58,7 @@ class CartService {
   async updateItem(data) {
     try {
       let cartItem = await CartItem.findOne({ _id: data.itemId });
+      if (data?._id) delete data?._id
       cartItem.item = data;
       return await cartItem.save();
     } catch (err) {
