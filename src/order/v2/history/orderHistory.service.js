@@ -20,10 +20,10 @@ class OrderHistoryService {
             let totalCount = 1;
 
             let {
-                limit = limit || 1,
+                limit = limit || 10,
                 orderId,
                 orderStatus,
-                pageNumber = pageNumber || 10,
+                pageNumber = pageNumber || 1,
                 parentOrderId,
                 state,
                 transactionId,
