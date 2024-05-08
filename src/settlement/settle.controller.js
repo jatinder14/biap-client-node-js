@@ -89,25 +89,26 @@ export async function getSettlementsHandler(req, res) {
             orderAnalysis.week[orderWeek].netItemPrice += parseFloat(itemPrice)
         })
 
+        const on_confirmData = await ConfirmModel.find({})
+
+
         const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
             updatedQuote, payment  }) => {
-            const on_confirm = await ConfirmModel.findOne({
-                where: {
-                    transactionId,
-                    action: "on_confirm",
-                },
-            });
+            
+            const on_confirm_data=on_confirmData.filter((data)=>data?.context?.transaction_id===transactionId && data?.context?.action==="on_confirm" )
+             const on_confirm=on_confirm_data[0]
+            
             const paymentObj = on_confirm?.message?.order?.payment ? JSON.parse(on_confirm?.message?.order?.payment): {};
-            const buyerPercentage = Number(paymentObj.params.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+            const buyerPercentage = Number(paymentObj?.params?.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
             const withHoldAmount = !paymentObj['@ondc/org/withholding_amount'] ? 0 : paymentObj['@ondc/org/withholding_amount']
 
-            const settlementAmount = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
-            Number(paymentObj.params.amount) - Number(buyerPercentage) - Number(withHoldAmount)
-            : Number(paymentObj.params.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
+            const settlementAmount = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
+            Number(paymentObj.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
+            : Number(paymentObj.params?.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
-            const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"].toLowerCase()=='percent'?
+            const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
             : Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
             const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
@@ -173,7 +174,7 @@ export async function getSettlementsHandler(req, res) {
         
             // Define an array to store filtered data for each state combination
             const filteredDataArray = states.map(state => {
-                return settlementData.filter(data => data.settlement_type === state);
+                return settlementData.filter(data => data?.settlement_type === state);
             });
             const combinedFilteredData = filteredDataArray.reduce((acc, curr) => acc.concat(curr), []);
             const startIndex = (pageValue - 1) * limitValue;
