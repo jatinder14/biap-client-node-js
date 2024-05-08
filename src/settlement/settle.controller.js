@@ -105,8 +105,8 @@ export async function getSettlementsHandler(req, res) {
             const withHoldAmount = !paymentObj['@ondc/org/withholding_amount'] ? 0 : paymentObj['@ondc/org/withholding_amount']
 
             const settlementAmount = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
-            Number(paymentObj.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
-            : Number(paymentObj.params?.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
+            Number(paymentObj?.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
+            : Number(paymentObj?.params?.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
             const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
