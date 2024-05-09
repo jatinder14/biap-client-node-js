@@ -171,7 +171,21 @@ class CancelOrderService {
         return protocolCancelResponse;
       }
     } catch (err) {
-      return err.response.data;
+      console.log("error onCancelOrder ----", err)
+      if (err?.response?.data) {
+          return err?.response?.data;
+      } else if (err?.message) {
+          return {
+              success: false,
+              message: "We are encountering issue while canceling this order",
+              error: err?.message
+          }
+      } else {
+          return {
+              success: false,
+              message: "We are encountering issue while canceling this order!"
+          }
+      }
     }
   }
 

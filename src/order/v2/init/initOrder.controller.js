@@ -48,7 +48,7 @@ class InitOrderController {
                 });
             } else {
                 initOrderService.initMultipleOrder(orderRequests, user).then(response => {
-                    if (response?.some(el => el.success == false)) {
+                    if (response?.some(el => el.success == false || el.status == 'failed')) {
                         res.header("Access-Control-Allow-Origin", "*");
                         res.status(400).json(response);
                     } else {
@@ -98,7 +98,7 @@ class InitOrderController {
             const messageIdArray = messageIds.split(",");
 
             initOrderService.onInitMultipleOrder(messageIdArray).then(response => {
-                if (response?.some(el => el.success == false)) {
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
                     res.header("Access-Control-Allow-Origin", "*");
                     res.status(400).json(response);
                 } else {

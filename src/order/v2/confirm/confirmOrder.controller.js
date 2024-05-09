@@ -41,7 +41,7 @@ class ConfirmOrderController {
       confirmOrderService
         .confirmMultipleOrder(orderRequests)
         .then((response) => {
-          if (response?.some(el => el.success == false)) {
+          if (response?.some(el => el.success == false || el.status == 'failed')) {
             res.header("Access-Control-Allow-Origin", "*");
             res.status(400).json(response);
           } else {
@@ -92,7 +92,7 @@ class ConfirmOrderController {
       confirmOrderService
         .onConfirmMultipleOrder(messageIdArray)
         .then(async (orders) => {
-          if (orders?.some(el => el.success == false)) {
+          if (orders?.some(el => el.success == false || el.status == 'failed')) {
             res.header("Access-Control-Allow-Origin", "*");
             res.status(400).json(orders);
           } else {
