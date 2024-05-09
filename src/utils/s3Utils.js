@@ -5,8 +5,8 @@ import fs from 'fs';
 async function uploadImageToS3(imagePath, bucketName, keyName) {
     // Create an S3 instance
     const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIASUMEMDRDTKC7YPV5',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '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',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     });
 
     // Read the image file
@@ -35,14 +35,14 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
 async function getSignedUrl(fileKey){
     const signedUrlExpireSeconds = 60 * 12
         const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIASUMEMDRDTKC7YPV5',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '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',
-            region: 'ap-south-1',
-            signatureVersion: 'v4'
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.S3_REGION,
+            signatureVersion: process.env.S3_VERSION
     });
 
     const url = s3.getSignedUrl('getObject', {
-        Bucket: 'wil-bharatham-preprod',
+        Bucket: process.env.S3_BUCKET,
         Key: fileKey,
         Expires: signedUrlExpireSeconds
     });
