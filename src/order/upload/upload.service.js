@@ -4,11 +4,7 @@ class UploadService {
         console.log("path---->",path);
         console.log("path--filetype-->",fileType);
 
-            // return await getSignedUrlForUpload({ path, fileType });
-            let result = await getSignedUrlForUpload({ path, fileType });
-        console.log('result22222',result)
-
-            return result 
+            return await getSignedUrlForUpload({ path, fileType });
     }
 }
 export default UploadService;
