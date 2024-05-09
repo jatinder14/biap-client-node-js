@@ -97,6 +97,7 @@ console.log('JSON.stringify(valuesToTranslate)',JSON.stringify(valuesToTranslate
 
   } catch (error) {
     console.error("Error:", error);
+    res.header("Access-Control-Allow-Origin", "*");
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };

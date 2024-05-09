@@ -19,6 +19,8 @@ import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
+import Refund from "../db/refund.js";
+
 
 
 
@@ -138,16 +140,31 @@ class CancelOrderService {
           
           lokiLogger.info("protocolCancelResponse-----",protocolCancelResponse)
             
-          if(QuoteAmount >= totalAmount){
-            razorPayService
-            .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
-            .then((response) => {
-              lokiLogger.info('response>>>>>>>>>>',response)
+          if(parseInt(QuoteAmount) >= parseInt(totalAmount)){
+            const orderRefund = Refund.findOne({id:order.id})
+            if(!orderRefund){
+              razorPayService
+              .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+              .then((response) => {
+                lokiLogger.info('response>>>>>>>>>>',response)
+                const refundDetails = new Refund({
+                  orderId: order.id,
+                  refundedAmount:totalAmount,
+                  itemId:order.items[0].id, 
+                  itemQty:order.items[0].quantity.count,
+                  isRefunded:true,
+                  transationId:order.transactionId,
+                  razorpayPaymentId:order.payment.razorpayPaymentId
+             }) 
+             lokiLogger.info('refundDetails_onCancelOrder>>>>>>>>>>',refundDetails) 
             })
-            .catch((err) => {
-              console.log("err", err);
-              lokiLogger.info('err>>>>>>>>>>',err)
-                     });
+              .catch((err) => {
+                console.log("err", err);
+                lokiLogger.info('err>>>>>>>>>>',err)
+                });
+           
+              }
+            
           }
         }
 

@@ -41,7 +41,12 @@ class ConfirmOrderController {
       confirmOrderService
         .confirmMultipleOrder(orderRequests)
         .then((response) => {
-          res.json(response);
+          if (response?.some(el => el.success == false)) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.status(400).json(response);
+          } else {
+              res.json(response);
+          }
         })
         .catch((err) => {
           next(err);
@@ -87,48 +92,37 @@ class ConfirmOrderController {
       confirmOrderService
         .onConfirmMultipleOrder(messageIdArray)
         .then(async (orders) => {
-          // console.log("orders>>>>>>>>>>",JSON.stringify(orders))
-          const userEmails = req.user.decodedToken.email;
-          const userName = req.user.decodedToken.name;
-          const orderIds = orders[0].message.order.id;
-          const emailWithoutNumber=orders[0].message.order.fulfillments[0].end.contact.email
-          const nameWithoutNumber=orders[0].message.order.fulfillments[0].end.location.address.name
-
-          console.log('emailWithoutNumber', emailWithoutNumber)
-          console.log('nameWithoutNumber', nameWithoutNumber)
-
-          console.log("orderIds>>>>>",orderIds)
-          const itemName = orders[0].message.order.quote.breakup[0].title;
-          const itemQuantity = orders[0].message.order.items[0].quantity.count;
-          const itemPrice = orders[0].message.order.quote.price.value;
-          const estimatedDelivery =
-         orders[0].message.order.fulfillments[0]["@ondc/org/TAT"];
-
-          // Parse the duration using moment.js
-          const duration = moment.duration(estimatedDelivery);
-
-          // Get the days and minutes from the duration
-          let days = duration.days();
-
-          // If duration is less than 1 day, set days to 1
-          if (days === 0 && duration.asMinutes() < 1440) {
-            console.log("days>>>>>", days);
-            days = "1";
+          if (orders?.some(el => el.success == false)) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.status(400).json(orders);
           } else {
-            days = `${days}`;
-          }
+            const userEmails = req.user.decodedToken.email;
+            const userName = req.user.decodedToken.name;
+            const orderIds = orders[0].message.order.id;
+            const emailWithoutNumber = orders[0].message.order.fulfillments[0].end.contact.email
+            const nameWithoutNumber = orders[0].message.order.fulfillments[0].end.location.address.name
+            const itemName = orders[0].message.order.quote.breakup[0].title;
+            const itemQuantity = orders[0].message.order.items[0].quantity.count;
+            const itemPrice = orders[0].message.order.quote.price.value;
+            const estimatedDelivery =
+              orders[0].message.order.fulfillments[0]["@ondc/org/TAT"];
 
-          console.log(
-            "notifications has been created",
-            itemName,
-            itemQuantity,
-            itemPrice,
-            estimatedDelivery
-          );
-          
-           if(emailWithoutNumber && nameWithoutNumber){
+            // Parse the duration using moment.js
+            const duration = moment.duration(estimatedDelivery);
 
-            Notification.create({
+            // Get the days and minutes from the duration
+            let days = duration.days();
+
+            // If duration is less than 1 day, set days to 1
+            if (days === 0 && duration.asMinutes() < 1440) {
+              days = "1";
+            } else {
+              days = `${days}`;
+            }
+
+            if (emailWithoutNumber && nameWithoutNumber) {
+
+              Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: nameWithoutNumber,
@@ -139,9 +133,9 @@ class ConfirmOrderController {
                 .catch((error) => {
                   console.error("Error creating notification:", error);
                 });
-           
+
               await sendEmail({
-                userEmails:emailWithoutNumber,
+                userEmails: emailWithoutNumber,
                 orderIds,
                 HTMLtemplate: "/template/acceptedOrder.ejs",
                 userName: nameWithoutNumber || "",
@@ -153,8 +147,8 @@ class ConfirmOrderController {
               });
               res.json(orders);
 
-          }else if(userEmails && userName){
-            Notification.create({
+            } else if (userEmails && userName) {
+              Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: userName,
@@ -165,7 +159,7 @@ class ConfirmOrderController {
                 .catch((error) => {
                   console.error("Error creating notification:", error);
                 });
-           
+
               await sendEmail({
                 userEmails,
                 orderIds,
@@ -179,13 +173,14 @@ class ConfirmOrderController {
               });
               res.json(orders);
 
-          }
-          else{
+            }
+            else {
 
-            res.json(orders);
+              res.json(orders);
 
+            }
           }
-        
+
         })
         .catch((err) => {
           next(err);

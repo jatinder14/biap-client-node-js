@@ -81,7 +81,7 @@ let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
   orderId: onConfirm.message.order.id
 }));
 
-    await Promise.all(
+    await Promise.allSettled(
       arrayOfArrays.map(async (el) => {
         const request_body = {};
         const baseUrl = "collector_recon";

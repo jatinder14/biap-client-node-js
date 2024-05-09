@@ -38,7 +38,12 @@ class SupportController {
 
         if (supportRequests && supportRequests.length) {
             supportService.supportMultipleOrder(supportRequests).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false)) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });
@@ -83,7 +88,12 @@ class SupportController {
             const messageIdArray = messageIds.split(",");
             
             supportService.onSupportMultipleOrder(messageIdArray).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false)) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });

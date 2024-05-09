@@ -309,8 +309,22 @@ class InitOrderService {
                     return bppResponse;
                 }
                 catch (err) {
-                    console.log(err)
-                    return err.response.data;
+                    console.log("error initMultipleOrder ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!"
+                        }
+                    }
+                    
                 }
 
             })
@@ -384,7 +398,22 @@ class InitOrderService {
                         return protocolInitResponse;
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onInitMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!"
+                            }
+                        }
+                        
                     }
                 })
             );

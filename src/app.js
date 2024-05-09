@@ -70,13 +70,12 @@ app.get("*", (req, res) => {
 app.use((err, req, res, next) => {
     if (err) {
         lokiLogger.error(`Error -->> `, err)
-        console.error('err.stack :', err.stack, 'err.message : ', err.message)
+        res.header("Access-Control-Allow-Origin", "*");
         res.status(500).json({ message: 'Internal server error!', success: false })
     } else {
         next()
     }
-}
-)
+})
 
 const port = process.env.PORT || 8080;
 

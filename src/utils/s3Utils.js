@@ -35,6 +35,7 @@ async function getSignedUrlForUpload(data) {
         const params = {
             Bucket: myBucket,
             Key: myKey,
+            ACL: 'public-read',
             Expires: signedUrlExpireSeconds
         };
         console.log("params------>", params);

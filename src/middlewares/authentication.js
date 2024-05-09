@@ -34,7 +34,7 @@ const authentication = (options) => async(req, res, next) => {
           "Origin, X-Requested-With, Content-Type, Accept, Authorization"
         );
         res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-        return res.status(401).json({'success' : false, 'message': "Invalid token" })
+        return res.status(401).json({'success' : false, 'message': "Authentication failed: Please login again!" })
       }
     }).catch(err => { 
       res.header("Access-Control-Allow-Origin", "*");
@@ -43,7 +43,7 @@ const authentication = (options) => async(req, res, next) => {
         "Origin, X-Requested-With, Content-Type, Accept, Authorization"
       );
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE"); 
-      return res.status(401).json({'success' : false, 'message': "Invalid token", error: err?.message })
+      return res.status(401).json({'success' : false, 'message': "Authentication failed: Please login again!", error: err?.message })
     });
   } else {
     // next(new UnauthenticatedError(MESSAGES.LOGIN_ERROR_USER_ACCESS_TOKEN_INVALID));
@@ -53,7 +53,7 @@ const authentication = (options) => async(req, res, next) => {
       "Origin, X-Requested-With, Content-Type, Accept, Authorization"
     );
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    return res.status(401).json({'success' : false, 'message': "Invalid token" })
+    return res.status(401).json({'success' : false, 'message': "Authentication failed: Please login again!" })
   }
 }catch(error){
   res.header("Access-Control-Allow-Origin", "*");
@@ -62,7 +62,7 @@ const authentication = (options) => async(req, res, next) => {
     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
   );
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  return res.status(403).json({'success' : false, 'message':"Invalid Token Signature" })
+  return res.status(403).json({'success' : false, 'message':"Invalid Token Signature!" })
 }
 };
 

@@ -13,6 +13,7 @@ export const onCollectorReconController = {
     const valid = ajv.validate(onCollectonschema, req.body);
     if (!valid) {
       console.log('Request body does not match the schema:', ajv.errors);
+      res.header("Access-Control-Allow-Origin", "*");
       return res.status(400).json({ error: 'Request body does not match the schema' });
     }
 

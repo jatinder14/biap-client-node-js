@@ -1,10 +1,11 @@
-import { onOrderCancel ,onUpdateStatus} from "../../../utils/protocolApis/index.js";
+import { onOrderCancel, onUpdateStatus } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
+import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
-    getOrderById, saveOrderRequest,getOrderRequest,
+    getOrderById, saveOrderRequest, getOrderRequest,
     addOrUpdateOrderWithdOrderId
 } from "../../v1/db/dbService.js";
-
+import lokiLogger from '../../../utils/logger.js'
 import BppUpdateService from "./bppUpdate.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
@@ -14,9 +15,11 @@ import OrderRequestLogMongooseModel from "../../v1/db/orderRequestLog.js";
 import Fulfillments from "../db/fulfillments.js";
 import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
+import Refund from "../db/refund.js";
 
 const bppUpdateService = new BppUpdateService();
+const razorPayService = new RazorPayService()
 
 class UpdateOrderService {
 
@@ -38,67 +41,67 @@ class UpdateOrderService {
                 bpp_uri: orderDetails[0]?.bpp_uri,
                 cityCode: orderDetails[0].city,
                 city: orderDetails[0].city,
-                domain:orderDetails[0].domain
+                domain: orderDetails[0].domain
             });
 
-            orderRequest.context = {...context}
-            const data = {context:context,data:orderRequest}
+            orderRequest.context = { ...context }
+            const data = { context: context, data: orderRequest }
 
             let fulfilments = []
             let dbFulfillment = new Fulfillments();
             let type = '';
-            let code= '';
-            if(orderRequest.message.order.items[0].tags.update_type==="return"){
-                type ='Return';
+            let code = '';
+            if (orderRequest.message.order.items[0].tags.update_type === "return") {
+                type = 'Return';
                 code = 'return_request'
             }
 
             let fulfillmentId;
             let tags = []
-            for(let item of orderRequest.message.order.items){
+            for (let item of orderRequest.message.order.items) {
 
-                if(!fulfillmentId){
-                   fulfillmentId=dbFulfillment._id;
+                if (!fulfillmentId) {
+                    fulfillmentId = dbFulfillment._id;
                 }
-                let returnRequest =                                 {
-                    "code":code,
+                let returnRequest = {
+                    "code": code,
                     "list":
                         [
                             {
-                                "code":"id",
-                                "value":fulfillmentId
+                                "code": "id",
+                                "value": fulfillmentId
                             },
                             {
-                                "code":"item_id",
-                                "value":item.id
+                                "code": "item_id",
+                                "value": item.id
                             },
                             {
-                                "code":"parent_item_id",
-                                "value":item.tags.parent_item_id??""
+                                "code": "parent_item_id",
+                                "value": item.tags.parent_item_id ?? ""
                             },
                             {
-                                "code":"item_quantity",
-                                "value":`${item.quantity.count}`
+                                "code": "item_quantity",
+                                "value": `${item.quantity.count}`
                             },
                             {
-                                "code":"reason_id",
+                                "code": "reason_id",
                                 "value": `${item.tags.reason_code}`
                             },
                             {
-                                "code":"reason_desc",
-                                "value":"detailed description for return"
+                                "code": "reason_desc",
+                                "value": "detailed description for return"
                             },
                             {
-                                "code":"images",
-                                "value":`${item.tags.image}`
+                                "code": "images",
+                                "value": `${item.tags.image}`
                             },
                             {
-                                "code":"ttl_approval",
-                                "value":"PT24H"
+                                "code": "ttl_approval",
+                                "value": "PT24H"
                             },
                             {
-                                "code":"ttl_reverseqc",
-                                "value":"P3D"
+                                "code": "ttl_reverseqc",
+                                "value": "P3D"
                             }
                         ]
                 }
@@ -106,40 +109,40 @@ class UpdateOrderService {
 
                 dbFulfillment.itemId = item.id
                 dbFulfillment.orderId = orderRequest.message.order.id
-                dbFulfillment.parent_item_id = item.tags.parent_item_id??""
+                dbFulfillment.parent_item_id = item.tags.parent_item_id ?? ""
                 dbFulfillment.item_quantity = item.quantity.count
                 dbFulfillment.reason_id = item.tags.reason_code
                 dbFulfillment.reason_desc = 'detailed description for return'
                 dbFulfillment.images = item.tags.image
-                dbFulfillment.type =type
-                dbFulfillment.id =fulfillmentId;
+                dbFulfillment.type = type
+                dbFulfillment.id = fulfillmentId;
                 await dbFulfillment.save();
             }
 
-            let  fulfilment =
-                {
-                    "type":type,
-                    "tags":tags
-                }
+            let fulfilment =
+            {
+                "type": type,
+                "tags": tags
+            }
 
             fulfilments.push(fulfilment);
 
             //1. create a new fullfillment
 
-           let order = {
-                "update_target":"item",
+            let order = {
+                "update_target": "item",
                 "order":
                 {
-                    "id":orderRequest.message.order.id,
-                    "fulfillments":fulfilments
+                    "id": orderRequest.message.order.id,
+                    "fulfillments": fulfilments
                 }
             }
 
-            const transactionId= data.context.transaction_id
-            const messageId= data.context.message_id
+            const transactionId = data.context.transaction_id
+            const messageId = data.context.message_id
             const request = data.data
             const requestType = data.context.action
-            const orderSaved =new OrderRequestLogMongooseModel({requestType,transactionId,messageId,request})
+            const orderSaved = new OrderRequestLogMongooseModel({ requestType, transactionId, messageId, request })
 
             await orderSaved.save();
 
@@ -167,123 +170,123 @@ class UpdateOrderService {
     * cancel order
     * @param {Object} orderRequest
     */
-    async updateForPaymentObject(orderRequest,protocolUpdateResponse) {
+    async updateForPaymentObject(orderRequest, protocolUpdateResponse) {
         try {
 
 
             const orderDetails = await getOrderById(orderRequest.message.order.id);
 
-            const orderRequestDb = await getOrderRequest({transaction_id:orderRequest.context.transaction_id,message_id:orderRequest.context.message_id,requestType:'update'})
+            const orderRequestDb = await getOrderRequest({ transaction_id: orderRequest.context.transaction_id, message_id: orderRequest.context.message_id, requestType: 'update' })
 
-            if(!orderRequestDb?.request?.message?.payment){
+            if (!orderRequestDb?.request?.message?.payment) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
                     action: PROTOCOL_CONTEXT.UPDATE,
                     transactionId: orderDetails?.transactionId,
                     bppId: orderRequest?.context?.bpp_id,
                     bpp_uri: orderDetails?.bpp_uri,
-                    cityCode:orderDetails.city,
-                    city:orderDetails.city
+                    cityCode: orderDetails.city,
+                    city: orderDetails.city
                 });
 
                 const { message = {} } = orderRequest || {};
-                const { update_target,order } = message || {};
+                const { update_target, order } = message || {};
 
                 if (!(context?.bpp_id)) {
                     throw new CustomError("BPP Id is mandatory");
                 }
 
-                console.log("orderDetails?.updatedQuote?.price?.value----1->",orderDetails?.updatedQuote?.price?.value)
-                console.log("orderDetails?.updatedQuote?.price?.value----2->",protocolUpdateResponse.message.order.quote?.price?.value)
-                console.log("orderDetails?.updatedQuote?.price?.value---message id--3>",protocolUpdateResponse.context.message_id)
+                console.log("orderDetails?.updatedQuote?.price?.value----1->", orderDetails?.updatedQuote?.price?.value)
+                console.log("orderDetails?.updatedQuote?.price?.value----2->", protocolUpdateResponse.message.order.quote?.price?.value)
+                console.log("orderDetails?.updatedQuote?.price?.value---message id--3>", protocolUpdateResponse.context.message_id)
 
                 let originalQouteUpdated = false;
                 let updateQoute = false
-                if(parseInt(orderDetails?.updatedQuote?.price?.value) > parseInt(protocolUpdateResponse.message.order.quote?.price?.value)){
+                if (parseInt(orderDetails?.updatedQuote?.price?.value) > parseInt(protocolUpdateResponse.message.order.quote?.price?.value)) {
                     originalQouteUpdated = true;
                     const lastUpdatedItems = orderRequestDb.request.message.items;
-                    console.log("qoute updated ------originalQouteUpdated---->",originalQouteUpdated)
+                    console.log("qoute updated ------originalQouteUpdated---->", originalQouteUpdated)
 
-                    console.log("qoute updated ------originalQouteUpdated---qoute-items>",lastUpdatedItems)
+                    console.log("qoute updated ------originalQouteUpdated---qoute-items>", lastUpdatedItems)
 
-                    console.log("qoute updated ------originalQouteUpdated---qoute-items protocolUpdateResponse.message.order.items>",protocolUpdateResponse.message.order.items)
+                    console.log("qoute updated ------originalQouteUpdated---qoute-items protocolUpdateResponse.message.order.items>", protocolUpdateResponse.message.order.items)
 
 
                     //check if item state is liquidated or cancelled
                     //if there is update qoute recieved from on_update we need to calculate refund amount
                     //refund amount = original quote - update quote
 
-                    for(const item of protocolUpdateResponse.message.order.items){
-                        let updateItem =  orderDetails.items.find((i)=>{return i.id===item.id});
-                        if(updateItem){
+                    for (const item of protocolUpdateResponse.message.order.items) {
+                        let updateItem = orderDetails.items.find((i) => { return i.id === item.id });
+                        if (updateItem) {
                             console.log("**************************************",)
-                            console.log("update item found---->",updateItem.id)
-                            console.log("update item found----item?.tags?.status>item?.tags?.status",item?.tags?.status);
-                            console.log("update item found----item?.tags?.status>item?.tags?.status",item);
-                            console.log("update item found----updateItem.return_status",updateItem.return_status)
+                            console.log("update item found---->", updateItem.id)
+                            console.log("update item found----item?.tags?.status>item?.tags?.status", item?.tags?.status);
+                            console.log("update item found----item?.tags?.status>item?.tags?.status", item);
+                            console.log("update item found----updateItem.return_status", updateItem.return_status)
                             //check the status
-                            if(['Cancelled','Liquidated','Return_Picked'].includes(item?.return_status)  && item?.return_status !== updateItem.return_status && item?.cancellation_status !== updateItem.cancellation_status){
-                                updateQoute =true;
-                                console.log("update item found--mark true-->",updateItem.id)
-                            }else{
+                            if (['Cancelled', 'Liquidated', 'Return_Picked'].includes(item?.return_status) && item?.return_status !== updateItem.return_status && item?.cancellation_status !== updateItem.cancellation_status) {
+                                updateQoute = true;
+                                console.log("update item found--mark true-->", updateItem.id)
+                            } else {
                                 console.log("-----does not match------")
                             }
                         }
                     }
 
-                   // const olderQuote = await OrderRequestLogMongooseModel.find({transactionId:orderDetails?.transactionId,requestType:'on_update'}).sort({createdAt:'desc'});
-                   //
-                   //  let previouseQoute ;
-                   //  if(!olderQuote){
-                   //      previouseQoute = olderQuote.map((item) => parseInt(item?.request?.payment? item?.request?.payment["@ondc/org/settlement_details"][0]?.settlement_amount:0)|| 0).reduce((a, b) => +a + +b)
-                   //  }else{
-                   //      previouseQoute = olderQuote.map((item) => parseInt(item?.request?.payment? item?.request?.payment["@ondc/org/settlement_details"][0]?.settlement_amount:0)|| 0).reduce((a, b) => +a + +b)
-                   //  }
+                    // const olderQuote = await OrderRequestLogMongooseModel.find({transactionId:orderDetails?.transactionId,requestType:'on_update'}).sort({createdAt:'desc'});
+                    //
+                    //  let previouseQoute ;
+                    //  if(!olderQuote){
+                    //      previouseQoute = olderQuote.map((item) => parseInt(item?.request?.payment? item?.request?.payment["@ondc/org/settlement_details"][0]?.settlement_amount:0)|| 0).reduce((a, b) => +a + +b)
+                    //  }else{
+                    //      previouseQoute = olderQuote.map((item) => parseInt(item?.request?.payment? item?.request?.payment["@ondc/org/settlement_details"][0]?.settlement_amount:0)|| 0).reduce((a, b) => +a + +b)
+                    //  }
 
-                    let lastUpdatedQoute = parseInt(orderDetails?.updatedQuote?.price?.value??0);
-                    console.log("lastUpdatedQoute--->",orderDetails?.updatedQuote?.price?.value??0)
+                    let lastUpdatedQoute = parseInt(orderDetails?.updatedQuote?.price?.value ?? 0);
+                    console.log("lastUpdatedQoute--->", orderDetails?.updatedQuote?.price?.value ?? 0)
 
                     let refundAmount = 0
                     // if(lastUpdatedQoute==0){
                     //     refundAmount = parseInt(orderDetails?.quote?.price?.value) - parseInt(protocolUpdateResponse.message.order.quote?.price?.value)//- previouseQoute
                     // }else{
-                        refundAmount = lastUpdatedQoute-parseInt(protocolUpdateResponse.message.order.quote?.price?.value)//- previouseQoute
-//                    }
+                    refundAmount = lastUpdatedQoute - parseInt(protocolUpdateResponse.message.order.quote?.price?.value)//- previouseQoute
+                    //                    }
 
-                    console.log("refund value--->",refundAmount)
-                   // console.log("refund value--previouseQoute->",previouseQoute)
+                    console.log("refund value--->", refundAmount)
+                    // console.log("refund value--previouseQoute->",previouseQoute)
                     let paymentSettlementDetails =
-                        {
-                            "@ondc/org/settlement_details":
-                                [
-                                    {
-                                        "settlement_counterparty": "buyer",
-                                        "settlement_phase": "refund",
-                                        "settlement_type":"upi",//TODO: take it from payment object of juspay
-                                        "settlement_amount":''+refundAmount,
-                                        "settlement_timestamp":new Date()
-                                    }
-                                ]
-                        }
+                    {
+                        "@ondc/org/settlement_details":
+                            [
+                                {
+                                    "settlement_counterparty": "buyer",
+                                    "settlement_phase": "refund",
+                                    "settlement_type": "upi",//TODO: take it from payment object of juspay
+                                    "settlement_amount": '' + refundAmount,
+                                    "settlement_timestamp": new Date()
+                                }
+                            ]
+                    }
 
-                    order.payment= paymentSettlementDetails
+                    order.payment = paymentSettlementDetails
 
                     orderRequest.payment = paymentSettlementDetails
 
 
                     //if(orderRequest.context.message_id){ //if messageId exist then do not save order again
-                    await saveOrderRequest({context,data:orderRequest});
+                    await saveOrderRequest({ context, data: orderRequest });
                     // }
                     //
 
-                    if(updateQoute){
+                    if (updateQoute) {
                         return await bppUpdateService.update(
                             context,
                             'payment',
                             order,
                             orderDetails
                         );
-                    }else{
+                    } else {
                         return {}
                     }
 
@@ -304,7 +307,7 @@ class UpdateOrderService {
     async onUpdate(messageId) {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-            
+
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -350,13 +353,97 @@ class UpdateOrderService {
                         orderId: protocolUpdateResponse.message.order.id
                     })
 
+
+
                     dbResponse.save()
                     fullfillmentHistory.save()
+
+                    //check if item state is liquidated or cancelled
+                    //if there is update qoute recieved from on_update we need to calculate refund amount
+                    let totalAmount = 0
+
+
+                    if (latestFullfilement?.message?.order?.fulfillments?.state == 'Cancelled') {
+
+                        protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
+                            let tags = fulfillment?.tags;
+                            if (tags && Array.isArray(tags)) {
+                                tags.forEach(tag => {
+                                    if (tag?.code === 'quote_trail') {
+                                        let quoteTrail = tag.list;
+                                        if (Array.isArray(quoteTrail)) {
+                                            quoteTrail.forEach(trailItem => {
+                                                if (trailItem.code === 'value') {
+                                                    totalAmount += parseFloat(trailItem.value);
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+
+                    }
+                    else if (latestFullfilement?.message.order?.fulfillments?.state == 'Liquidated') {
+
+                        protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
+                            let tags = fulfillment?.tags;
+                            if (tags && Array.isArray(tags)) {
+                                tags.forEach(tag => {
+                                    if (tag?.code === 'quote_trail') {
+                                        let quoteTrail = tag.list;
+                                        if (Array.isArray(quoteTrail)) {
+                                            quoteTrail.forEach(trailItem => {
+                                                if (trailItem.code === 'value') {
+                                                    totalAmount += parseFloat(trailItem.value);
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+                    }
+
+                    else if (latestFullfilement?.message.order?.fulfillments?.state == 'Return_Picked') {
+                        totalAmount = protocolUpdateResponse.message.order.quote.price.value
+                    }
+
+                    const orderRefunded= Refund.find({id: dbResponse.id})
+                    
+                    if(!orderRefunded){
+                        razorPayService
+                        .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+                        .then((response) => {
+                            lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
+                            const refundDetails = new Refund({
+                                orderId: dbResponse.id,
+                                refundedAmount:totalAmount,
+                                itemId:dbResponse.items[0].id, 
+                                itemQty:dbResponse.items[0].quantity.count,
+                                isRefunded:true,
+                                transationId:dbResponse.transactionId,
+                                razorpayPaymentId:dbResponse.payment.razorpayPaymentId
+
+                            })
+                            lokiLogger.info('refundDetails>>>>>>>>>>', refundDetails)
+                        })
+                        .catch((err) => {
+                            console.log("err", err);
+                            lokiLogger.info('err_response_razorpay_on_update>>>>>>>>>>', err)
+                        });
+                    }
+                    
                 }
 
-                return protocolUpdateResponse;
+
             }
+            return protocolUpdateResponse;
         }
+
+
         catch (err) {
             throw err;
         }
@@ -387,8 +474,8 @@ class UpdateOrderService {
 
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
 
-                    console.log("orderDetails?.updatedQuote?.price?.value----->",protocolUpdateResponse.message.order.quote?.price?.value)
-                    console.log("orderDetails?.updatedQuote?.price?.value---message id-->",protocolUpdateResponse.context.message_id)
+                    console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
+                    console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
 
                     const dbResponse = await OrderMongooseModel.find({
                         transactionId: protocolUpdateResponse.context.transaction_id,
@@ -399,13 +486,13 @@ class UpdateOrderService {
                         throw new NoRecordFoundError();
                     else {
 
-                        if(protocolUpdateResponse?.message?.update_target ===  'billing'){
+                        if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;
                         }
                         const orderSchema = dbResponse?.[0].toJSON();
                         orderSchema.state = protocolUpdateResponse?.message?.order?.state;
 
-                        if(protocolUpdateResponse?.message?.order?.quote){
+                        if (protocolUpdateResponse?.message?.order?.quote) {
                             orderSchema.updatedQuote = protocolUpdateResponse?.message?.order?.quote
                         }
 
@@ -427,111 +514,111 @@ class UpdateOrderService {
 
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments
 
-                        for(let fl of fulfillments){
+                        for (let fl of fulfillments) {
                             //find if fl present
-                            let dbFl = await Fulfillments.findOne({orderId:protocolUpdateResponse?.message?.order.id,id:fl.id});
+                            let dbFl = await Fulfillments.findOne({ orderId: protocolUpdateResponse?.message?.order.id, id: fl.id });
 
-                            console.log("dbFl--->",dbFl)
-                            if(!dbFl){
+                            console.log("dbFl--->", dbFl)
+                            if (!dbFl) {
                                 //save new fl
                                 let newFl = new Fulfillments();
                                 newFl.id = fl.id;
                                 newFl.orderId = protocolUpdateResponse?.message?.order.id;
                                 newFl.state = fl.state;
-                                if(fl.type ==='Return' || fl.type ==='Cancel'){
-                                    newFl.type=fl.type
+                                if (fl.type === 'Return' || fl.type === 'Cancel') {
+                                    newFl.type = fl.type
                                     //dbFl.tags = fl.tags;
-                                }else{
-                                    newFl.type='orderFulfillment';
+                                } else {
+                                    newFl.type = 'orderFulfillment';
                                 }
                                 dbFl = await newFl.save();
 
-                            }else{
+                            } else {
                                 dbFl.state = fl.state;
-                                if(fl.type ==='Return' || fl.type ==='Cancel'){
+                                if (fl.type === 'Return' || fl.type === 'Cancel') {
                                     dbFl.tags = fl.tags;
                                 }
                                 await dbFl.save();
                             }
 
-                                // if(fulfillment.type==='Delivery'){
-                                let existingFulfillment  =await FulfillmentHistory.findOne({
-                                    id:fl.id,
-                                    state:fl.state.descriptor.code
+                            // if(fulfillment.type==='Delivery'){
+                            let existingFulfillment = await FulfillmentHistory.findOne({
+                                id: fl.id,
+                                state: fl.state.descriptor.code
+                            })
+                            if (!existingFulfillment) {
+                                await FulfillmentHistory.create({
+                                    orderId: protocolUpdateResponse?.message?.order.id,
+                                    type: fl.type,
+                                    id: fl.id,
+                                    state: fl.state.descriptor.code,
+                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at?.toString()
                                 })
-                                if(!existingFulfillment){
-                                    await FulfillmentHistory.create({
-                                        orderId:protocolUpdateResponse?.message?.order.id,
-                                        type:fl.type,
-                                        id:fl.id,
-                                        state:fl.state.descriptor.code,
-                                        updatedAt:protocolUpdateResponse?.message?.order?.updated_at?.toString()
-                                    })
-                                }
-                                // }
+                            }
+                            // }
 
-                            if(fl?.state?.descriptor?.code ==='Cancelled' || fl?.state?.descriptor?.code ==='Return_Picked'|| fl?.state?.descriptor?.code ==='Liquidated'){
+                            if (fl?.state?.descriptor?.code === 'Cancelled' || fl?.state?.descriptor?.code === 'Return_Picked' || fl?.state?.descriptor?.code === 'Liquidated') {
                                 //calculate refund amount from qoute trail
                                 //check if settlement already done!
 
-                                let qouteTrails = fl.tags.filter(i=> i.code==='quote_trail');
+                                let qouteTrails = fl.tags.filter(i => i.code === 'quote_trail');
                                 let refundAmount = 0;
-                                for(let trail of qouteTrails){
-                                    let amount =trail?.list?.find(i=>i.code==='value')?.value??0;
-                                    refundAmount+=parseFloat(amount);
+                                for (let trail of qouteTrails) {
+                                    let amount = trail?.list?.find(i => i.code === 'value')?.value ?? 0;
+                                    refundAmount += parseFloat(amount);
                                 }
 
-                                console.log("amount",refundAmount*-1);
+                                console.log("amount", refundAmount * -1);
 
-                                let oldSettlement = await Settlements.findOne({orderId:dbFl.orderId,fulfillmentId:dbFl.id})
-                                if(!oldSettlement){
-                                    let settlementContext =  protocolUpdateResponse.context;
+                                let oldSettlement = await Settlements.findOne({ orderId: dbFl.orderId, fulfillmentId: dbFl.id })
+                                if (!oldSettlement) {
+                                    let settlementContext = protocolUpdateResponse.context;
                                     let settlementTimeStamp = new Date();
                                     //send update request
                                     let updateRequest = {
                                         "context":
-                                            {
-                                                "domain":settlementContext.domain,
-                                                "action":"update",
-                                                "core_version":"1.2.0",
-                                                "bap_id":settlementContext.bap_id,
-                                                "bap_uri":settlementContext.bap_uri,
-                                                "bpp_id":settlementContext.bpp_id,
-                                                "bpp_uri":settlementContext.bpp_uri,
-                                                "transaction_id":settlementContext.transaction_id,
-                                                "message_id":uuidv4(),
-                                                "city":settlementContext.city,
-                                                "country":settlementContext.country,
-                                                "timestamp":settlementTimeStamp
-                                            },
+                                        {
+                                            "domain": settlementContext.domain,
+                                            "action": "update",
+                                            "core_version": "1.2.0",
+                                            "bap_id": settlementContext.bap_id,
+                                            "bap_uri": settlementContext.bap_uri,
+                                            "bpp_id": settlementContext.bpp_id,
+                                            "bpp_uri": settlementContext.bpp_uri,
+                                            "transaction_id": settlementContext.transaction_id,
+                                            "message_id": uuidv4(),
+                                            "city": settlementContext.city,
+                                            "country": settlementContext.country,
+                                            "timestamp": settlementTimeStamp
+                                        },
                                         "message":
+                                        {
+                                            "update_target": "payment",
+                                            "order":
                                             {
-                                                "update_target":"payment",
-                                                "order":
-                                                    {
-                                                        "id":dbFl.orderId,
-                                                        "fulfillments":
-                                                            [
-                                                                {
-                                                                    "id":dbFl.id,
-                                                                    "type":dbFl.type
-                                                                }
-                                                            ],
-                                                        "payment":
+                                                "id": dbFl.orderId,
+                                                "fulfillments":
+                                                    [
+                                                        {
+                                                            "id": dbFl.id,
+                                                            "type": dbFl.type
+                                                        }
+                                                    ],
+                                                "payment":
+                                                {
+                                                    "@ondc/org/settlement_details":
+                                                        [
                                                             {
-                                                                "@ondc/org/settlement_details":
-                                                                    [
-                                                                        {
-                                                                            "settlement_counterparty":"buyer",
-                                                                            "settlement_phase":"refund",
-                                                                            "settlement_type":"upi",
-                                                                            "settlement_amount":`${refundAmount*-1}`, //TODO; fix this post qoute calculation
-                                                                            "settlement_timestamp":settlementTimeStamp
-                                                                        }
-                                                                    ]
+                                                                "settlement_counterparty": "buyer",
+                                                                "settlement_phase": "refund",
+                                                                "settlement_type": "upi",
+                                                                "settlement_amount": `${refundAmount * -1}`, //TODO; fix this post qoute calculation
+                                                                "settlement_timestamp": settlementTimeStamp
                                                             }
-                                                    }
+                                                        ]
+                                                }
                                             }
+                                        }
                                     }
 
                                     let newSettlement = await Settlements();
@@ -549,17 +636,17 @@ class UpdateOrderService {
                             }
                         }
 
-                       // console.log("updateItems",updateItems)
+                        // console.log("updateItems",updateItems)
                         let updateItems = []
-                       for(let item of protocolItems){
+                        for (let item of protocolItems) {
                             let updatedItem = {}
-                            let fulfillmentStatus = await Fulfillments.findOne({id:item.fulfillment_id,orderId:protocolUpdateResponse.message.order.id}); //TODO: additional filter of order id required
-                           
+                            let fulfillmentStatus = await Fulfillments.findOne({ id: item.fulfillment_id, orderId: protocolUpdateResponse.message.order.id }); //TODO: additional filter of order id required
+
 
                             // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO TEMP testing
-                            updatedItem = orderSchema.items.filter(element=> element.id === item.id);
-                            let temp=updatedItem[0];
-                            if(fulfillmentStatus.type==='Return' || fulfillmentStatus.type==='Cancel' ){
+                            updatedItem = orderSchema.items.filter(element => element.id === item.id);
+                            let temp = updatedItem[0];
+                            if (fulfillmentStatus.type === 'Return' || fulfillmentStatus.type === 'Cancel') {
                                 item.return_status = fulfillmentStatus?.state?.descriptor?.code;
                                 item.cancellation_status = fulfillmentStatus?.state?.descriptor?.code;
                                 // orderSchema.settle_status = SETTLE_STATUS.DEBIT
@@ -570,7 +657,7 @@ class UpdateOrderService {
                             updateItems.push(item)
                         }
 
-                        console.log("updateItems",updateItems)
+                        console.log("updateItems", updateItems)
                         //get item from db and update state for item
                         orderSchema.items = updateItems;
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
