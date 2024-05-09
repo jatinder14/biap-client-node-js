@@ -21,12 +21,22 @@ class UpdateOrderController {
 
                     console.log("update orders--------------->",order);
                     return await cancelOrderService.update(order);
-                } catch (err) {
-
-                    console.log("update orders---------err------>",err);
-
-                    return err.response.data;
-                    // throw err;
+                }  catch (err) {
+                    console.log("error cancelOrderService.update ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while updating this order",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while updating this order!"
+                        }
+                    }
                 }
             })
         );

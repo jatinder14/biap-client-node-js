@@ -65,7 +65,21 @@ class OrderStatusService {
                     return orderResponse;
                 }
                 catch (err) {
-                    return err.response.data;
+                    console.log("error orderStatusV2 ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while fetching order status!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while fetching order status!"
+                        }
+                    }
                 }
             })
         );

@@ -161,7 +161,7 @@ class BppInitService {
         catch (err) {
 
             console.log("error------->",err)
-            err.response.data.initRequest =order
+            // err.response.data.initRequest =order
 
             throw err;
         }

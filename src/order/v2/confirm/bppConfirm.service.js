@@ -27,7 +27,7 @@ class BppConfirmService {
         catch (err) {
 
             //set confirm request in error data
-            err.response.data.confirmRequest =confirmRequest
+            // err.response.data.confirmRequest =confirmRequest
             throw err;
         }
     }
