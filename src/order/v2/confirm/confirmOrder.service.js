@@ -68,8 +68,7 @@ class ConfirmOrderService {
      * @param {Object} dbResponse 
      * @param {Object} confirmResponse 
      */
-    async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {
-        
+    async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {    
     let orderSchema = dbResponse?.toJSON() || {};
 
         orderSchema.messageId = confirmResponse?.context?.message_id;

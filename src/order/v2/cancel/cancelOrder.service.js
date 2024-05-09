@@ -94,22 +94,53 @@ class CancelOrderService {
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
         }
+
         if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
+            
+
           const order=OrderMongooseModel.find({id:protocolCancelResponse?.message?.order?.id})
+          
+          let QuoteAmount=0
+
+          if(order?.updatedQuote){
+            QuoteAmount= order?.updatedQuote?.price?.value
+          }
+
+          else{
+            QuoteAmount= order?.quote?.price?.value
+          }
 
           const razorpayPaymentId= order[0]?.payment?.razorpayPaymentId
-          let amount
 
-          if(protocolCancelResponse?.message?.payment?.amount == order?.payment.amount){
-            amount= protocolCancelResponse?.message?.payment?.amount
-          }
+          let totalAmount=0
+
+          protocolCancelResponse?.fulfillments.forEach(fulfillment => {
+            let tags = fulfillment?.tags;
+            if (tags && Array.isArray(tags)) {
+                tags.forEach(tag => {
+                    if (tag?.code === 'quote_trail') {
+                        let quoteTrail = tag.list;
+                        if (Array.isArray(quoteTrail)) {
+                            quoteTrail.forEach(trailItem => {
+                                if (trailItem.code === 'value') {
+                                    totalAmount += parseFloat(trailItem.value);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+        
+        console.log('Total amount from quote_trail items:', Math.abs(totalAmount));
 
           lokiLogger.info("order_details_cancelOrder.service.js",order)
           
           lokiLogger.info("protocolCancelResponse-----",protocolCancelResponse)
             
-          razorPayService
-            .refundOrder(razorpayPaymentId, amount)
+          if(QuoteAmount >= totalAmount){
+            razorPayService
+            .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
             .then((response) => {
               lokiLogger.info('response>>>>>>>>>>',response)
             })
@@ -117,6 +148,7 @@ class CancelOrderService {
               console.log("err", err);
               lokiLogger.info('err>>>>>>>>>>',err)
                      });
+          }
         }
 
         return protocolCancelResponse;
