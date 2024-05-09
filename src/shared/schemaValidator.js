@@ -211,7 +211,6 @@ export const validate_schema = (data, schema) => {
 // }
  
 export const validate_schema_collector_recon_NTS10_for_json = (data) => {
-  console.log("validate_schema_collector_recon_NTS10_for_json>>>>========", JSON.stringify(data))
   const error_list = validate_schema(data, collectorReconSchema)
   return formatted_error(error_list)
 }
