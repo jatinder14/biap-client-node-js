@@ -72,7 +72,8 @@ const keyName = data.fileType.originalname; // Specify the key (path) in the buc
             resolve({
                 success: true,
                 message: 'AWS SDK S3 Pre-signed urls generated successfully.',
-                publicUrl: result.imageUrl
+                publicUrl: result.imageUrl,
+                urls: result.imageUrl
             });
         });
     
