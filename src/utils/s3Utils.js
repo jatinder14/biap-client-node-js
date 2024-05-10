@@ -33,7 +33,7 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
 }
 
 async function getSignedUrl(fileKey){
-    const signedUrlExpireSeconds = 60 * 12
+    // const signedUrlExpireSeconds = 60 * 12
         const s3 = new AWS.S3({
         accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -44,7 +44,7 @@ async function getSignedUrl(fileKey){
     const url = s3.getSignedUrl('getObject', {
         Bucket: process.env.S3_BUCKET ,
         Key: fileKey,
-        Expires: signedUrlExpireSeconds
+        // Expires: signedUrlExpireSeconds
     });
     return url;
     // console.log(url,"bhaskalhfalsdh",fileKey)
