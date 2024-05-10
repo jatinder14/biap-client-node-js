@@ -359,11 +359,12 @@ class UpdateOrderService {
                     fullfillmentHistory.save()
 
                     //check if item state is liquidated or cancelled
+
                     //if there is update qoute recieved from on_update we need to calculate refund amount
                     let totalAmount = 0
 
 
-                    if (latestFullfilement?.message?.order?.fulfillments?.state == 'Cancelled') {
+                    if (latestFullfilement?.message?.order?.fulfillments?.state== 'Cancelled') {
 
                         protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
                             let tags = fulfillment?.tags;
@@ -420,7 +421,8 @@ class UpdateOrderService {
                             lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
                             const refundDetails = new Refund({
                                 orderId: dbResponse.id,
-                                refundedAmount:totalAmount,
+                                refundId:response.id,
+                                refundedAmount:(response.amount)/100,
                                 itemId:dbResponse.items[0].id, 
                                 itemQty:dbResponse.items[0].quantity.count,
                                 isRefunded:true,

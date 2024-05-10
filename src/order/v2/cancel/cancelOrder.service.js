@@ -149,7 +149,8 @@ class CancelOrderService {
                 lokiLogger.info('response>>>>>>>>>>',response)
                 const refundDetails = new Refund({
                   orderId: order.id,
-                  refundedAmount:totalAmount,
+                  refundId:response.id,
+                  refundedAmount:(response.amount)/100,
                   itemId:order.items[0].id, 
                   itemQty:order.items[0].quantity.count,
                   isRefunded:true,

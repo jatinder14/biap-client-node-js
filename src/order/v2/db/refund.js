@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const RefundSchema = mongoose.Schema({
+        refundId:{type: String},
         orderId: { type: String, ref: 'Order' },
         refundedAmount:{ type: String },
         itemId:{ type: String }, 
