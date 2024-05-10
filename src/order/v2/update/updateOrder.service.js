@@ -364,7 +364,7 @@ class UpdateOrderService {
                     let totalAmount = 0
 
 
-                    if (latestFullfilement?.message?.order?.fulfillments?.state== 'Cancelled') {
+                    if (latestFullfilement?.message?.order?.fulfillments?.state.toLowerCase()== 'cancelled') {
 
                         protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
                             let tags = fulfillment?.tags;
@@ -386,7 +386,7 @@ class UpdateOrderService {
 
 
                     }
-                    else if (latestFullfilement?.message.order?.fulfillments?.state == 'Liquidated') {
+                    else if (latestFullfilement?.message.order?.fulfillments?.state.toLowerCase() == 'liquidated') {
 
                         protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
                             let tags = fulfillment?.tags;
@@ -408,7 +408,7 @@ class UpdateOrderService {
 
                     }
 
-                    else if (latestFullfilement?.message.order?.fulfillments?.state == 'Return_Picked') {
+                    else if (latestFullfilement?.message.order?.fulfillments?.state.toLowerCase() == 'return_picked') {
                         totalAmount = protocolUpdateResponse.message.order.quote.price.value
                     }
 
