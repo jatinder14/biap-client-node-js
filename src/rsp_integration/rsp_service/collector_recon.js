@@ -372,8 +372,6 @@ export const isObjectEmpty = (obj) => {
   return Object.keys(obj).length === 0;
 };
 export const validateSchema = (domain, api, data) => {
-  // logger.info(`Inside Schema Validation for domain: ${domain}, api: ${api}`)
-  console.log(`Inside Schema Validation for domain: ${domain}, api: ${api}`);
   const errObj = {};
   const schmaVldtr = validate_schema_for_retail_json(domain, api, data);
 
@@ -388,22 +386,13 @@ export const validateSchema = (domain, api, data) => {
       i++;
     }
     console.log(`Schema Validation`, errObj);
-    // logger.error(`Schema Validation`, errObj)
     return errObj;
   } else return "error";
 };
 
 const validate_schema_for_retail_json = (vertical, api, data) => {
-  console.log("validate_schema_for_retail_json>>>>", vertical, api, data);
-  console.log(
-    "validate_schema_collector_recon_NTS10_for_json>>>>1234",
-    data.context.timestamp
-  );
   const res = validate_schema_collector_recon_NTS10_for_json(data);
-  console.log("275>>>>>>>>>>>", `validate_schema_${api}_${vertical}_for_json`);
-
   try {
-    console.log("res>>>>>>>>>>>>>", res);
     return res;
   } catch (error) {
     console.log(error);

@@ -24,14 +24,22 @@ class TopSellingController {
             topSellingService.getTopOrderList().then(async response => {
                 if (!response.error) {
                     const userId = req.params.userId
-                    if (userId && userId != "null" && userId != "undefined") {
+                    const wishlistKey = req.query.wishlist_key || req.query.deviceId
+                    let where = [], itemids = []
+                    if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+                        where = [...where, { "item.userId": userId }]
+                    }
+                    if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
+                        where = [...where, { "item.wishlist_key": wishlistKey }]
+                    }
+                    if (where.length) {
                         const findWishlistItem = await WishlistItem.find({
-                            "item.userId": userId
+                            $or: where
                         });
-                        const itemids = findWishlistItem.map((item) => {
-                            return item?.item?.id;
+
+                        itemids = findWishlistItem.map((item) => {
+                        return item?.item?.id;
                         });
-    
                         response.forEach((item) => {
                             if (itemids.includes(item.id)) {
                                 item.wishlistAdded = true;

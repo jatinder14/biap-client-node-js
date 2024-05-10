@@ -25,15 +25,15 @@ class SearchService {
      * search
      * @param {Object} searchRequest
      */
-    async search(searchRequest = {},targetLanguage) {
+    async search(searchRequest = {}, targetLanguage) {
         try {
 
             let searchResponses = await bppSearchService.search(
-                searchRequest,'ITEM',targetLanguage
+                searchRequest, 'ITEM', targetLanguage
             );
-            if(targetLanguage){ //translate data
-                return await translateObject(searchResponses,OBJECT_TYPE.ITEM,targetLanguage)
-            }else{
+            if (targetLanguage) { //translate data
+                return await translateObject(searchResponses, OBJECT_TYPE.ITEM, targetLanguage)
+            } else {
                 return searchResponses
             }
         } catch (err) {
