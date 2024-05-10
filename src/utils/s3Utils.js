@@ -5,18 +5,18 @@ import fs from 'fs';
 async function uploadImageToS3(imagePath, bucketName, keyName) {
     // Create an S3 instance
     const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ,
     });
 
     // Read the image file
-    const fileContent = fs.readFileSync(imagePath);
+    // const fileContent = fs.readFileSync(imagePath);
 
     // Prepare the upload parameters
     const params = {
         Bucket: bucketName,
         Key: keyName,
-        Body: fileContent
+        Body: imagePath
     };
 
     try {
@@ -35,14 +35,14 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
 async function getSignedUrl(fileKey){
     const signedUrlExpireSeconds = 60 * 12
         const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: process.env.S3_REGION,
+            region: process.env.S3_REGION ,
             signatureVersion: process.env.S3_VERSION
     });
 
     const url = s3.getSignedUrl('getObject', {
-        Bucket: process.env.S3_BUCKET,
+        Bucket: process.env.S3_BUCKET ,
         Key: fileKey,
         Expires: signedUrlExpireSeconds
     });
@@ -63,10 +63,9 @@ async function getSignedUrlForUpload(data) {
     // const publicPath = process.env.S3_PUBLIC_PATH;
 
     // const imagePath = '/a.jpeg';
-const imagePath = data.fileType.path;
-const bucketName = 'wil-bharatham-preprod';
-const keyName = data.fileType.originalname; // Specify the key (path) in the bucket where you want to store the image
-    let result = await uploadImageToS3(imagePath, 'wil-bharatham-preprod', keyName)
+const imagePath = data.fileType.buffer;
+const keyName = `${uuidv4()}-${data.fileType.originalname}`; // Specify the key (path) in the bucket where you want to store the image
+    let result = await uploadImageToS3(imagePath, process.env.S3_BUCKET, keyName)
     console.log(result)
             return  await new Promise((resolve, reject) => {
             resolve({
