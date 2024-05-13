@@ -308,11 +308,12 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
-            lokiLogger.info('protocolUpdateResponse_onUpdate>>>>>',protocolUpdateResponse)
+            // lokiLogger.info('protocolUpdateResponse_onUpdate>>>>>',protocolUpdateResponse)
 
-            const totalRefundAmount=(protocolUpdateResponses,totalAmount)=>{
-                if(protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)){
-                     protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
+            const totalRefundAmount = (protocolUpdateResponses) => {
+                let totalAmount = 0;
+                if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)) {
+                    protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
                         let tags = fulfillment?.tags;
                         if (tags && Array.isArray(tags)) {
                             tags.forEach(tag => {
@@ -364,7 +365,7 @@ class UpdateOrderService {
                     const dbResponse = await OrderMongooseModel.findOne({
                         transactionId: protocolUpdateResponse.context.transaction_id,
                         id: protocolUpdateResponse.message.order.id
-                    });
+                    }).lean();
                     dbResponse.fulfillments = protocolUpdateResponse.message.order.fulfillments
 
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
@@ -389,50 +390,51 @@ class UpdateOrderService {
                     let totalAmount = 0
 
 
-                    if (latestFullfilement?.message?.order?.fulfillments?.state?.toLowerCase()== 'cancelled') {
-                        totalAmount=  totalRefundAmount(protocolUpdateResponse,totalAmount)                        
-                   }
+                    if (latestFullfilement?.message?.order?.fulfillments?.state?.toLowerCase() == 'cancelled') {
+                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                    }
                     else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'liquidated') {
-                        totalAmount= totalRefundAmount(protocolUpdateResponse,totalAmount)
-}
+                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                    }
 
                     else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'return_picked') {
+                        // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
 
-                    const orderRefunded= Refund.findOne({id: dbResponse.id})
+                    const orderRefunded = Refund.findOne({ id: dbResponse.id }).lean()
 
-                    let razorpayPaymentId= dbResponse?.payment?.razorpayPaymentId
+                    let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
 
-                    lokiLogger.log('razorpayPaymentId_onUpdate-----',razorpayPaymentId)
+                    lokiLogger.log('razorpayPaymentId_onUpdate-----', razorpayPaymentId)
 
-                    lokiLogger.log('totalAmount_onUpdate-----',totalAmount)
+                    lokiLogger.log('totalAmount_onUpdate-----', totalAmount)
 
-                    if(!orderRefunded && dbResponse.id){
+                    if (!orderRefunded && dbResponse.id) {
                         razorPayService
-                        .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
-                        .then((response) => {
-                            lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
-                            const refundDetails = new Refund({
-                                orderId: dbResponse.id,
-                                refundId:response.id,
-                                refundedAmount:(response.amount)/100,
-                                itemId:dbResponse.items[0].id, 
-                                itemQty:dbResponse.items[0].quantity.count,
-                                isRefunded:true,
-                                transationId:dbResponse.transactionId,
-                                razorpayPaymentId:dbResponse.payment.razorpayPaymentId
+                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+                            .then((response) => {
+                                lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
+                                const refundDetails = new Refund({
+                                    orderId: dbResponse.id,
+                                    refundId: response.id,
+                                    refundedAmount: (response.amount) / 100,
+                                    itemId: dbResponse.items[0].id,
+                                    itemQty: dbResponse.items[0].quantity.count,
+                                    isRefunded: true,
+                                    transationId: dbResponse.transactionId,
+                                    razorpayPaymentId: dbResponse.payment.razorpayPaymentId
 
+                                })
+                                lokiLogger.info('refundDetails>>>>>>>>>>', refundDetails)
                             })
-                            lokiLogger.info('refundDetails>>>>>>>>>>', refundDetails)
-                        })
-                        .catch((err) => {
-                            console.log("err", err);
-                            lokiLogger.info('err_response_razorpay_on_update>>>>>>>>>>', err)
-                        });
+                            .catch((err) => {
+                                lokiLogger.info('err_response_razorpay_on_update>>>>>>>>>>', err)
+                                throw err
+                            });
 
                     }
-                    
+
                 }
 
 
