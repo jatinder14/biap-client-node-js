@@ -308,7 +308,7 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
-            const totalRefundAmount=(protocolUpdateResponses)=>{
+            const totalRefundAmount=(protocolUpdateResponses,totalAmount)=>{
                 if(protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)){
                     return protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
                         let tags = fulfillment?.tags;
@@ -387,10 +387,10 @@ class UpdateOrderService {
 
 
                     if (latestFullfilement?.message?.order?.fulfillments?.state?.toLowerCase()== 'cancelled') {
-                        totalRefundAmount(protocolUpdateResponse)                        
+                        totalAmount=  totalRefundAmount(protocolUpdateResponse,totalAmount)                        
                    }
                     else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'liquidated') {
-                        totalRefundAmount(protocolUpdateResponse)
+                        totalAmount= totalRefundAmount(protocolUpdateResponse,totalAmount)
 }
 
                     else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'return_picked') {
