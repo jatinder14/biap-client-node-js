@@ -116,25 +116,26 @@ class RazorPayService {
    * @param {string} amount
    * @param {String} paymentId
    */
-async refundOrder(paymentId,amount){
-try{
-  
-  const instance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-  });
+  async refundOrder(paymentId, amount) {
+    try {
 
-   const refund=instance.payments.refund(paymentId,{
-  "amount": `${amount}`,
-  "speed": "optimum",
-})
-return refund
-}
-catch(error){
-  throw err;
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
 
-}
-}
+      const refund = await instance.payments.refund(paymentId, {
+        "amount": `${amount}`,
+        "speed": "optimum",
+      })
+      return refund
+    }
+    catch (error) {
+      console.log("error -------------- ", paymentId, amount, error);
+      throw error;
+
+    }
+  }
 
   /**
    * verify payment

@@ -401,7 +401,7 @@ class UpdateOrderService {
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
 
-                    const orderRefunded = Refund.findOne({ id: dbResponse.id }).lean()
+                    const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
                     let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
 
@@ -409,7 +409,7 @@ class UpdateOrderService {
 
                     lokiLogger.log('totalAmount_onUpdate-----', totalAmount)
 
-                    if (!orderRefunded && dbResponse?.id) {
+                    if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
                             .then((response) => {
