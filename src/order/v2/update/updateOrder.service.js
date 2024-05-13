@@ -365,7 +365,7 @@ class UpdateOrderService {
                     const dbResponse = await OrderMongooseModel.findOne({
                         transactionId: protocolUpdateResponse.context.transaction_id,
                         id: protocolUpdateResponse.message.order.id
-                    }).lean();
+                    });
                     dbResponse.fulfillments = protocolUpdateResponse.message.order.fulfillments
 
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
@@ -390,14 +390,13 @@ class UpdateOrderService {
                     let totalAmount = 0
 
 
-                    if (latestFullfilement?.message?.order?.fulfillments?.state?.toLowerCase() == 'cancelled') {
+                    if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'cancelled') {
                         totalAmount = totalRefundAmount(protocolUpdateResponse)
                     }
-                    else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'liquidated') {
+                    else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
                         totalAmount = totalRefundAmount(protocolUpdateResponse)
-                    }
-
-                    else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'return_picked') {
+                    } 
+                    else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
                         // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
@@ -410,7 +409,7 @@ class UpdateOrderService {
 
                     lokiLogger.log('totalAmount_onUpdate-----', totalAmount)
 
-                    if (!orderRefunded && dbResponse.id) {
+                    if (!orderRefunded && dbResponse?.id) {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
                             .then((response) => {
@@ -422,8 +421,8 @@ class UpdateOrderService {
                                     itemId: dbResponse.items[0].id,
                                     itemQty: dbResponse.items[0].quantity.count,
                                     isRefunded: true,
-                                    transationId: dbResponse.transactionId,
-                                    razorpayPaymentId: dbResponse.payment.razorpayPaymentId
+                                    transationId: dbResponse?.transactionId,
+                                    razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
 
                                 })
                                 lokiLogger.info('refundDetails>>>>>>>>>>', refundDetails)
