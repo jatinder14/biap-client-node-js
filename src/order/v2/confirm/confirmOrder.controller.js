@@ -117,7 +117,7 @@ class ConfirmOrderController {
             if (days === 0 && duration.asMinutes() < 1440) {
               days = "1";
             } else {
-              days = `${days}`;
+              days = Math.ceil(`${days}`);
             }
 
             if (emailWithoutNumber && nameWithoutNumber) {
