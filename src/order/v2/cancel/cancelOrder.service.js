@@ -4,7 +4,7 @@ import {
   PROTOCOL_CONTEXT,
   SETTLE_STATUS,
 } from "../../../utils/constants.js";
-// import razorPayService from "../../../razorPay/razorPay.service.js";
+import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
   addOrUpdateOrderWithTransactionId,
   addOrUpdateOrderWithTransactionIdAndProvider,
@@ -19,10 +19,13 @@ import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
+import Refund from "../db/refund.js";
+
 
 
 
 const bppCancelService = new BppCancelService();
+const razorPayService = new RazorPayService()
 
 class CancelOrderService {
   /**
@@ -93,20 +96,80 @@ class CancelOrderService {
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
         }
+
         if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
-          const order=OrderMongooseModel.find({id:protocolCancelResponse?.message?.order?.id})
+            
+
+          const order=OrderMongooseModel.findOne({id:protocolCancelResponse?.message?.order?.id})
+          
+          let QuoteAmount=0
+
+          if(order?.updatedQuote){
+            QuoteAmount= order?.updatedQuote?.price?.value
+          }
+
+          else{
+            QuoteAmount= order?.quote?.price?.value
+          }
+
+          const razorpayPaymentId= order[0]?.payment?.razorpayPaymentId
+
+          let totalAmount=0
+
+          if(protocolCancelResponse?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)){
+            protocolCancelResponse?.fulfillments.forEach(fulfillment => {
+              let tags = fulfillment?.tags;
+              if (tags && Array.isArray(tags)) {
+                  tags.forEach(tag => {
+                      if (tag?.code === 'quote_trail') {
+                          let quoteTrail = tag.list;
+                          if (Array.isArray(quoteTrail)) {
+                              quoteTrail.forEach(trailItem => {
+                                  if (trailItem.code === 'value') {
+                                      totalAmount += parseFloat(trailItem.value);
+                                  }
+                              });
+                          }
+                      }
+                  });
+              }
+          });
+          }
+         
+        
+        console.log('Total amount from quote_trail items:', Math.abs(totalAmount));
 
           lokiLogger.info("order_details_cancelOrder.service.js",order)
+          
           lokiLogger.info("protocolCancelResponse-----",protocolCancelResponse)
-            // razorPayService
-            // .createOrder(amount, currency)
-            // .then((user) => {
-            //   res.json({ data: user });
-            // })orderByID_FulfillmentHistoryAddedbService.js----------->
-            // .catch((err) => {
-            //   console.log("err", err);
-            //   next(err);
-            // });
+            
+          if(parseInt(QuoteAmount) >= parseInt(totalAmount)){
+            const orderRefund = Refund.findOne({id:order.id})
+            if(!orderRefund && order.id){
+              razorPayService
+              .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+              .then((response) => {
+                lokiLogger.info('response>>>>>>>>>>',response)
+                const refundDetails = new Refund({
+                  orderId: order.id,
+                  refundId:response.id,
+                  refundedAmount:(response.amount)/100,
+                  itemId:order.items[0].id, 
+                  itemQty:order.items[0].quantity.count,
+                  isRefunded:true,
+                  transationId:order.transactionId,
+                  razorpayPaymentId:order.payment.razorpayPaymentId
+             }) 
+             lokiLogger.info('refundDetails_onCancelOrder>>>>>>>>>>',refundDetails) 
+            })
+              .catch((err) => {
+                console.log("err", err);
+                lokiLogger.info('err>>>>>>>>>>',err)
+                });
+           
+              }
+            
+          }
         }
 
         return protocolCancelResponse;

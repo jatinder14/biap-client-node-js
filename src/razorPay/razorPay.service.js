@@ -111,7 +111,12 @@ class RazorPayService {
     }
   }
 
-async refundOrder(paymentId,paymentDetails){
+  /**
+   * refund payment
+   * @param {string} amount
+   * @param {String} paymentId
+   */
+async refundOrder(paymentId,amount){
 try{
   
   const instance = new Razorpay({
@@ -119,15 +124,11 @@ try{
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
 
-instance.payments.refund("pay_O78BsZ9VBuPpib",{
-  "amount": "100",
+   const refund=instance.payments.refund(paymentId,{
+  "amount": `${amount}`,
   "speed": "optimum",
-  "notes": {
-    "notes_key_1": "Beam me up Scotty.",
-    "notes_key_2": "Engage"
-  },
-  "receipt": "Receipt No. 31"
 })
+return refund
 }
 catch(error){
   throw err;
