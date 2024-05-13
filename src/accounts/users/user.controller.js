@@ -18,13 +18,13 @@ class UserController {
     }
     try {
       // Save OTP and its expiration time in the database
+      const phone_otp_expiry_date = Date.now() + 60000; // 1 minute = 60000 milliseconds
+
       const user = await User.findOneAndUpdate(
         { phone },
-        { phone_otp: otp }, // OTP expires in 10 minutes
-        // otpExpiration: Date.now() + 600000
+        { phone_otp: otp, phone_otp_expiry_date }, // OTP expires in 10 minutes
         { upsert: true, new: true }
       );
-
       // Send OTP via SMS
       await sendOTPUtil(phone, otp);
 
@@ -44,10 +44,11 @@ class UserController {
     }
 
     try {
+      const phone_otp_expiry_date = Date.now() + 60000; // 1 minute = 60000 milliseconds
       // Save OTP and its expiration time in the database
       const user = await User.findOneAndUpdate(
         { phone },
-        { phone_otp: otp },
+        { phone_otp: otp, phone_otp_expiry_date },
         { new: true }
       );
 
@@ -72,6 +73,11 @@ class UserController {
         // || user.otpExpiration < Date.now()
         res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({ success: false, message: 'Entered OTP is invalid!' });
+      }
+
+      if(Date.now() > user.phone_otp_expiry_date){
+        res.header("Access-Control-Allow-Origin", "*");
+        return res.status(400).json({ success: false, message: 'Otp is expired' });
       }
 
       const token = createJwtToken({ userId: user._id, uid: user._id, phone: phone });
