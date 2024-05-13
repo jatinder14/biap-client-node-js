@@ -113,7 +113,7 @@ class UserController {
         if (request.userName) existingUser.userName = request.userName;
         if (request.phone) existingUser.phone = request.phone;
         if (request.email) existingUser.email = request.email;
-        if (request.picture) existingUser.userImage = request.picture || user?.decodedToken?.picture;
+        if (request.userImage || request.picture) existingUser.userImage = request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture);
         if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
         if (request.userId) existingUser.userId = request.userId
         if (request.cart_key) existingUser.cart_key = request.cart_key
@@ -141,7 +141,7 @@ class UserController {
           userName: request.userName || user?.decodedToken?.name,
           phone: user?.decodedToken?.phone || request.phone,
           email: user?.decodedToken?.email || request.email,
-          userImage: user?.decodedToken?.picture || request.picture,
+          userImage: request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture),
           delivery_address: request.address || user?.decodedToken?.address,
           userId: request.userId || "",
           cart_key: request.cart_key || "",
