@@ -399,7 +399,7 @@ class UpdateOrderService {
 
                     const orderRefunded= Refund.findOne({id: dbResponse.id})
                     
-                    if(!orderRefunded){
+                    if(!orderRefunded && dbResponse.id){
                         razorPayService
                         .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
                         .then((response) => {

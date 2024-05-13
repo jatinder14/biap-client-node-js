@@ -145,7 +145,7 @@ class CancelOrderService {
             
           if(parseInt(QuoteAmount) >= parseInt(totalAmount)){
             const orderRefund = Refund.findOne({id:order.id})
-            if(!orderRefund){
+            if(!orderRefund && order.id){
               razorPayService
               .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
               .then((response) => {
