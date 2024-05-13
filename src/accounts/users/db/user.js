@@ -31,7 +31,7 @@ const  UserSchema = new mongoose.Schema(
         email: { type: String, default: null },
         phone_otp : {type : String},
         email : {type : String},
-        phone_otp_expiry_date : {type : String},
+        phone_otp_expiry_date : {type : Number},
         email_otp_expiry_date : {type : String},
         address: {type:AddressSchema,default:null},
         cart_key: { type: String },
