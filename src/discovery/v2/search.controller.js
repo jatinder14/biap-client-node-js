@@ -16,55 +16,50 @@ class SearchController {
    */
   search(req, res, next) {
     const searchRequest = req.query;
-
     console.log({ searchRequest });
-
-    console.log({ searchRequest })
     const headers = req.headers;
-
     let targetLanguage = headers['targetlanguage'];
 
-    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-    {
+    if (targetLanguage === 'en' || !targetLanguage) { //default catalog is in english hence not considering this for translation
       targetLanguage = undefined
     }
     searchService.search(searchRequest, targetLanguage).then(async response => {
-      if (!response)
-        {
-          return { response: { 
-            count:0,
+      if (!response) {
+        return {
+          response: {
+            count: 0,
             data: [],
-            pages:0
-        
-        } };
-        }    else {
+            pages: 0
+
+          }
+        };
+      } else {
 
         try {
           const userId = req.params.userId
-          const wishlistKey = req.query.wishlist_key
+          const wishlistKey = req.query.wishlist_key || req.query.deviceId
           console.log("userId ------------------------", userId);
           console.log("wishlistKey ------------------------", wishlistKey);
           let where = [], itemids = []
           if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
-            where = [ ...where, { "item.userId": userId }]
+            where = [...where, { "item.userId": userId }]
           }
-          if (wishlistKey) {
-            where = [ ...where, { "item.wishlist_key": wishlistKey }]
+          if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
+            where = [...where, { "item.wishlist_key": wishlistKey }]
           }
           console.log("where ------------------------", where);
           if (where.length) {
             const findWishlistItem = await WishlistItem.find({
               $or: where
             });
-  
+
             itemids = findWishlistItem.map((item) => {
-              return item.item.id; // Assuming the id is nested inside the item object
+              return item.item.id;
             });
           }
-          
-          response.response.data.forEach((item) => {
-            if (itemids.includes(item.id)) {
-              console.log("Matched item id:", item.id);
+
+          response?.response?.data?.forEach((item) => {
+            if (itemids.includes(item?.id)) {
               item.wishlistAdded = true;
             }
           });
@@ -72,7 +67,7 @@ class SearchController {
           next()
         }
         catch (e) {
-          console.log(e)
+          next(e);
         }
       }
     }).catch((err) => {

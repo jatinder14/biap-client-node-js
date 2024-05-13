@@ -127,9 +127,6 @@ try{
    const refund=instance.payments.refund(paymentId,{
   "amount": `${amount}`,
   "speed": "optimum",
-  "notes": {
-    "notes_key_1": "Refund the order.",
-  }
 })
 return refund
 }

@@ -100,7 +100,7 @@ class CancelOrderService {
         if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
             
 
-          const order=OrderMongooseModel.find({id:protocolCancelResponse?.message?.order?.id})
+          const order=OrderMongooseModel.findOne({id:protocolCancelResponse?.message?.order?.id})
           
           let QuoteAmount=0
 
@@ -116,23 +116,26 @@ class CancelOrderService {
 
           let totalAmount=0
 
-          protocolCancelResponse?.fulfillments.forEach(fulfillment => {
-            let tags = fulfillment?.tags;
-            if (tags && Array.isArray(tags)) {
-                tags.forEach(tag => {
-                    if (tag?.code === 'quote_trail') {
-                        let quoteTrail = tag.list;
-                        if (Array.isArray(quoteTrail)) {
-                            quoteTrail.forEach(trailItem => {
-                                if (trailItem.code === 'value') {
-                                    totalAmount += parseFloat(trailItem.value);
-                                }
-                            });
-                        }
-                    }
-                });
-            }
-        });
+          if(protocolCancelResponse?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)){
+            protocolCancelResponse?.fulfillments.forEach(fulfillment => {
+              let tags = fulfillment?.tags;
+              if (tags && Array.isArray(tags)) {
+                  tags.forEach(tag => {
+                      if (tag?.code === 'quote_trail') {
+                          let quoteTrail = tag.list;
+                          if (Array.isArray(quoteTrail)) {
+                              quoteTrail.forEach(trailItem => {
+                                  if (trailItem.code === 'value') {
+                                      totalAmount += parseFloat(trailItem.value);
+                                  }
+                              });
+                          }
+                      }
+                  });
+              }
+          });
+          }
+         
         
         console.log('Total amount from quote_trail items:', Math.abs(totalAmount));
 

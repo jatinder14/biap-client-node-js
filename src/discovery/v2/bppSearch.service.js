@@ -23,21 +23,36 @@ class BppSearchService {
      */
     async search(searchRequest) {
         try {
+            let {
+                page,
+                limit,
+                categoryId,
+                name
+            } = searchRequest
+            const p_no = page ? Number(page): 1
+            const payload = {
+                ...searchRequest,
+                page_number: p_no,
+                pageNumber: p_no,
+                page: p_no,
+                limit: limit ? Number(limit): 10,
+                categoryIds: categoryId,
+                name,
+            }
+            const response = await protocolSearchItems(payload);
 
-            const response = await protocolSearchItems(searchRequest);
-            
             if (!response) {
-            return { response: { 
-                count:0,
-                data: [],
-                pages:0
-            
-            } }; // Return blank response
+                return {
+                    response: {
+                        count: 0,
+                        data: [],
+                        pages: 0
+
+                    }
+                };
 
             }
-          if(searchRequest && searchRequest.categoryId){
-                response.data = response.data?.filter(item => item?.item_details?.category_id === searchRequest?.categoryId);
-           }
+            
             return { response };
         }
         catch (err) {
