@@ -36,7 +36,7 @@ class CancelOrderService {
     try {
       console.log("cancel order-------------->", orderRequest);
 
-      lokiLogger.info('cancel order-------------->',orderRequest)
+      lokiLogger.info('cancel order-------------->', orderRequest)
 
       const orderDetails = await getOrderById(orderRequest.message.order_id);
 
@@ -79,6 +79,8 @@ class CancelOrderService {
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
 
+      lokiLogger.info('protocolCancelResponse_inside_onCancel>>>>>>>>>', protocolCancelResponse)
+
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
         const context = contextFactory.create({
@@ -97,78 +99,87 @@ class CancelOrderService {
           protocolCancelResponse = protocolCancelResponse?.[0];
         }
 
-        if (protocolCancelResponse?.message?.order?.state == ORDER_STATUS.CANCELLED) {
-            
+        if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.CANCELLED) {
 
-          const order=OrderMongooseModel.findOne({id:protocolCancelResponse?.message?.order?.id})
-          
-          let QuoteAmount=0
+          lokiLogger.info('protocolCancelResponse_order_status>>>>>>>>>', protocolCancelResponse?.message?.order?.state?.toLowerCase())
 
-          if(order?.updatedQuote){
-            QuoteAmount= order?.updatedQuote?.price?.value
+          const order = OrderMongooseModel.findOne({ id: protocolCancelResponse?.message?.order?.id })
+
+          let QuoteAmount = 0
+
+          if (order?.updatedQuote) {
+            QuoteAmount = order?.updatedQuote?.price?.value
           }
 
-          else{
-            QuoteAmount= order?.quote?.price?.value
+          else {
+            QuoteAmount = order?.quote?.price?.value
           }
 
-          const razorpayPaymentId= order[0]?.payment?.razorpayPaymentId
+          const razorpayPaymentId = order?.payment?.razorpayPaymentId
 
-          let totalAmount=0
+          let totalAmount = 0
 
-          if(protocolCancelResponse?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)){
+          if (protocolCancelResponse?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)) {
             protocolCancelResponse?.fulfillments.forEach(fulfillment => {
               let tags = fulfillment?.tags;
               if (tags && Array.isArray(tags)) {
-                  tags.forEach(tag => {
-                      if (tag?.code === 'quote_trail') {
-                          let quoteTrail = tag.list;
-                          if (Array.isArray(quoteTrail)) {
-                              quoteTrail.forEach(trailItem => {
-                                  if (trailItem.code === 'value') {
-                                      totalAmount += parseFloat(trailItem.value);
-                                  }
-                              });
-                          }
-                      }
-                  });
-              }
-          });
-          }
-         
-        
-        console.log('Total amount from quote_trail items:', Math.abs(totalAmount));
-
-          lokiLogger.info("order_details_cancelOrder.service.js",order)
-          
-          lokiLogger.info("protocolCancelResponse-----",protocolCancelResponse)
-            
-          if(parseInt(QuoteAmount) >= parseInt(totalAmount)){
-            const orderRefund = Refund.findOne({id:order.id})
-            if(!orderRefund && order.id){
-              razorPayService
-              .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
-              .then((response) => {
-                lokiLogger.info('response>>>>>>>>>>',response)
-                const refundDetails = new Refund({
-                  orderId: order.id,
-                  refundId:response.id,
-                  refundedAmount:(response.amount)/100,
-                  itemId:order.items[0].id, 
-                  itemQty:order.items[0].quantity.count,
-                  isRefunded:true,
-                  transationId:order.transactionId,
-                  razorpayPaymentId:order.payment.razorpayPaymentId
-             }) 
-             lokiLogger.info('refundDetails_onCancelOrder>>>>>>>>>>',refundDetails) 
-            })
-              .catch((err) => {
-                console.log("err", err);
-                lokiLogger.info('err>>>>>>>>>>',err)
+                tags.forEach(tag => {
+                  if (tag?.code === 'quote_trail') {
+                    let quoteTrail = tag.list;
+                    if (Array.isArray(quoteTrail)) {
+                      quoteTrail.forEach(trailItem => {
+                        if (trailItem.code === 'value') {
+                          totalAmount += parseFloat(trailItem.value);
+                        }
+                      });
+                    }
+                  }
                 });
-           
               }
-            
+            });
+          }
+
+
+
+          lokiLogger.info("order_details_cancelOrder.service.js", order)
+
+          lokiLogger.info("protocolCancelResponse_onCancelOrder-----", protocolCancelResponse)
+
+          lokiLogger.info("QuoteAmount_onCancelOrder-----", QuoteAmount)
+
+          lokiLogger.info("Total_amount_from_quote_trail items:", totalAmount)
+
+          lokiLogger.info("razorpayPaymentId_onCancelOrder-----", razorpayPaymentId)
+
+          if (parseInt(QuoteAmount) >= parseInt(totalAmount)) {
+            const orderRefund = Refund.findOne({ id: order.id })
+
+            lokiLogger.info("orderRefund_onCancelOrder-----", orderRefund)
+
+            if (!orderRefund && order.id) {
+              razorPayService
+                .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+                .then((response) => {
+                  lokiLogger.info('response_razorpay_onCancelOrder>>>>>>>>>>', response)
+                  const refundDetails = new Refund({
+                    orderId: order.id,
+                    refundId: response.id,
+                    refundedAmount: (response.amount) / 100,
+                    itemId: order.items[0].id,
+                    itemQty: order.items[0].quantity.count,
+                    isRefunded: true,
+                    transationId: order.transactionId,
+                    razorpayPaymentId: order.payment.razorpayPaymentId
+                  })
+                  lokiLogger.info('refundDetails_onCancelOrder>>>>>>>>>>', refundDetails)
+                })
+                .catch((err) => {
+                  console.log("err", err);
+                  lokiLogger.info('err_onCancelOrder>>>>>>>>>>', err)
+                });
+
+            }
+
           }
         }
 
@@ -177,18 +188,18 @@ class CancelOrderService {
     } catch (err) {
       console.log("error onCancelOrder ----", err)
       if (err?.response?.data) {
-          return err?.response?.data;
+        return err?.response?.data;
       } else if (err?.message) {
-          return {
-              success: false,
-              message: "We are encountering issue while canceling this order",
-              error: err?.message
-          }
+        return {
+          success: false,
+          message: "We are encountering issue while canceling this order",
+          error: err?.message
+        }
       } else {
-          return {
-              success: false,
-              message: "We are encountering issue while canceling this order!"
-          }
+        return {
+          success: false,
+          message: "We are encountering issue while canceling this order!"
+        }
       }
     }
   }
@@ -227,11 +238,11 @@ class CancelOrderService {
 
           console.log("dbResponse----------------->", dbResponse);
 
-          logger.info('dbResponseOnCancelOrderDbOperation----------------->',dbResponse)
+          logger.info('dbResponseOnCancelOrderDbOperation----------------->', dbResponse)
 
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
-          else {  
+          else {
             const orderSchema = dbResponse?.[0].toJSON();
             orderSchema.state = protocolCancelResponse?.message?.order?.state;
             if (
