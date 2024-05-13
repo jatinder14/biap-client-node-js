@@ -308,6 +308,28 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
+            const totalRefundAmount=(protocolUpdateResponses)=>{
+                if(protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)){
+                    return protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
+                        let tags = fulfillment?.tags;
+                        if (tags && Array.isArray(tags)) {
+                            tags.forEach(tag => {
+                                if (tag?.code === 'quote_trail') {
+                                    let quoteTrail = tag.list;
+                                    if (Array.isArray(quoteTrail)) {
+                                        quoteTrail.forEach(trailItem => {
+                                            if (trailItem.code === 'value') {
+                                                totalAmount += parseFloat(trailItem.value);
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -364,55 +386,18 @@ class UpdateOrderService {
                     let totalAmount = 0
 
 
-                    if (latestFullfilement?.message?.order?.fulfillments?.state.toLowerCase()== 'cancelled') {
+                    if (latestFullfilement?.message?.order?.fulfillments?.state?.toLowerCase()== 'cancelled') {
+                        totalRefundAmount(protocolUpdateResponse)                        
+                   }
+                    else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'liquidated') {
+                        totalRefundAmount(protocolUpdateResponse)
+}
 
-                        protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
-                            let tags = fulfillment?.tags;
-                            if (tags && Array.isArray(tags)) {
-                                tags.forEach(tag => {
-                                    if (tag?.code === 'quote_trail') {
-                                        let quoteTrail = tag.list;
-                                        if (Array.isArray(quoteTrail)) {
-                                            quoteTrail.forEach(trailItem => {
-                                                if (trailItem.code === 'value') {
-                                                    totalAmount += parseFloat(trailItem.value);
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
-
-                    }
-                    else if (latestFullfilement?.message.order?.fulfillments?.state.toLowerCase() == 'liquidated') {
-
-                        protocolUpdateResponse?.fulfillments.forEach(fulfillment => {
-                            let tags = fulfillment?.tags;
-                            if (tags && Array.isArray(tags)) {
-                                tags.forEach(tag => {
-                                    if (tag?.code === 'quote_trail') {
-                                        let quoteTrail = tag.list;
-                                        if (Array.isArray(quoteTrail)) {
-                                            quoteTrail.forEach(trailItem => {
-                                                if (trailItem.code === 'value') {
-                                                    totalAmount += parseFloat(trailItem.value);
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
+                    else if (latestFullfilement?.message.order?.fulfillments?.state?.toLowerCase() == 'return_picked') {
+                        totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
 
-                    else if (latestFullfilement?.message.order?.fulfillments?.state.toLowerCase() == 'return_picked') {
-                        totalAmount = protocolUpdateResponse.message.order.quote.price.value
-                    }
-
-                    const orderRefunded= Refund.find({id: dbResponse.id})
+                    const orderRefunded= Refund.findOne({id: dbResponse.id})
                     
                     if(!orderRefunded){
                         razorPayService
@@ -436,6 +421,7 @@ class UpdateOrderService {
                             console.log("err", err);
                             lokiLogger.info('err_response_razorpay_on_update>>>>>>>>>>', err)
                         });
+
                     }
                     
                 }
