@@ -308,6 +308,8 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
+            lokiLogger.info('protocolUpdateResponse_onUpdate>>>>>',protocolUpdateResponse)
+
             const totalRefundAmount=(protocolUpdateResponses,totalAmount)=>{
                 if(protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)){
                      protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
@@ -399,7 +401,13 @@ class UpdateOrderService {
                     }
 
                     const orderRefunded= Refund.findOne({id: dbResponse.id})
-                    
+
+                    let razorpayPaymentId= dbResponse?.payment?.razorpayPaymentId
+
+                    lokiLogger.log('razorpayPaymentId_onUpdate-----',razorpayPaymentId)
+
+                    lokiLogger.log('totalAmount_onUpdate-----',totalAmount)
+
                     if(!orderRefunded && dbResponse.id){
                         razorPayService
                         .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
