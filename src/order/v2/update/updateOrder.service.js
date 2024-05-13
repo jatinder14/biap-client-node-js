@@ -310,7 +310,7 @@ class UpdateOrderService {
 
             const totalRefundAmount=(protocolUpdateResponses,totalAmount)=>{
                 if(protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)){
-                    return protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
+                     protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
                         let tags = fulfillment?.tags;
                         if (tags && Array.isArray(tags)) {
                             tags.forEach(tag => {
@@ -327,6 +327,7 @@ class UpdateOrderService {
                             });
                         }
                     });
+                    return Math.abs(totalAmount)
                 }
             }
 
