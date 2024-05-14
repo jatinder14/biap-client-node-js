@@ -312,26 +312,24 @@ class UpdateOrderService {
 
             const totalRefundAmount = (protocolUpdateResponses) => {
                 let totalAmount = 0;
-                if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)) {
+                if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)) {
                     protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
-                        let tags = fulfillment?.tags;
-                        if (tags && Array.isArray(tags)) {
-                            tags.forEach(tag => {
-                                if (tag?.code === 'quote_trail') {
-                                    let quoteTrail = tag.list;
-                                    if (Array.isArray(quoteTrail)) {
-                                        quoteTrail.forEach(trailItem => {
-                                            if (trailItem.code === 'value') {
-                                                totalAmount += parseFloat(trailItem.value);
-                                            }
-                                        });
+                      let tags = fulfillment?.tags;
+                      if (tags && Array.isArray(tags)) {
+                        tags.forEach(tag => {
+                            if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
+                                tag.list.forEach(trailItem => {
+                                    if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
+                                        totalAmount += parseFloat(trailItem.value);
                                     }
-                                }
-                            });
-                        }
+                                });
+                            }
+                        });
+                        
+                    }
                     });
                     return Math.abs(totalAmount)
-                }
+                  }
             }
 
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
@@ -411,7 +409,7 @@ class UpdateOrderService {
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
-                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2))
                             .then((response) => {
                                 lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
                                 const refundDetails = new Refund({
