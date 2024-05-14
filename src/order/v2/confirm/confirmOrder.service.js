@@ -111,7 +111,7 @@ class ConfirmOrderService {
         lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
         console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
 
-        if (dbResponse?.paymentStatus === null) {
+        if (!dbResponse?.paymentStatus) {
 
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
