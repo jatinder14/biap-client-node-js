@@ -108,46 +108,43 @@ class CancelOrderService {
             QuoteAmount = order?.updatedQuote?.price?.value
           }
 
-          else {
+          else if(order?.quote) {
             QuoteAmount = order?.quote?.price?.value
           }
 
           const razorpayPaymentId = order?.payment?.razorpayPaymentId
 
-          let totalAmount = 0
+          let totalAmount = 0;
 
           if (protocolCancelResponse?.fulfillments && Array.isArray(protocolCancelResponse?.fulfillments)) {
             protocolCancelResponse?.fulfillments.forEach(fulfillment => {
               let tags = fulfillment?.tags;
               if (tags && Array.isArray(tags)) {
                 tags.forEach(tag => {
-                  if (tag?.code === 'quote_trail') {
-                    let quoteTrail = tag.list;
-                    if (Array.isArray(quoteTrail)) {
-                      quoteTrail.forEach(trailItem => {
-                        if (trailItem.code === 'value') {
-                          totalAmount += parseFloat(trailItem.value);
-                        }
-                      });
+                    if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
+                        tag.list.forEach(trailItem => {
+                            if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
+                                totalAmount += parseFloat(trailItem.value);
+                            }
+                        });
                     }
-                  }
                 });
-              }
+            }
             });
           }
 
+          console.log('totalAmount :>>', totalAmount);
 
+          lokiLogger.info("order_details_cancelOrder.service.js", order)
 
-          lokiLogger.info("order_details_cancelOrder.service.js", JSON.stringify(order))
-
-          lokiLogger.info("protocolCancelResponse_onCancelOrder-----", JSON.stringify(protocolCancelResponse))
+          lokiLogger.info("protocolCancelResponse_onCancelOrder-----", protocolCancelResponse)
 
           if (parseFloat(QuoteAmount) >= parseFloat(totalAmount)) {
             const orderRefund = await Refund.findOne({ id: order.id }).lean().exec()
 
             if (!orderRefund && order.id && razorpayPaymentId && totalAmount) {
               razorPayService
-                .refundOrder(razorpayPaymentId, Math.abs(totalAmount))
+                .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2))
                 .then((response) => {
                   lokiLogger.info('response_razorpay_onCancelOrder>>>>>>>>>>', response)
                   const refundDetails = new Refund({
