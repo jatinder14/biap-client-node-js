@@ -5,8 +5,8 @@ import fs from 'fs';
 async function uploadImageToS3(imagePath, bucketName, keyName) {
     // Create an S3 instance
     const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID  || 'AKIASUMEMDRDTKC7YPV5',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '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',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ,
     });
 
     // Read the image file
@@ -14,10 +14,9 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
 
     // Prepare the upload parameters
     const params = {
-        Bucket: 'wil-bharatham-preprod',
+        Bucket: bucketName,
         Key: keyName,
-        Body: imagePath,
-        // ACL: 'public-read' // Set the ACL to public-read
+        Body: imagePath
     };
 
     try {
@@ -25,8 +24,6 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
         const data = await s3.upload(params).promise();
         console.log('Image uploaded successfully:', data);
         let imageUrl= await getSignedUrl(data.Key);
-        // let imageUrlbyACL = await getPublicUrl(data.Key);
-        // console.log('==============imageUrlbyACL=================',imageUrlbyACL)
         return { success: true, message: 'Image uploaded successfully', imageUrl: imageUrl };
         
     } catch (err) {
@@ -37,15 +34,15 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
 
 async function getSignedUrl(fileKey){
     // const signedUrlExpireSeconds = 60 * 12
-    const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'AKIASUMEMDRDTKC7YPV5',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY|| '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',
-            region: process.env.S3_REGION || 'ap-south-1',
-            signatureVersion: process.env.S3_VERSION || 'v4'
+        const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.S3_REGION ,
+            signatureVersion: process.env.S3_VERSION
     });
 
     const url = s3.getSignedUrl('getObject', {
-        Bucket: process.env.S3_BUCKET || 'wil-bharatham-preprod',
+        Bucket: process.env.S3_BUCKET ,
         Key: fileKey,
         // Expires: signedUrlExpireSeconds
     });
@@ -68,7 +65,7 @@ async function getSignedUrlForUpload(data) {
     // const imagePath = '/a.jpeg';
 const imagePath = data.fileType.buffer;
 const keyName = `${uuidv4()}-${data.fileType.originalname}`; // Specify the key (path) in the bucket where you want to store the image
-    let result = await uploadImageToS3(imagePath, 'wil-bharatham-preprod', keyName)
+    let result = await uploadImageToS3(imagePath, process.env.S3_BUCKET, keyName)
     console.log(result)
             return  await new Promise((resolve, reject) => {
             resolve({
