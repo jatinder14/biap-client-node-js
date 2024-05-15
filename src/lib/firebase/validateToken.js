@@ -14,17 +14,16 @@ const validateToken = async (token, is_otp_login, refreshtoken) => {
   try {
     if (is_otp_login) {
       decodedToken = decodeJwtToken(token);
-      console.log('decodedToeken :>> ', decodedToken);
+      lokiLogger.error('decodedToeken :>> ', decodedToken);
     } else {
-      console.log('jatinder------------------------bhaskar')
       decodedToken = await admin.auth().verifyIdToken(token);
 
-      console.log('decodedToeken :>> ', decodedToken);
+      lokiLogger.error('decodedToeken :>> ', decodedToken);
     }
 
     return decodedToken;
   } catch (e) {
-    console.log('-------------refreshtoken----------------',refreshtoken)
+    lokiLogger.error('-------------refreshtoken----------------',refreshtoken)
     try {
       let data = qs.stringify({
         'grant_type': process.env.GRANT_TYPE,
@@ -42,15 +41,15 @@ const validateToken = async (token, is_otp_login, refreshtoken) => {
       };
 
       let response = await axios.request(config)
-      console.log(JSON.stringify(response.data));
+      lokiLogger.error(JSON.stringify(response.data));
       decodedToken = await admin.auth().verifyIdToken(response.data.access_token);
 
-      console.log('decodedToeken --------- inside catch:>> ', response.data);
+      lokiLogger.error('decodedToeken --------- inside catch:>> ', response.data);
 
-      console.log('Token is invalid.')
+      lokiLogger.error('Token is invalid.')
       return decodedToken;
     } catch (error) {
-      console.log('error validating refresh token -------', error)
+      lokiLogger.error('error validating refresh token -------', error)
       return null;
 
     }
