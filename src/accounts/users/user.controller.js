@@ -124,10 +124,10 @@ class UserController {
         // }
         lokiLogger.error('duplicateUser', duplicateUser, 'duplicateUser.emaill', duplicateUser?.email, duplicateUser?.phone)
         if (duplicateUser?.email == request?.email) {
-          return res.status(200).json({ message: `User with the email ${request?.email} already exits`, data: duplicateUser });
+          return res.status(400).json({ success: false, message: `User with the email ${request?.email} already exits` });
         }
         else if (duplicateUser?.phone == request?.phone) {
-          return res.status(200).json({ message: `User with the phone number ${request?.phone} already exits`, data: duplicateUser });
+          return res.status(400).json({ success: false, message: `User with the phone number ${request?.phone} already exits` });
         }
       }
 
@@ -146,7 +146,7 @@ class UserController {
         existingUser.userId = userId
         await existingUser.save();
 
-        res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
+        res.status(200).json({  success: true, message: 'User profile updated successfully', data: existingUser });
       } else {
         // User does not exist, create a new profile
         const newUser = new User({
@@ -169,7 +169,7 @@ class UserController {
       console.log("error -----------------------", error);
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
-        error: true,
+        success: false,
         message: 'Internal server error',
         error: error?.message
       })
