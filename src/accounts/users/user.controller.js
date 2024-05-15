@@ -111,7 +111,7 @@ class UserController {
           // if(decodedToken?.is_otp_login){
           const duplicateUser = await User.findOne({  "_id": { $ne: user?.decodedToken?.userId }, $or: [{ phone: request?.phone }, { email: request?.email }] });
           // }
-        console.log('duplicateUser',duplicateUser,'duplicateUser.emaill',duplicateUser?.email,duplicateUser?.phone)
+          lokiLogger.error('duplicateUser',duplicateUser,'duplicateUser.emaill',duplicateUser?.email,duplicateUser?.phone)
         if (duplicateUser?.email == request?.email){
         return res.status(200).json({ message: `User with the email ${request?.email} already exits`, data: duplicateUser });
       }
