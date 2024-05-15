@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 import User from './db/user.js';
 import sendOTPUtil from '../../utils/otp.js';
 import validateToken from '../../lib/firebase/validateToken.js';
-import DeliveryAddress from '../deliveryAddress/db/deliveryAddress.js';
 import lokiLogger from '../../utils/logger.js'
 const JWT_SECRET = 'secret_token';
 import qs from 'qs';
@@ -135,20 +134,7 @@ class UserController {
         if (request.cart_key) existingUser.cart_key = request.cart_key
         if (request.wishlist_key) existingUser.wishlist_key = request.wishlist_key
         existingUser.user_id = user_id
-        const existingDefaultAddress = await DeliveryAddress.findOne({
-          userId: existingUser?._id
-        })
         await existingUser.save();
-
-        if (!existingDefaultAddress) {
-
-          let defalutAdress = new DeliveryAddress({
-            id: uuidv4(),
-            userId: existingUser._id,
-            address: request.address
-          })
-          await defalutAdress.save();
-        }
 
         res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
       } else {
