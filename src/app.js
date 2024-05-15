@@ -12,7 +12,6 @@ import subscriberRoute from './utils/subscribe.js'
 import { schedulerEachDay } from './rsp_integration/rsp_service/crons.js'
 import settleRouter from "./settlement/settle.routes.js"
 import lokiLogger from './utils/logger.js';
-import User from './accounts/users/db/user.js';
 // import analyticsRouter from "./utils/analytics/router.js"
 const app = express();
 // import Redis from 'ioredis';
@@ -62,13 +61,6 @@ app.use(logErrors);
 
 app.get("/health", (req,res) => {
     res.send("HEALTH CHECK - Server is Running")
-})
-app.get("/users",async (req,res) => {
-   let data = await User.find();
-
-    res.status(200).json({"use": "testing",
-    data: data
-})
 })
 
 app.get("*", (req, res) => {
