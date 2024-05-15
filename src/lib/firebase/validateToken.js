@@ -1,6 +1,7 @@
 import admin from "firebase-admin";
 import { decodeJwtToken } from '../../utils/token.utils.js';
 import User from "../../accounts/users/db/user.js";
+import lokiLogger from '../../utils/logger.js'
 import axios from "axios";
 import qs from 'qs';
 
@@ -23,7 +24,7 @@ const validateToken = async (token, is_otp_login, refreshtoken) => {
 
     return decodedToken;
   } catch (e) {
-    lokiLogger.error('-------------refreshtoken----------------',refreshtoken)
+    lokiLogger.error('-------------refreshtoken----------------', refreshtoken)
     try {
       let data = qs.stringify({
         'grant_type': process.env.GRANT_TYPE,

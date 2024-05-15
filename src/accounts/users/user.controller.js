@@ -5,6 +5,7 @@ import User from './db/user.js';
 import sendOTPUtil from '../../utils/otp.js';
 import validateToken from '../../lib/firebase/validateToken.js';
 import DeliveryAddress from '../deliveryAddress/db/deliveryAddress.js';
+import lokiLogger from '../../utils/logger.js'
 const JWT_SECRET = 'secret_token';
 
 class UserController {
@@ -75,7 +76,7 @@ class UserController {
         return res.status(400).json({ success: false, message: 'Entered OTP is invalid!' });
       }
 
-      if(Date.now() > user.phone_otp_expiry_date){
+      if (Date.now() > user.phone_otp_expiry_date) {
         res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({ success: false, message: 'Otp is expired' });
       }
@@ -106,19 +107,19 @@ class UserController {
       let phone = user?.decodedToken?.phone || ""
       let email = user?.decodedToken?.email || ""
       let user_id = user?.decodedToken?.user_id || uuidv4()
-      
-      if(request?.email || request?.phone){
-          // if(decodedToken?.is_otp_login){
-          const duplicateUser = await User.findOne({  "_id": { $ne: user?.decodedToken?.userId }, $or: [{ phone: request?.phone }, { email: request?.email }] });
-          // }
-          lokiLogger.error('duplicateUser',duplicateUser,'duplicateUser.emaill',duplicateUser?.email,duplicateUser?.phone)
-        if (duplicateUser?.email == request?.email){
-        return res.status(200).json({ message: `User with the email ${request?.email} already exits`, data: duplicateUser });
+
+      if (request?.email || request?.phone) {
+        // if(decodedToken?.is_otp_login){
+        const duplicateUser = await User.findOne({ "_id": { $ne: user?.decodedToken?.userId }, $or: [{ phone: request?.phone }, { email: request?.email }] });
+        // }
+        lokiLogger.error('duplicateUser', duplicateUser, 'duplicateUser.emaill', duplicateUser?.email, duplicateUser?.phone)
+        if (duplicateUser?.email == request?.email) {
+          return res.status(200).json({ message: `User with the email ${request?.email} already exits`, data: duplicateUser });
+        }
+        else if (duplicateUser?.phone == request?.phone) {
+          return res.status(200).json({ message: `User with the phone number ${request?.phone} already exits`, data: duplicateUser });
+        }
       }
-      else if (duplicateUser?.phone == request?.phone){
-        return res.status(200).json({ message: `User with the phone number ${request?.phone} already exits`, data: duplicateUser });
-      }
-    }
 
       const existingUser = await User.findOne({ $or: [{ phone: phone }, { email: email }] });
       if (existingUser) {
