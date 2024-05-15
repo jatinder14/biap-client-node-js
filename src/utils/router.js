@@ -20,7 +20,7 @@ import razorPayv2 from "../razorPay/razorpay.routes.js";
 import rspRoutes from "../rsp_integration/rsp_routes/rsfRoutes.js"
 import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
 import User from '../accounts/users/db/user.js';
-
+import rootRouter from '../accounts/accounts.routes.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
@@ -30,6 +30,7 @@ router.get("/users",async (req,res) => {
      data: data
  })
  })
+router.use("/refresh-token", rootRouter);
 //v1
 router.use(accountRoutes);
 router.use(migrationsRoutes);
