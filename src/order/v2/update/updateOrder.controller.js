@@ -13,8 +13,6 @@ class UpdateOrderController {
     */
     async update(req, res, next) {
         const {body: orders} = req;
-
-        // console.log("orderStatus-------------------->",orders)
         const onUpdateOrderResponse = await Promise.all(
             orders.map(async order => {
                 try {
