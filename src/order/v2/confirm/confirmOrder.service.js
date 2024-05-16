@@ -77,7 +77,7 @@ class ConfirmOrderService {
         
         if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
-        console.log('orderSchema :>> ', orderSchema);
+        logger.info('orderSchema :>> ', orderSchema);
 
         lokiLogger.info("orderSchema :>>",orderSchema)
 
@@ -94,22 +94,26 @@ class ConfirmOrderService {
      * @param {Boolean} confirmPayment
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
-        console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
+        logger.info('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
         lokiLogger.info('confirmAndUpdateOrder>payment-------- :>>',orderRequest?.message?.payment)
         const {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
+        logger.info('requestContext?.city---------------------',requestContext?.city)
+        requestContext.city = 'std:'+ getCityCode(requestContext?.city)["STD Code"]
+        logger.info('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
+
         let paymentStatus = {}
 
-        // console.log("message---------------->",orderRequest.message)
+        // logger.info("message---------------->",orderRequest.message)
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
-        console.log("dbResponse??---------------->", dbResponse)
+        logger.info("dbResponse??---------------->", dbResponse)
 
         lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
-        console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
+        logger.info('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
 
         if (!dbResponse?.paymentStatus) {
 
@@ -147,7 +151,7 @@ class ConfirmOrderService {
             // }else{
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
-           console.log('dbResponse=============>  :>> ', order);
+           logger.info('dbResponse=============>  :>> ', order);
 
            lokiLogger.info('dbResponse=============> :>>' ,order)
            
@@ -157,7 +161,7 @@ class ConfirmOrderService {
                 dbResponse
             );
 
-            console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
+            logger.info("bppConfirmResponse-------------------->", bppConfirmResponse);
             
             lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
 
@@ -222,8 +226,8 @@ class ConfirmOrderService {
 
             // Save the new instance to the database
             await newDataInstance.save();
-            console.log("newDataInstance>>>>>>>>>>>", newDataInstance)
-            console.log("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
+            logger.info("newDataInstance>>>>>>>>>>>", newDataInstance)
+            logger.info("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
             if (response?.message?.order) {
                 const dbResponse = await getOrderByTransactionIdAndProvider(
                     response?.context?.transaction_id, response?.message?.order.provider.id
@@ -255,7 +259,7 @@ class ConfirmOrderService {
 
 
                 for (let fulfillment of orderSchema.fulfillments) {
-                    console.log("fulfillment--->", fulfillment)
+                    logger.info("fulfillment--->", fulfillment)
                     // if(fulfillment.type==='Delivery'){
                     let existingFulfillment = await FulfillmentHistory.findOne({
                         id: fulfillment.id,
@@ -271,13 +275,13 @@ class ConfirmOrderService {
                             updatedAt: orderSchema.toString()
                         })
                     }
-                    console.log("existingFulfillment--->", existingFulfillment);
+                    logger.info("existingFulfillment--->", existingFulfillment);
                     // }
                 }
 
-                console.log("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
+                logger.info("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
 
-                console.log("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
+                logger.info("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
 
                 if (orderSchema.items && dbResponse.items) {
                     orderSchema.items = dbResponse.items
@@ -310,8 +314,8 @@ class ConfirmOrderService {
                     //     // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO: verify if this will work with cancel/returned items
                     //     updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags);
                     //     let temp=updatedItem[0];
-                    //     console.log("item----length-before->",item)
-                    //     console.log("item----length-before temp->",temp)
+                    //     logger.info("item----length-before->",item)
+                    //     logger.info("item----length-before temp->",temp)
                     //     // if(item.tags){
                     //     //     item.return_status = item?.tags?.status;
                     //     //     item.cancellation_status = item?.tags?.status;
@@ -321,7 +325,7 @@ class ConfirmOrderService {
                     //     item.product = temp.product;
                     //     //item.quantity = item.quantity.count
                     //
-                    //     console.log("item --after-->",item)
+                    //     logger.info("item --after-->",item)
                     updateItems.push(item)
                 }
                 orderSchema.items = updateItems;
@@ -340,7 +344,7 @@ class ConfirmOrderService {
 
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
-                console.log("dbResponse.userId --------------------------------------- ", dbResponse.userId);
+                logger.info("dbResponse.userId --------------------------------------- ", dbResponse.userId);
                 cartService.clearCart({ userId: dbResponse.userId });
             }
 
@@ -418,7 +422,7 @@ class ConfirmOrderService {
      * @param {Array} orders 
      */
     async confirmMultipleOrder(orders) {    
-        console.log('orders--------- :>> ', orders);
+        logger.info('orders--------- :>> ', orders);
         let total = 0;
         orders.forEach(order => {
             total += order?.message?.payment?.paid_amount;
@@ -436,7 +440,7 @@ class ConfirmOrderService {
 
                 }
                 catch (err) {
-                    console.log("error confirmMultipleOrder ----", err)
+                    logger.info("error confirmMultipleOrder ----", err)
                     if (err?.response?.data) {
                         return err?.response?.data;
                     } else if (err?.message) {
@@ -516,7 +520,7 @@ class ConfirmOrderService {
                         return await this.processOnConfirmResponse(protocolConfirmResponse);
                     }
                     catch (err) {
-                        console.log("error onConfirmMultipleOrder ----", err)
+                        logger.info("error onConfirmMultipleOrder ----", err)
                         if (err?.response?.data) {
                             return err?.response?.data;
                         } else if (err?.message) {
