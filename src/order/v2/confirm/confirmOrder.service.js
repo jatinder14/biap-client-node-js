@@ -77,7 +77,7 @@ class ConfirmOrderService {
         
         if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
-        logger.info('orderSchema :>> ', orderSchema);
+        console.log('orderSchema :>> ', orderSchema);
 
         lokiLogger.info("orderSchema :>>",orderSchema)
 
@@ -94,26 +94,26 @@ class ConfirmOrderService {
      * @param {Boolean} confirmPayment
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
-        logger.info('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
+        console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
         lokiLogger.info('confirmAndUpdateOrder>payment-------- :>>',orderRequest?.message?.payment)
         const {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
-        logger.info('requestContext?.city---------------------',requestContext?.city)
+        console.log('requestContext?.city---------------------',requestContext?.city)
         requestContext.city = 'std:'+ getCityCode(requestContext?.city)["STD Code"]
-        logger.info('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
+        console.log('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
 
         let paymentStatus = {}
 
-        // logger.info("message---------------->",orderRequest.message)
+        // console.log("message---------------->",orderRequest.message)
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
-        logger.info("dbResponse??---------------->", dbResponse)
+        console.log("dbResponse??---------------->", dbResponse)
 
         lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
-        logger.info('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
+        console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
 
         if (!dbResponse?.paymentStatus) {
 
@@ -151,7 +151,7 @@ class ConfirmOrderService {
             // }else{
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
-           logger.info('dbResponse=============>  :>> ', order);
+           console.log('dbResponse=============>  :>> ', order);
 
            lokiLogger.info('dbResponse=============> :>>' ,order)
            
@@ -161,7 +161,7 @@ class ConfirmOrderService {
                 dbResponse
             );
 
-            logger.info("bppConfirmResponse-------------------->", bppConfirmResponse);
+            console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
             
             lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
 
@@ -226,8 +226,8 @@ class ConfirmOrderService {
 
             // Save the new instance to the database
             await newDataInstance.save();
-            logger.info("newDataInstance>>>>>>>>>>>", newDataInstance)
-            logger.info("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
+            console.log("newDataInstance>>>>>>>>>>>", newDataInstance)
+            console.log("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
             if (response?.message?.order) {
                 const dbResponse = await getOrderByTransactionIdAndProvider(
                     response?.context?.transaction_id, response?.message?.order.provider.id
@@ -259,7 +259,7 @@ class ConfirmOrderService {
 
 
                 for (let fulfillment of orderSchema.fulfillments) {
-                    logger.info("fulfillment--->", fulfillment)
+                    console.log("fulfillment--->", fulfillment)
                     // if(fulfillment.type==='Delivery'){
                     let existingFulfillment = await FulfillmentHistory.findOne({
                         id: fulfillment.id,
@@ -275,13 +275,13 @@ class ConfirmOrderService {
                             updatedAt: orderSchema.toString()
                         })
                     }
-                    logger.info("existingFulfillment--->", existingFulfillment);
+                    console.log("existingFulfillment--->", existingFulfillment);
                     // }
                 }
 
-                logger.info("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
+                console.log("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
 
-                logger.info("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
+                console.log("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
 
                 if (orderSchema.items && dbResponse.items) {
                     orderSchema.items = dbResponse.items
@@ -314,8 +314,8 @@ class ConfirmOrderService {
                     //     // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO: verify if this will work with cancel/returned items
                     //     updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags);
                     //     let temp=updatedItem[0];
-                    //     logger.info("item----length-before->",item)
-                    //     logger.info("item----length-before temp->",temp)
+                    //     console.log("item----length-before->",item)
+                    //     console.log("item----length-before temp->",temp)
                     //     // if(item.tags){
                     //     //     item.return_status = item?.tags?.status;
                     //     //     item.cancellation_status = item?.tags?.status;
@@ -325,7 +325,7 @@ class ConfirmOrderService {
                     //     item.product = temp.product;
                     //     //item.quantity = item.quantity.count
                     //
-                    //     logger.info("item --after-->",item)
+                    //     console.log("item --after-->",item)
                     updateItems.push(item)
                 }
                 orderSchema.items = updateItems;
@@ -344,7 +344,7 @@ class ConfirmOrderService {
 
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
-                logger.info("dbResponse.userId --------------------------------------- ", dbResponse.userId);
+                console.log("dbResponse.userId --------------------------------------- ", dbResponse.userId);
                 cartService.clearCart({ userId: dbResponse.userId });
             }
 
@@ -422,7 +422,7 @@ class ConfirmOrderService {
      * @param {Array} orders 
      */
     async confirmMultipleOrder(orders) {    
-        logger.info('orders--------- :>> ', orders);
+        console.log('orders--------- :>> ', orders);
         let total = 0;
         orders.forEach(order => {
             total += order?.message?.payment?.paid_amount;
@@ -440,7 +440,7 @@ class ConfirmOrderService {
 
                 }
                 catch (err) {
-                    logger.info("error confirmMultipleOrder ----", err)
+                    console.log("error confirmMultipleOrder ----", err)
                     if (err?.response?.data) {
                         return err?.response?.data;
                     } else if (err?.message) {
@@ -520,7 +520,7 @@ class ConfirmOrderService {
                         return await this.processOnConfirmResponse(protocolConfirmResponse);
                     }
                     catch (err) {
-                        logger.info("error onConfirmMultipleOrder ----", err)
+                        console.log("error onConfirmMultipleOrder ----", err)
                         if (err?.response?.data) {
                             return err?.response?.data;
                         } else if (err?.message) {
