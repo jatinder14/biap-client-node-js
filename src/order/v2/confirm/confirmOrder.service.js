@@ -15,6 +15,8 @@ import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
+import getCityCode from "../../../utils/AreaCodeMap.js";
+
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
 const juspayService = new JuspayService();
@@ -100,9 +102,9 @@ class ConfirmOrderService {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
-        let paymentStatus = {}
+        requestContext.city = getCityCode(requestContext?.city)
 
-        // console.log("message---------------->",orderRequest.message)
+        let paymentStatus = {}
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 

@@ -24,8 +24,13 @@ rootRouter.delete(
 );
 
 rootRouter.delete(
-    '/v2/wishlist/:userId/:itemId',
+    '/v2/item/wishlist/:userId/:wishlist_key/:itemId',
     wishListController.removeWishlistItem,
+);
+
+rootRouter.delete(
+    '/v2/wishlist/:userId/:withlist_id',
+    wishListController.removeWishlistItemById,
 );
 
 rootRouter.put(

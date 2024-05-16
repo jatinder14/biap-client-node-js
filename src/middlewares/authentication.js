@@ -9,7 +9,6 @@ import { verifyJwtToken } from '../utils/token.utils.js';
 const authentication = (options) => async(req, res, next) => {
   try{
   const authHeader = req.headers.authorization;
-  const refreshtoken = req.headers.refreshtoken;
 
   
   let idToken = authHeader 
@@ -23,7 +22,7 @@ const authentication = (options) => async(req, res, next) => {
       is_otp_login = true
     }
 
-    validateToken(idToken, is_otp_login, refreshtoken).then((decodedToken) => {
+    validateToken(idToken, is_otp_login).then((decodedToken) => {
       if (decodedToken) {
         req.user = { decodedToken: decodedToken, token: idToken };
         next();

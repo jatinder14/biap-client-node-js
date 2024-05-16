@@ -4,6 +4,7 @@ import {RetailsErrorCode} from "../../../utils/retailsErrorCode.js";
 
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppSelectService from "./bppSelect.service.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppSelectService = new BppSelectService();
 
@@ -57,6 +58,8 @@ class SelectOrderService {
         try {
             const { context: requestContext, message = {} } = orderRequest || {};
             const { cart = {}, fulfillments = [] } = message;
+            console.log('requestContext?.city---------------------',requestContext?.city)
+            requestContext.city = getCityCode(requestContext?.city)
 
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({

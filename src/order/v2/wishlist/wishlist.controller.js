@@ -45,6 +45,15 @@ async clearWishlist(req, res, next) {
             next(err);
         }
     }
+    async removeWishlistItemById(req, res, next) {
+        try {
+            return  res.send(await wishlistService.removeWishlistItemById({...req.body,...req.params}));
+
+        }
+        catch (err) {
+            next(err);
+        }
+    }
     async updateWishlistItem(req, res, next) {
         try {
             return  res.send(await wishlistService.updateWishlistItem({...req.body,...req.params}));
