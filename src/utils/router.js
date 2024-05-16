@@ -21,6 +21,7 @@ import rspRoutes from "../rsp_integration/rsp_routes/rsfRoutes.js"
 import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
 import User from '../accounts/users/db/user.js';
 import rootRouter from '../accounts/accounts.routes.js';
+import configurationRouter from '../configuration/index.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
@@ -51,6 +52,6 @@ router.use(cartRoutesv2);
 router.use(sseRoutesv2);
 router.use(razorPayv2);
 router.use(wishlistRoutes);
-
+router.use(configurationRouter)
 
 export default router;
