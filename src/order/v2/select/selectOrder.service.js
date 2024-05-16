@@ -4,7 +4,7 @@ import {RetailsErrorCode} from "../../../utils/retailsErrorCode.js";
 
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppSelectService from "./bppSelect.service.js";
-import { AreaCodeMap } from "../../../utils/AreaCodeMap.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppSelectService = new BppSelectService();
 
@@ -207,13 +207,5 @@ class SelectOrderService {
         }
     }
 }
-
-export function getCityCode(pincode) {
-    // 853202
-    return AreaCodeMap.find((element)=>{
-        return element.Pincode == pincode
-    })
-
-} 
 
 export default SelectOrderService;

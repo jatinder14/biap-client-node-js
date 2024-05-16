@@ -1,3 +1,9 @@
+export default function getCityCode(pincode) {
+  return AreaCodeMap.find((element)=>{
+      return element.Pincode == pincode
+  })
+}
+ 
 export const AreaCodeMap = [
     {
       "Pincode": 110001,

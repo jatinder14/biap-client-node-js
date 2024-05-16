@@ -15,7 +15,7 @@ import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
-import { getCityCode } from "../select/selectOrder.service.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();

@@ -4,7 +4,7 @@ import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId,getOrderByTr
 
 import BppInitService from "./bppInit.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
-import { getCityCode } from "../select/selectOrder.service.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppInitService = new BppInitService();
 
