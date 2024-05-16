@@ -1,13 +1,13 @@
 import { CronJob } from "cron";
-import { initiateRsp } from "./collector_recon.js";
-// import { logger } from "../../shared/logger.js";
+import { initiateRsp } from "./prepare_recon.js";
+import logger from "../../utils/logger.js";
 const isRedisEnabled = process.env.REDIS_SERVICE_ENABLED === "true";
 
 export const schedulerEachDay = () => {
   new CronJob(
-    "*/2 * * * *", // Modified cron expression to run every 10 seconds
+    "*/2 * * * *",
     async () => {
-      console.log(`Inside schedulerEachDay`);
+      logger.info(`*=== Inside schedulerEachDay ====*`);
       await initiateRsp();
     },
     null,

@@ -87,6 +87,7 @@ class CancelOrderService {
 
         return {
           context,
+          success: false,
           error: {
             message: "No data found",
           },
@@ -204,6 +205,7 @@ class CancelOrderService {
 
         return {
           context,
+          success: false,
           error: {
             message: "No data found",
           },

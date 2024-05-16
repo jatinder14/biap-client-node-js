@@ -265,18 +265,21 @@ class InitOrderService {
             if (!(order?.items?.length)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "Empty order received" }
                 };
             }
             else if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             }
@@ -356,6 +359,7 @@ class InitOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }

@@ -28,7 +28,7 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
         
     } catch (err) {
         console.error('Error uploading image to S3:', err);
-        return { success: false, message: 'Error uploading image to S3', error: err };
+        return { success: false, message: 'Error uploading image to S3', error: err?.message };
     }
 }
 

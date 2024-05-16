@@ -74,6 +74,7 @@ class SupportService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }

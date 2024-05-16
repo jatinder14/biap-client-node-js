@@ -22,8 +22,7 @@ export const add = async (req, res, next) => {
         })
 
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ "success": false, "error": "Internal Server Error" });
+        res.status(500).json({ "success": false, "message": "Internal Server Error!", error: error?.message });
     }
 }
 
@@ -42,8 +41,7 @@ export const getConfigurations = async (req, res) => {
             data: configurations,
         })
     } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ "success": false, "error": "Internal Server Error" });
+        res.status(500).json({ "success": false, "message": "Internal Server Error", error: error?.message });
     }
 
 }
