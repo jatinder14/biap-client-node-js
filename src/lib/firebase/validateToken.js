@@ -10,7 +10,7 @@ import qs from 'qs';
  * @param {String} token
  * @returns {String} decodedToken
  */
-const validateToken = async (token, is_otp_login, refreshtoken) => {
+const validateToken = async (token, is_otp_login) => {
   let decodedToken;
   try {
     if (is_otp_login) {
@@ -24,36 +24,8 @@ const validateToken = async (token, is_otp_login, refreshtoken) => {
 
     return decodedToken;
   } catch (e) {
-    lokiLogger.error('-------------refreshtoken----------------', refreshtoken)
-    try {
-      let data = qs.stringify({
-        'grant_type': process.env.GRANT_TYPE,
-        'refresh_token': refreshtoken
-      });
-
-      let config = {
-        method: 'post',
-        maxBodyLength: Infinity,
-        url: process.env.REFRESH_TOKEN_URL,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        data: data
-      };
-
-      let response = await axios.request(config)
-      lokiLogger.error(JSON.stringify(response.data));
-      decodedToken = await admin.auth().verifyIdToken(response.data.access_token);
-
-      lokiLogger.error('decodedToeken --------- inside catch:>> ', response.data);
-
-      lokiLogger.error('Token is invalid.')
-      return decodedToken;
-    } catch (error) {
-      lokiLogger.error('error validating refresh token -------', error)
+      lokiLogger.error('error validating refresh token -------', e)
       return null;
-
-    }
   }
 };
 

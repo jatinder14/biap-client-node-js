@@ -6,7 +6,8 @@ import sendOTPUtil from '../../utils/otp.js';
 import validateToken from '../../lib/firebase/validateToken.js';
 import lokiLogger from '../../utils/logger.js'
 const JWT_SECRET = 'secret_token';
-
+import qs from 'qs';
+import axios from 'axios';
 class UserController {
 
   async signUp(req, res) {
@@ -216,6 +217,51 @@ class UserController {
     }
   }
 
+  async getRefreshToken(req, res) {
+    try {
+      let refreshtoken = req?.headers?.refreshtoken
+      lokiLogger.error('-------------refreshtoken----------------', refreshtoken)
+      let data = qs.stringify({
+        'grant_type': process.env.GRANT_TYPE,
+        'refresh_token': refreshtoken
+      });
+
+      let config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: process.env.REFRESH_TOKEN_URL,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        data: data
+      };
+
+      let response = await axios.request(config)
+      lokiLogger.error(JSON.stringify(response?.data));
+      // decodedToken = await admin.auth().verifyIdToken(response.data.access_token);
+
+      lokiLogger.error('decodedToeken --------- inside catch:>> ', response?.data);
+
+      lokiLogger.error('Token is invalid.')
+      //   return decodedToken;
+      return res.status(200).json({
+        "success": "true",
+        token: response?.data?.access_token
+      });
+    } catch (error) {
+      lokiLogger.error('error validating refresh token -------', error)
+      return res.status(403).json({
+        "success": "false",
+        "message": "Refresh token is expired"
+      });;
+
+    }
+    // let data = await User.find();
+
+    //  res.status(200).json({"use": "testing",
+    //  data: data
+    //  })
+  }
 }
 
 export default UserController;
