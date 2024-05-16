@@ -30,6 +30,7 @@ export const initiateRsp = async () => {
       $and: [
         { state: "Completed" },
         { "payment.status": "PAID" },
+        { "payment.razorpayPaymentId": { $exists: true } },
         // { settle_status: { $in: ["pending", "settle"] }},
         { is_settlement_sent: false },
       ],
@@ -59,9 +60,10 @@ export const initiateRsp = async () => {
       }
     });
 
-    const prepare_payload = await Promise.allSettled(
+    const prepare_payload = await Promise.all(
       orderDetails.map(async (el) => {
         let protocolConfirmResponse = await onOrderConfirm(el.messageId);
+        protocolConfirmResponse = protocolConfirmResponse?.[0] || {};
         const quote_total = el?.quote?.price?.value ? Number(el?.quote?.price?.value) : 0;
         if (protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email) {
           userEmails.push(protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email)
@@ -107,6 +109,7 @@ export const initiateRsp = async () => {
     const request_body = {
       orders: prepare_payload
     }
+    console.log("==================================================", JSON.stringify(request_body));
     const { valid, validate } = ajv_validate(
       { body: request_body },
       prepareReconSchema,
