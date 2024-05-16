@@ -27,34 +27,12 @@ class BppUpdateService {
                             "email": orderDetailsData.email,
                             "phone": orderDetailsData.phone
                         },
-                        "context": {
-                            "domain": context.domain,
-                            "country": context.country,
-                            "city": context.city,
-                            "action": context.action,
-                            "core_version": context.core_version,
-                            "bap_id": context.bap_id,
-                            "bpp_id": context.bpp_id,
-                            "bpp_uri": context.bpp_uri,
-                            "transaction_id": context.transaction_id,
-                            "message_id": context.message_id,
-                            "timestamp": context.timestamp,
-                            "ttl": context.ttl      
-                        },
+                        "context": context,
                         "message": {
                             "update_target": order.update_target,
                             "order": {
                                 "id": order.order.id,
-                                "fulfillments": order.order.fulfillments.map(fulfillment => ({
-                                    "type": fulfillment.type,
-                                    "tags": fulfillment.tags.map(tag => ({
-                                        "code": tag.code,
-                                        "list": tag.list.map(item => ({
-                                            "code": item.code,
-                                            "value": item.value
-                                        }))
-                                    }))
-                                }))
+                                "fulfillments": order.order.fulfillments
                             }
                         }
                     }
@@ -62,7 +40,6 @@ class BppUpdateService {
             };
     
             const data = JSON.stringify(payload);
-           console.log('data64', data)
             const config = {
                 method: "post",
                 maxBodyLength: Infinity,
