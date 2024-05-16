@@ -59,8 +59,7 @@ class SelectOrderService {
             const { context: requestContext, message = {} } = orderRequest || {};
             const { cart = {}, fulfillments = [] } = message;
             console.log('requestContext?.city---------------------',requestContext?.city)
-            requestContext.city = 'std:'+ getCityCode(requestContext?.city)["STD Code"]
-            console.log('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
+            requestContext.city = getCityCode(requestContext?.city)
 
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({

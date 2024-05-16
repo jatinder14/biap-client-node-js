@@ -102,13 +102,9 @@ class ConfirmOrderService {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
-        console.log('requestContext?.city---------------------',requestContext?.city)
-        requestContext.city = 'std:'+ getCityCode(requestContext?.city)["STD Code"]
-        console.log('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
+        requestContext.city = getCityCode(requestContext?.city)
 
         let paymentStatus = {}
-
-        // console.log("message---------------->",orderRequest.message)
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 

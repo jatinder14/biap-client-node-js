@@ -246,8 +246,7 @@ class InitOrderService {
             const { context: requestContext = {}, message: order = {} } = orderRequest || {};
             const parentOrderId = requestContext?.transaction_id; //FIXME: verify usage
             console.log('requestContext?.city---------------------',requestContext?.city)
-            requestContext.city = 'std:'+ getCityCode(requestContext?.city)["STD Code"]
-            console.log('requestContext?.city--33333333333333333333333333-------------------',requestContext.city)
+            requestContext.city = getCityCode(requestContext?.city)
 
             console.log("order--->",orderRequest)
             const contextFactory = new ContextFactory();
