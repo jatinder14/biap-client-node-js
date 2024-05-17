@@ -147,7 +147,7 @@ class UserController {
         existingUser.userId = userId
         await existingUser.save();
 
-        res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
+        res.status(200).json({  success: true, message: 'User profile updated successfully', data: existingUser });
       } else {
         // User does not exist, create a new profile
         const newUser = new User({
