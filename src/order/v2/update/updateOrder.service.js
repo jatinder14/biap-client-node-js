@@ -156,7 +156,7 @@ class UpdateOrderService {
 
             return await bppUpdateService.update(
                 context,
-                '',
+                type,
                 order,
                 orderDetails
             );
@@ -301,6 +301,64 @@ class UpdateOrderService {
     }
 
     /**
+     * Send return to dashboard
+     * @param {Object} order
+     */
+
+    async updateReturnOnEssentialDashboard(order) {
+        try {
+            const lastFulfillment =
+                order?.message?.order?.fulfillments[
+                order?.message?.order?.fulfillments.length - 1
+                ];
+            console.log("lastFulfillment --------------------", lastFulfillment);
+            let returnState = lastFulfillment?.state?.descriptor?.code;
+            const returnId = lastFulfillment?.id;
+
+            const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
+
+            const returnType = lastFulfillment?.type;
+
+            // const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
+            const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
+            if (
+                validReturnStates.includes(returnState) &&
+                essentialDashboardUri &&
+                order.context?.transaction_id &&
+                order.context?.bap_id
+            ) {
+                const payload = {
+                    0: {
+                        json: {
+                            id: returnId,
+                            remarks: returnType,
+                            returnStatus: returnState,
+                        },
+                    },
+                };
+
+                const data = JSON.stringify(payload);
+                const config = {
+                    method: "post",
+                    maxBodyLength: Infinity,
+                    url: `${essentialDashboardUri}/trpc/return.updateReturnBySeller?batch=1`,
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    data: data,
+                };
+                const response = await axios.request(config);
+                console.log("Response from Essential Dashboard API:", JSON.stringify(response.data));
+            } else {
+                return;
+            }
+        } catch (error) {
+            console.log("error updateReturnOnEssentialDashboard update order ===================", error);
+            throw error;
+        }
+    }
+
+    /**
     * on cancel order
     * @param {Object} messageId
     */
@@ -382,6 +440,8 @@ class UpdateOrderService {
 
                     dbResponse.save()
                     fullfillmentHistory.save()
+                    lokiLogger.info(`protocolUpdateResponse>>>>>======= ${JSON.stringify(protocolUpdateResponse)}`)
+                    if (protocolUpdateResponse) await this.updateReturnOnEssentialDashboard(protocolUpdateResponse)
 
                     //check if item state is liquidated or cancelled
 

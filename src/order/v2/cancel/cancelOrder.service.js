@@ -143,7 +143,7 @@ class CancelOrderService {
 
           lokiLogger.info("order_details_cancelOrder.service.js", order)
 
-          lokiLogger.info("protocolCancelResponse_onCancelOrder-----", protocolCancelResponse)
+          lokiLogger.info(`protocolCancelResponse_onCancelOrder----- ${protocolCancelResponse}`)
 
           lokiLogger.info(`QuoteAmount_onCancelOrder----- ${QuoteAmount}`)
           
