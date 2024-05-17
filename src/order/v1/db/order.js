@@ -42,7 +42,7 @@ const TimeRangeSchema = new mongoose.Schema(
 const TimeSchema = new mongoose.Schema(
     {
         label: { type: String },
-        timestamp: { type: Date },
+        timestamp: { type: Date, default: Date.now },
         duration: { type: String },
         range: { type: TimeRangeSchema },
         days: { type: String },

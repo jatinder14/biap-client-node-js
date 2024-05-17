@@ -40,11 +40,11 @@ const schema = {
                                         invoice_pdf_url: {
                                             type: "string",
                                             format: "uri",
-                                            errorMessage: "Invoice PDF URL is required and must be a valid URI",
+                                            errorMessage: "Invoice PDF URL must be a valid URI",
                                         },
                                         collection_method: { type: "string", errorMessage: "Collection method is required" },
                                     },
-                                    required: ["reference_id", "status", "payment_date", "invoice_pdf_url", "collection_method"],
+                                    required: ["reference_id", "status", "payment_date", "collection_method"],
                                 },
                             },
                             network: {
