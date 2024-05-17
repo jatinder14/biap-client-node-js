@@ -138,13 +138,13 @@ class CancelOrderService {
 
           lokiLogger.info("order_details_cancelOrder.service.js", order)
 
-          lokiLogger.info("protocolCancelResponse_onCancelOrder-----", protocolCancelResponse)
+          lokiLogger.info(`protocolCancelResponse_onCancelOrder----- ${protocolCancelResponse}`)
 
-          lokiLogger.info("QuoteAmount_onCancelOrder-----", QuoteAmount)
+          lokiLogger.info(`QuoteAmount_onCancelOrder----- ${QuoteAmount}`)
           
-          lokiLogger.info("totalAmount_onCancelOrder-----", totalAmount)
+          lokiLogger.info(`totalAmount_onCancelOrder----- ${totalAmount}`)
 
-          lokiLogger.info('razorpayPaymentId_onCancelOrder-----',razorpayPaymentId)
+          lokiLogger.info(`razorpayPaymentId_onCancelOrder----- ${razorpayPaymentId}`)
 
 
 

@@ -9,15 +9,15 @@ class BppUpdateService {
      * @param {String} cancellationReasonId 
      * @returns 
      */
-    async sendDataToEssentialDashboard(context, order,orderDetails) {
+    async sendDataToEssentialDashboard(context, order, orderDetails) {
         try {
-            const orderDetailsData=orderDetails[0].billing
+            const orderDetailsData = orderDetails[0].billing
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
-            
+
             if (!essentialDashboardUri || !context?.transaction_id || !context.bap_id) {
                 return;
             }
-    
+
             const payload = {
                 "0": {
                     "json": {
@@ -38,7 +38,7 @@ class BppUpdateService {
                     }
                 }
             };
-    
+
             const data = JSON.stringify(payload);
             const config = {
                 method: "post",
@@ -49,7 +49,7 @@ class BppUpdateService {
                 },
                 data: data,
             };
-    
+
             const response = await axios.request(config);
             console.log("Response from Essential Dashboard API:", JSON.stringify(response.data));
             return response.data;
@@ -58,8 +58,8 @@ class BppUpdateService {
             throw error;
         }
     }
-    
-    async update(context, update_target,order,orderDetails) {
+
+    async update(context, update_target, order, orderDetails) {
         try {
 
             const cancelRequest = {
@@ -68,9 +68,13 @@ class BppUpdateService {
             }
 
             const response = await protocolUpdate(cancelRequest);
+            console.log("update_target----------------------->",update_target)
             console.log("response----------------------->",response)
+            console.log("context----------------------->",context)
+            console.log("order----------------------->",JSON.stringify(order))
+            console.log("orderDetails----------------------->",JSON.stringify(orderDetails))
 
-            await this.sendDataToEssentialDashboard(context, order,orderDetails);
+            if (update_target == 'Return') await this.sendDataToEssentialDashboard(context, order, orderDetails);
 
 
             return { context: context, message: response.message };
