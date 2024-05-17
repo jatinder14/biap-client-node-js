@@ -24,10 +24,12 @@ class OrderHistoryController {
                     next();
                 }
                 else
-                    res.status(404).json(
+                    res.status(400).json(
                         {
                             totalCount: 0,
                             orders: [],
+                            success: false, 
+                            message: "Something went wrong!",
                             error: response.error,
                         }
                     );

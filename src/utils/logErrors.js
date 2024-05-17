@@ -9,6 +9,7 @@ const logErrors = (err, req, res, next) => {
     response.header("Access-Control-Allow-Origin", "*");
     response.json({
         status: err.status, 
+        success: false,
         message: "Something went wrong!, Please try again later...",
         error: {
             name: err.name,

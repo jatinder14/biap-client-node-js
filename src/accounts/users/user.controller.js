@@ -147,9 +147,6 @@ class UserController {
         existingUser.userId = userId
         await existingUser.save();
 
-<<<<<<< Updated upstream
-        res.status(200).json({  success: true, message: 'User profile updated successfully', data: existingUser });
-=======
         if (!existingDefaultAddress) {
 
           let defalutAdress = new DeliveryAddress({
@@ -161,7 +158,6 @@ class UserController {
         }
         res.header("Access-Control-Allow-Origin", "*");
         res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
->>>>>>> Stashed changes
       } else {
         // User does not exist, create a new profile
         const newUser = new User({

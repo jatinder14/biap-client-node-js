@@ -125,7 +125,26 @@ class WishListService {
 
   async removeWishlistItem(data) {
     try {
-      return await WishlistItem.deleteOne({ _id: data.itemId });
+      let wishlist, wishlist2;
+      if (data.wishlist_key) {
+        wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
+      } 
+      if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
+        wishlist2 = await WishList.findOne({ userId: data.userId });
+      }
+      let wishlistIds = []
+      if (wishlist?._id) wishlistIds.push(wishlist?._id)
+      if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
+
+      return await WishlistItem.deleteOne({ wishlist: { $in: wishlistIds }, "item.product.id": data.itemId });
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async removeWishlistItemById(data) {
+    try {
+      return await WishlistItem.deleteOne({ _id: data.withlist_id });
     } catch (err) {
       throw err;
     }

@@ -27,21 +27,21 @@ class UpdateOrderService {
     * cancel order
     * @param {Object} orderRequest
     */
+    
     async update(orderRequest) {
         try {
 
 
             const orderDetails = await getOrderById(orderRequest.message.order.id);
-
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.UPDATE,
                 bppId: orderDetails[0]?.bppId,
                 transactionId: orderDetails[0]?.transactionId,
                 bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0].city,
-                city: orderDetails[0].city,
-                domain: orderDetails[0].domain
+                cityCode: orderDetails[0]?.city,
+                city: orderDetails[0]?.city,
+                domain: orderDetails[0]?.domain
             });
 
             orderRequest.context = { ...context }
@@ -341,6 +341,7 @@ class UpdateOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -459,6 +460,7 @@ class UpdateOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }

@@ -15,6 +15,8 @@ import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
+import getCityCode from "../../../utils/AreaCodeMap.js";
+
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
 const juspayService = new JuspayService();
@@ -100,9 +102,9 @@ class ConfirmOrderService {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
-        let paymentStatus = {}
+        requestContext.city = getCityCode(requestContext?.city)
 
-        // console.log("message---------------->",orderRequest.message)
+        let paymentStatus = {}
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
@@ -372,18 +374,21 @@ class ConfirmOrderService {
             if (!(order?.items?.length)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "Empty order received" }
                 };
             }
             else if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             } else if (await this.arePaymentsPending(
@@ -393,6 +398,7 @@ class ConfirmOrderService {
             )) {
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "BAP hasn't received payment yet",
                         status: "BAP_015",
@@ -491,6 +497,7 @@ class ConfirmOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }

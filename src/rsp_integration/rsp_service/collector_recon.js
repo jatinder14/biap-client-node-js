@@ -16,7 +16,7 @@ import {sendEmail} from "../../shared/mailer.js"
 // import { logger } from "../../shared/logger";
 // const uuid = uuidv4();
 
-export const initiateRsp = async () => {
+export const initiate_collector_recon = async () => {
   try {
     const date = new Date().toISOString();
 

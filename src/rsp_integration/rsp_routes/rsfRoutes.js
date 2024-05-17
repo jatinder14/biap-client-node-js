@@ -4,15 +4,8 @@ import { authentication } from '../../middlewares/index.js';
 import {onCollectorReconController} from "../rsp_controller/index.js"
 export const rootRouter = new Router();
 
-// const recieivereconController= new RecieiverReconController()
-
-
-    //#region confirm order
-
-// confirm order v1
-rootRouter.post(
-    '/response/v2/on_collector_recon',onCollectorReconController.onCollectorRecon, 
-);
+rootRouter.post('/response/v2/on_collector_recon',onCollectorReconController.onCollectorRecon);
+rootRouter.post('/response/v2/on_prepare_recon',onCollectorReconController.onPrepareRecon);
 
 
 //#endregion
