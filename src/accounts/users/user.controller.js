@@ -147,16 +147,6 @@ class UserController {
         existingUser.userId = userId
         await existingUser.save();
 
-        if (!existingDefaultAddress) {
-
-          let defalutAdress = new DeliveryAddress({
-            id: uuidv4(),
-            userId: existingUser._id,
-            address: request.address
-          })
-          await defalutAdress.save();
-        }
-        res.header("Access-Control-Allow-Origin", "*");
         res.status(200).json({ message: 'User profile updated successfully', data: existingUser });
       } else {
         // User does not exist, create a new profile
@@ -173,7 +163,6 @@ class UserController {
         });
 
         await newUser.save();
-        res.header("Access-Control-Allow-Origin", "*");
         res.status(201).json({ message: 'New user profile created', data: newUser });
       }
     }
