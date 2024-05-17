@@ -366,7 +366,7 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
-            // lokiLogger.info('protocolUpdateResponse_onUpdate>>>>>',protocolUpdateResponse)
+            lokiLogger.info(`protocolUpdateResponse_onUpdateStatus---1121>>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
 
             const totalRefundAmount = (protocolUpdateResponses) => {
                 let totalAmount = 0;
@@ -455,6 +455,7 @@ class UpdateOrderService {
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
                         totalAmount = totalRefundAmount(protocolUpdateResponse)
                     } 
+                    
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
                         // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
@@ -497,6 +498,7 @@ class UpdateOrderService {
 
 
             }
+            lokiLogger.info(`protocolUpdateResponse----lastLine---->>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
             return protocolUpdateResponse;
         }
 
