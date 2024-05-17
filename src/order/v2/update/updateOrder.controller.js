@@ -107,7 +107,7 @@ class UpdateOrderController {
         
         if(messageId) {
             cancelOrderService.onUpdate(messageId).then(async order => {
-                await sendDataToEssentialDashboard(order)
+                await this.sendDataToEssentialDashboard(order)
                 res.json(order);
             }).catch((err) => {
                 next(err);
