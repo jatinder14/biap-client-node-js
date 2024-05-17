@@ -155,10 +155,11 @@ class CancelOrderService {
 
           if (parseFloat(QuoteAmount) >= parseFloat(totalAmount)) {
             const orderRefund = await Refund.findOne({ id: order.id }).lean().exec()
-
+         
             if (!orderRefund && order.id && razorpayPaymentId && totalAmount) {
+              let refundAmount= Math.abs(totalAmount.toFixed(2))*100
               razorPayService
-                .refundOrder(razorpayPaymentId, Math.abs(totalAmount.toFixed(2)))
+                .refundOrder(razorpayPaymentId,refundAmount)
                 .then((response) => {
                   lokiLogger.info('response_razorpay_onCancelOrder>>>>>>>>>>', response)
                   const refundDetails = new Refund({
