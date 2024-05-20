@@ -514,7 +514,7 @@ class UpdateOrderService {
                     }
 
                     lokiLogger.info(`total amount calculation done ${totalAmount}`)
-                    lokiLogger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
+                    lokiLogger.info(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
 
                     const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
