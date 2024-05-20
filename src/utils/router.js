@@ -22,10 +22,19 @@ import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
 import User from '../accounts/users/db/user.js';
 import rootRouter from '../accounts/accounts.routes.js';
 import configurationRouter from '../configuration/index.js';
+import Order from '../order/v1/db/order.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
     let data = await User.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+//  for testing
+router.get("/ordres",async (req,res) => {
+    let data = await Order.find();
  
      res.status(200).json({"use": "testing",
      data: data
