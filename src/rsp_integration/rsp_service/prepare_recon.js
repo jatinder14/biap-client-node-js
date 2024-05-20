@@ -68,6 +68,7 @@ export const initiateRsp = async () => {
         if (protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email) {
           userEmails.push(protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email)
         }
+        console.log("el?.payment?.time ------------------ ", el?.payment, el?.payment?.time);
         return {
           transaction_details: {
             collector: {
@@ -80,26 +81,25 @@ export const initiateRsp = async () => {
             },
             payment_gateway: [
               {
-                reference_id: el?.payment?.razorpayPaymentId,
+                reference_id: "N122243013755541", // el?.payment?.razorpayPaymentId,  - Need static for now as RSP allow only this for testing
                 quote: {
                   subtotal: quote_total,
                   subtotal_excluding_tax: quote_total,
                   tax: null,
-                  total: quote_total,
+                  total: 5000, // quote_total,   - Need static for now as RSP allow only this for testing
                   total_excluding_tax: quote_total,
                 },
-                status: el?.payment?.status,
-                payment_date: el?.payment?.time?.timestamp,
-                invoice_pdf_url: el?.payment?.uri,
-                collection_method: "RAZORPAY",
+                status: el?.payment?.status?.toLowerCase() == "paid" ? "COMPLETED" : "PENDING",
+                payment_date: "2024-05-01T08:05:19.410Z", // el?.payment?.time?.timestamp, // NEED TO CHEDK for real time data and   - Need static for now as RSP allow only this for testing
+                invoice_pdf_url: el?.payment?.uri || "", // 
+                collection_method: "CREDIT_CARD", // CREDIT_CARD, DEBIT_CARD, NET_BANKING, UPI   - Need static for now as RSP allow only this for testing
               },
             ],
             network: [
               {
-                payment_reference_id: el?.payment?.params?.transaction_id || el?.payment?.razorpayPaymentId,
-                message_id: el.messageId,
-                payment_gateway_id: el?.payment?.razorpayPaymentId,
-                latest_on_action: [protocolConfirmResponse],
+                payment_reference_id: "N122243013755541", // el?.payment?.razorpayPaymentId,   - Need static for now as RSP allow only this for testing
+                // payment_gateway_id: el?.payment?.razorpayPaymentId,
+                latest_on_action: protocolConfirmResponse,
               },
             ],
           },

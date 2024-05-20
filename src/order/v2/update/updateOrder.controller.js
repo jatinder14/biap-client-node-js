@@ -12,12 +12,12 @@ class UpdateOrderController {
     * @return {callback}
     */
     async update(req, res, next) {
-        const {body: orders} = req;
+        const { body: orders } = req;
         const onUpdateOrderResponse = await Promise.all(
             orders.map(async order => {
                 try {
 
-                    console.log("update orders--------------->",order);
+                    console.log("update orders--------------->", order);
                     return await cancelOrderService.update(order);
                 } catch (err) {
                     console.log("error update order ----", err)
@@ -35,7 +35,7 @@ class UpdateOrderController {
                             message: "We are encountering issue while updating the order!"
                         }
                     }
-                    
+
                 }
             })
         );
@@ -45,55 +45,6 @@ class UpdateOrderController {
         // return onUpdateOrderResponse;
     }
 
-    async sendDataToEssentialDashboard(order) {
-        const lastFulfillment =
-            order?.message?.order?.fulfillments[
-            order?.message?.order?.fulfillments.length - 1
-            ];
-        let returnState = lastFulfillment?.state?.descriptor?.code;
-        const returnId = lastFulfillment?.id;
-
-        const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
-
-        const returnType = lastFulfillment?.type;
-
-        // const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
-        const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
-        if (
-            validReturnStates.includes(returnState) &&
-            essentialDashboardUri &&
-            order.context?.transaction_id &&
-            order.context?.bap_id
-        ) {
-            const payload = {
-                0: {
-                    json: {
-                        id: returnId,
-                        remarks: returnType,
-                        returnStatus: returnState,
-                    },
-                },
-            };
-
-            const data = JSON.stringify(payload);
-            const config = {
-                method: "post",
-                maxBodyLength: Infinity,
-                url: `${essentialDashboardUri}/trpc/return.updateReturnBySeller?batch=1`,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                data: data,
-            };
-            const response = await axios.request(config);
-            console.log(
-                "Response from Essential Dashboard API:",
-                JSON.stringify(response.data)
-            );
-        } else {
-            return;
-        }
-    }
     /**
     * on cancel order
     * @param {*} req    HTTP request object
@@ -104,10 +55,9 @@ class UpdateOrderController {
     onUpdate(req, res, next) {
         const { query } = req;
         const { messageId } = query;
-        
-        if(messageId) {
+
+        if (messageId) {
             cancelOrderService.onUpdate(messageId).then(async order => {
-                await this.sendDataToEssentialDashboard(order)
                 res.json(order);
             }).catch((err) => {
                 next(err);

@@ -22,10 +22,38 @@ import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
 import User from '../accounts/users/db/user.js';
 import rootRouter from '../accounts/accounts.routes.js';
 import configurationRouter from '../configuration/index.js';
+import Order from '../order/v1/db/order.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
     let data = await User.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+//  for testing
+router.get("/users/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await User.findOne({userId : req.params.id});
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders",async (req,res) => {
+    let data = await Order.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await Order.findOne({id: req.params.id});
+    if(!data) {
+     data = await Order.findOne({userId: req.params.id});
+    }
  
      res.status(200).json({"use": "testing",
      data: data

@@ -35,20 +35,6 @@ app.use(
 );
 app.use(logger("combined"));
 
-//
-// // Global exception handler for HTTP/HTTPS requests
-// app.use(function (err, req, res, next) {
-//
-//     console.log('err.status==============>',err.status);
-//     console.log('err.status==============>',err?.message);
-//     console.log('err.status==============>',err?.stack);
-//     // Send response status based on custom error code
-//     if (err.status) {
-//         return res.status(err.status).json({error: err.message});
-//     }
-//     res.status(500).json({ error: 'Something went wrong. Please try again' });
-// });
-
 // app.use(cors());
 
 app.use("/api", settleRouter)
@@ -60,11 +46,12 @@ app.use(logErrors);
 // app.use(logger('dev'));
 
 app.get("/health", (req,res) => {
-    res.send("HEALTH CHECK - Server is Running")
+    res.send({ success: true, message: "HEALTH CHECK - Server is Running" })
 })
 
 app.get("*", (req, res) => {
-    res.send("API NOT FOUND");
+    res.header("Access-Control-Allow-Origin", "*");
+    res.status(404).send({ success: true, message: "Invalid Endpoint, please re-confirm!"});
 });
 
 app.use((err, req, res, next) => {
