@@ -520,9 +520,9 @@ class UpdateOrderService {
 
                     let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
 
-                    lokiLogger.log(`razorpayPaymentId_onUpdate-----, ${razorpayPaymentId}`)
+                    lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
-                    lokiLogger.log(`totalAmount_onUpdate-----, ${totalAmount}`)
+                    lokiLogger.info(`totalAmount_onUpdate-----, ${totalAmount}`)
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
