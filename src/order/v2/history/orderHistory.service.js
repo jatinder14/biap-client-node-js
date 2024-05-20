@@ -64,34 +64,59 @@ class OrderHistoryService {
                 default:
                     break;
             }
-            if (clonedFilterObj.state['$in'].includes('Return')) {    
-                const orders = await OrderMongooseModel.aggregate([
+            
+            if (clonedFilterObj.state["$in"].includes("Return")) {
+                // Aggregation to get total count
+                const countAggregation = await OrderMongooseModel.aggregate([
                     {
-                      $addFields: {
-                        lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] }
-                      }
+                        $addFields: {
+                            lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] },
+                        },
                     },
                     {
-                      $match: {
-                        $expr: {
-                          $eq: ["$lastFulfillment.type", "Return"]
-                        }
-                      }
-                    }
-                  ]).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
-                  
-                  
-                  const totalCount = orders?.length ?? 0;
+                        $match: {
+                            $expr: {
+                                $eq: ["$lastFulfillment.type", "Return"],
+                            },
+                        },
+                    },
+                    {
+                        $count: "totalCount",
+                    },
+                ]).exec();
 
+                totalCount = countAggregation.length > 0 ? countAggregation[0].totalCount : 0;
 
-                  return { orders, totalCount };
-                } 
-               else {
-                orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).skip(skip).limit(limit).lean();
+                // Aggregation to get orders with pagination
+                orders = await OrderMongooseModel.aggregate([
+                    {
+                        $addFields: {
+                            lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] },
+                        },
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$lastFulfillment.type", "Return"],
+                            },
+                        },
+                    },
+                ])
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .exec();
+
+                return { orders, totalCount };
+            } else {
+                orders = await OrderMongooseModel.find({ ...clonedFilterObj })
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean();
                 totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
                 return { orders, totalCount };
-
-              }
+            }
         }
         catch (err) {
             throw err;
