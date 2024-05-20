@@ -400,9 +400,9 @@ class UpdateOrderService {
 
         }
 
-        lokiLogger.info("Sum of quoteBreakup values:", totalCharges);
+        lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
         let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-        lokiLogger.info("total price sum:", totalRefundAmount);
+        lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
         return totalRefundAmount;
 
     }
@@ -514,21 +514,21 @@ class UpdateOrderService {
                     }
 
                     lokiLogger.info(`total amount calculation done ${totalAmount}`)
-                    lokiLogger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
+                    lokiLogger.info(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
 
                     const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
                     let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
 
-                    lokiLogger.log('razorpayPaymentId_onUpdate-----', razorpayPaymentId)
+                    lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
-                    lokiLogger.log('totalAmount_onUpdate-----', totalAmount)
+                    lokiLogger.info(`totalAmount_onUpdate-----, ${totalAmount}`)
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2))
                             .then((response) => {
-                                lokiLogger.info('response_razorpay_on_update>>>>>>>>>>', response)
+                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
                                 const refundDetails = new Refund({
                                     orderId: dbResponse.id,
                                     refundId: response.id,
@@ -540,10 +540,10 @@ class UpdateOrderService {
                                     razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
 
                                 })
-                                lokiLogger.info('refundDetails>>>>>>>>>>', refundDetails)
+                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
                             })
                             .catch((err) => {
-                                lokiLogger.info('err_response_razorpay_on_update>>>>>>>>>>', err)
+                                lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
                                 throw err
                             });
 
