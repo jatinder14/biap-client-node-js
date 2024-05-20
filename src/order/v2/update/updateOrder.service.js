@@ -17,7 +17,6 @@ import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import { v4 as uuidv4 } from "uuid";
 import Refund from "../db/refund.js";
-import logger from "../../../utils/logger.js";
 
 const bppUpdateService = new BppUpdateService();
 const razorPayService = new RazorPayService()
@@ -514,8 +513,8 @@ class UpdateOrderService {
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
 
-                    logger.infor(`total amount calculation done ${totalAmount}`)
-                    logger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
+                    lokiLogger.info(`total amount calculation done ${totalAmount}`)
+                    lokiLogger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
 
                     const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
