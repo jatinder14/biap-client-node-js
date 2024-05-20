@@ -52,8 +52,8 @@ class OrderHistoryService {
 
            // if (_.isEmpty(clonedFilterObj))
                 clonedFilterObj = {...clonedFilterObj, userId: user.decodedToken.uid };
+                console.log("clonedFilter obj --->",clonedFilterObj)
 
-            console.log("clonedFilter obj --->",clonedFilterObj)
             switch (orderStatus) {
                 case ORDER_STATUS.COMPLETED:
                     clonedFilterObj = { ...clonedFilterObj, id: { "$ne": null } };
@@ -64,11 +64,34 @@ class OrderHistoryService {
                 default:
                     break;
             }
-            
-            orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).limit(limit).skip(skip).lean();
-            totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
+            if (clonedFilterObj.state['$in'].includes('Return')) {    
+                const orders = await OrderMongooseModel.aggregate([
+                    {
+                      $addFields: {
+                        lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] }
+                      }
+                    },
+                    {
+                      $match: {
+                        $expr: {
+                          $eq: ["$lastFulfillment.type", "Return"]
+                        }
+                      }
+                    }
+                  ]).sort({ createdAt: -1 }).limit(limit).skip(skip).exec();
+                  
+                  
+                  const totalCount = orders?.length ?? 0;
 
-            return { orders, totalCount };
+
+                  return { orders, totalCount };
+                } 
+               else {
+                orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).limit(limit).skip(skip).lean();
+                totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
+                return { orders, totalCount };
+
+              }
         }
         catch (err) {
             throw err;
