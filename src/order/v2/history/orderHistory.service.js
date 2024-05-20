@@ -78,7 +78,7 @@ class OrderHistoryService {
                         }
                       }
                     }
-                  ]).sort({ createdAt: -1 }).limit(limit).skip(skip).exec();
+                  ]).sort({ createdAt: -1 }).skip(skip).limit(limit).exec();
                   
                   
                   const totalCount = orders?.length ?? 0;
@@ -87,7 +87,7 @@ class OrderHistoryService {
                   return { orders, totalCount };
                 } 
                else {
-                orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).limit(limit).skip(skip).lean();
+                orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).skip(skip).limit(limit).lean();
                 totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
                 return { orders, totalCount };
 
