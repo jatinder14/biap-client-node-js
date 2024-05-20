@@ -400,9 +400,9 @@ class UpdateOrderService {
 
         }
 
-        lokiLogger.info("Sum of quoteBreakup values:", totalCharges);
+        lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
         let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-        lokiLogger.info("total price sum:", totalRefundAmount);
+        lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
         return totalRefundAmount;
 
     }
