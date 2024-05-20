@@ -17,6 +17,7 @@ import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import { v4 as uuidv4 } from "uuid";
 import Refund from "../db/refund.js";
+import logger from "../../../utils/logger.js";
 
 const bppUpdateService = new BppUpdateService();
 const razorPayService = new RazorPayService()
@@ -417,28 +418,28 @@ class UpdateOrderService {
 
             lokiLogger.info(`protocolUpdateResponse_onUpdateStatus---1121>>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
 
-            // const totalRefundAmount = (protocolUpdateResponses) => {
-            //     let totalAmount = 0;
-            //     if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)) {
-            //         protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
-            //           let tags = fulfillment?.tags;
-            //           if (tags && Array.isArray(tags)) {
-            //             tags.forEach(tag => {
-            //                 if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
-            //                     tag.list.forEach(trailItem => {
-            //                         if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
-            //                             totalAmount += parseFloat(trailItem.value);
-            //                         }
-            //                     });
-            //                 }
-            //             });
+            const totalRefundAmount = (protocolUpdateResponses) => {
+                let totalAmount = 0;
+                if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)) {
+                    protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
+                      let tags = fulfillment?.tags;
+                      if (tags && Array.isArray(tags)) {
+                        tags.forEach(tag => {
+                            if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
+                                tag.list.forEach(trailItem => {
+                                    if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
+                                        totalAmount += parseFloat(trailItem.value);
+                                    }
+                                });
+                            }
+                        });
                         
-            //         }
-            //         });
-            //         return Math.abs(totalAmount)
-            //       }
-            // }
-            let totalRefundAmount = this.calculateRefundAmount(protocolUpdateResponse);
+                    }
+                    });
+                    return Math.abs(totalAmount)
+                  }
+            }
+            // let totalRefundAmount = this.calculateRefundAmount(protocolUpdateResponse);
 
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
@@ -496,20 +497,25 @@ class UpdateOrderService {
                     //check if item state is liquidated or cancelled
 
                     //if there is update qoute recieved from on_update we need to calculate refund amount
-                    let totalAmount = 0
+                    // let totalAmount = 0
+                    let totalAmount = this.calculateRefundAmount(protocolUpdateResponse);
 
 
                     if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'cancelled') {
-                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        // totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     }
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
-                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     } 
                     
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
                         // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
+
+                    logger.infor(`total amount calculation done ${totalAmount}`)
+                    logger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
 
                     const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
