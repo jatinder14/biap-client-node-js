@@ -33,8 +33,27 @@ router.get("/users",async (req,res) => {
  })
  })
 //  for testing
-router.get("/ordres",async (req,res) => {
+router.get("/users/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await User.findOne({userId : req.params.id});
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders",async (req,res) => {
     let data = await Order.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await Order.findOne({id: req.params.id});
+    if(!data) {
+     data = await Order.findOne({userId: req.params.id});
+    }
  
      res.status(200).json({"use": "testing",
      data: data
