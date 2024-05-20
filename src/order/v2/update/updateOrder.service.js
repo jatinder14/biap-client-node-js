@@ -358,6 +358,55 @@ class UpdateOrderService {
         }
     }
 
+    calculateRefundAmount(obj) {
+        let fulfillments = obj?.message?.order?.fulfillments || [];
+        let stateFilter = ["Return_Picked", "Return_Delivered"];
+        let sumOfNegativeValues = 0;
+        fulfillments.forEach(fulfillment => {
+            let stateCode = fulfillment?.state?.descriptor?.code;
+            if (stateFilter.includes(stateCode)) {
+                fulfillment?.tags?.forEach(tag => {
+                    if (tag?.code === "quote_trail") {
+                        tag?.list?.forEach(item => {
+                            if (item?.code === "value") {
+                                let value = parseFloat(item?.value);
+                                if (!isNaN(value) && value < 0) {
+                                    sumOfNegativeValues += value;
+                                }
+                            }
+                        });
+
+                    }
+                });
+            }
+        });
+        console.log("Sum of negative values:", sumOfNegativeValues);
+        // full order cancellation We need to return auxilliary charges amount as well
+
+        let totalCharges = 0;
+        let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
+
+        let full_Cancel = false;
+        quoteBreakup.forEach(breakupItem => {
+            if (breakupItem?.["@ondc/org/item_quantity"]?.count === 0)
+                full_Cancel = true;
+        });
+        if (full_Cancel) {
+
+            quoteBreakup.forEach(breakupItem => {
+                totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+            });
+
+
+        }
+
+        lokiLogger.info("Sum of quoteBreakup values:", totalCharges);
+        let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+        lokiLogger.info("total price sum:", totalRefundAmount);
+        return totalRefundAmount;
+
+    }
+
     /**
     * on cancel order
     * @param {Object} messageId
@@ -366,7 +415,7 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
-            // lokiLogger.info('protocolUpdateResponse_onUpdate>>>>>',protocolUpdateResponse)
+            lokiLogger.info(`protocolUpdateResponse_onUpdateStatus---1121>>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
 
             const totalRefundAmount = (protocolUpdateResponses) => {
                 let totalAmount = 0;
@@ -389,6 +438,7 @@ class UpdateOrderService {
                     return Math.abs(totalAmount)
                   }
             }
+            // let totalRefundAmount = this.calculateRefundAmount(protocolUpdateResponse);
 
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
@@ -446,19 +496,25 @@ class UpdateOrderService {
                     //check if item state is liquidated or cancelled
 
                     //if there is update qoute recieved from on_update we need to calculate refund amount
-                    let totalAmount = 0
+                    // let totalAmount = 0
+                    let totalAmount = this.calculateRefundAmount(protocolUpdateResponse);
 
 
                     if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'cancelled') {
-                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        // totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     }
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
-                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     } 
+                    
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
                         // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
                     }
+
+                    lokiLogger.info(`total amount calculation done ${totalAmount}`)
+                    lokiLogger.infor(`latestFullfilement?.state?.descriptor?.code?.toLowerCase() ${latestFullfilement?.state?.descriptor?.code?.toLowerCase()}`)
 
                     const orderRefunded = await Refund.findOne({ id: dbResponse.id }).lean().exec()
 
@@ -497,6 +553,7 @@ class UpdateOrderService {
 
 
             }
+            lokiLogger.info(`protocolUpdateResponse----lastLine---->>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
             return protocolUpdateResponse;
         }
 

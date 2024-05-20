@@ -279,6 +279,7 @@ class SearchController {
     getProviders(req, res, next) {
       const searchRequest = req.query;
         const headers = req.headers;
+        console.log('searchRequest :>> ', searchRequest);
 
         let targetLanguage = headers['targetlanguage'];
 

@@ -15,6 +15,10 @@ router.get(
     
 );
 
+// get providers
+router.get(
+    '/v2/providers',  searchController.getProviders
+);
 
 // get item details
 router.get(
@@ -68,10 +72,7 @@ router.get(
     '/v2/attributeValues',  searchController.getAttributesValues,
 );
 
-// get providers
-router.get(
-    '/v2/providers',  searchController.getProviders
-);
+
 
 // get custom menus
 router.get(
