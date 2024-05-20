@@ -10,15 +10,11 @@ const searchController = new SearchController();
 
 // search
 router.get(
-    '/v2/search/:userId',  
+    '/v2/search',  
     searchController.search,bhashiniTranslator
     
 );
 
-// get providers
-router.get(
-    '/v2/providers',  searchController.getProviders
-);
 
 // get item details
 router.get(
@@ -72,7 +68,10 @@ router.get(
     '/v2/attributeValues',  searchController.getAttributesValues,
 );
 
-
+// get providers
+router.get(
+    '/v2/providers',  searchController.getProviders
+);
 
 // get custom menus
 router.get(
