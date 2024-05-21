@@ -478,14 +478,14 @@ class UpdateOrderService {
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
                     const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
-
+                    const itemIds = latestFullfilement?.tags?.[0]?.list?.filter(item => item?.code === "item_id").map(item => item?.value) || [];
                     const fullfillmentHistory = new FulfillmentHistory({
                         id: dbResponse.id,
                         type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
-                        orderId: protocolUpdateResponse.message.order.id
+                        orderId: protocolUpdateResponse.message.order.id,
+                        itemIds:itemIds
                     })
-
 
 
                     dbResponse.save()
@@ -526,7 +526,7 @@ class UpdateOrderService {
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
-                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2))
+                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
                             .then((response) => {
                                 lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
                                 const refundDetails = new Refund({
@@ -661,7 +661,7 @@ class UpdateOrderService {
                                 id: fl.id,
                                 state: fl.state.descriptor.code
                             })
-                            if (!existingFulfillment) {
+                            if (!existingFulfillment || existingFulfillment!=='null') {
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
@@ -770,8 +770,7 @@ class UpdateOrderService {
                             item.product = temp.product;
                             //item.quantity = item.quantity.count
                             updateItems.push(item)
-                        }
-
+                            }                                         
                         console.log("updateItems", updateItems)
                         //get item from db and update state for item
                         orderSchema.items = updateItems;

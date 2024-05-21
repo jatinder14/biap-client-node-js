@@ -178,7 +178,7 @@ class SseController {
 
     onUpdate(req, res, next) {
         const { body: response } = req;
-        logger.info(`ONDC API call - on_update --> ${JSON.stringify(response)}`)
+        logger.info(`ONDC API call verification - on_update --> ${JSON.stringify(response)}`)
         sseProtocolService.onUpdate(response).then(result => {
             res.json(result);
         }).catch((err) => {
