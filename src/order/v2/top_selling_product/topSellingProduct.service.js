@@ -19,7 +19,7 @@ class TopSellingService {
             {
                 $group: {
                     _id: "$items.id",
-                    count: { $max: "$items.quantity.count" }
+                    count: { $sum: "$items.quantity.count" }
                 }
             },
             {
