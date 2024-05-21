@@ -78,7 +78,7 @@ class CancelOrderService {
   async onCancelOrder(messageId) {
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
-      
+
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
         const context = contextFactory.create({
@@ -110,32 +110,32 @@ class CancelOrderService {
             QuoteAmount = order?.updatedQuote?.price?.value
           }
 
-          else if(order?.quote) {
+          else if (order?.quote) {
             QuoteAmount = order?.quote?.price?.value
           }
 
           const razorpayPaymentId = order?.payment?.razorpayPaymentId
 
-          
+
 
           let fulfillmentArray = protocolCancelResponse?.message?.order?.fulfillments
 
-          let totalAmount = 0; 
+          let totalAmount = 0;
 
           if (fulfillmentArray && Array.isArray(fulfillmentArray)) {
             fulfillmentArray.forEach(fulfillment => {
               let tags = fulfillment?.tags;
               if (tags && Array.isArray(tags)) {
                 tags.forEach(tag => {
-                    if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
-                        tag?.list.forEach(trailItem => {
-                            if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
-                                totalAmount += parseFloat(trailItem.value);
-                            }
-                        });
-                    }
+                  if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
+                    tag?.list.forEach(trailItem => {
+                      if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
+                        totalAmount += parseFloat(trailItem.value);
+                      }
+                    });
+                  }
                 });
-            }
+              }
             });
           }
 
@@ -146,7 +146,7 @@ class CancelOrderService {
           lokiLogger.info(`protocolCancelResponse_onCancelOrder----- ${protocolCancelResponse}`)
 
           lokiLogger.info(`QuoteAmount_onCancelOrder----- ${QuoteAmount}`)
-          
+
           lokiLogger.info(`totalAmount_onCancelOrder----- ${totalAmount}`)
 
           lokiLogger.info(`razorpayPaymentId_onCancelOrder----- ${razorpayPaymentId}`)
@@ -157,8 +157,9 @@ class CancelOrderService {
             const orderRefund = await Refund.findOne({ id: order.id }).lean().exec()
 
             if (!orderRefund && order.id && razorpayPaymentId && totalAmount) {
+              let refundAmount = Math.abs(totalAmount.toFixed(2)) * 100
               razorPayService
-                .refundOrder(razorpayPaymentId, Math.abs(totalAmount.toFixed(2)))
+                .refundOrder(razorpayPaymentId, refundAmount)
                 .then((response) => {
                   lokiLogger.info('response_razorpay_onCancelOrder>>>>>>>>>>', response)
                   const refundDetails = new Refund({

@@ -533,7 +533,7 @@ const onUpdateStatus = async (messageId) => {
     );
 
     const result = await apiCall.send();
-    logger.info(`ONDC API call - on_update --> ${JSON.stringify(result.data)}`)
+    logger.info(`ONDC API call verification purpose - on_update --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
