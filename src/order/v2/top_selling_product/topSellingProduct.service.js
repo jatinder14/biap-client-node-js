@@ -17,22 +17,22 @@ class TopSellingService {
                   $match: { "items.quantity.count": { $gt: 1 } } 
                 },
                 {
-                  $group: { 
-                    _id: null,
-                    itemIds: { $push: "$items.id" }
+                    $group: {
+                      _id: null,
+                      itemIds: { $addToSet: "$items.id" }  
+                    }
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      itemIds: { $slice: ["$itemIds", 10] } 
+                    }
                   }
-                },
-                {
-                  $project: { 
-                    _id: 0,
-                    itemIds: 1
-                  }
-                }
               ];
           const allOrders = await OrderMongooseModel.aggregate(pipeline);
               const itemIds = allOrders[0].itemIds;
             const response = await protocolSearchItems({ itemIds: itemIds.join(',')});
-                            return response.data
+                            return response.data    
         } catch (error) {
             throw error;
         }
