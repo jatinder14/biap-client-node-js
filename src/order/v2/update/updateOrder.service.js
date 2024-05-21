@@ -526,7 +526,7 @@ class UpdateOrderService {
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
-                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2))
+                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
                             .then((response) => {
                                 lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
                                 const refundDetails = new Refund({
