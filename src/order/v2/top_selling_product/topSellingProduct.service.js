@@ -42,7 +42,6 @@ class TopSellingService {
             }
         ];
           let allOrders = await OrderMongooseModel.aggregate(pipeline);
-          allOrders=[]
               const itemIds = allOrders[0]?.itemIds;
               const itemJoin=itemIds?.join(',')
             if(itemJoin){
