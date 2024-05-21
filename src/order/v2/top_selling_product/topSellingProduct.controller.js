@@ -50,14 +50,8 @@ class TopSellingController {
                     res.send(response)
                 }
                 else {
-                    res.header("Access-Control-Allow-Origin", "*");
-                    res.status(400).json(
-                        {
-                            totalCount: 0,
-                            orders: [],
-                            error: response.error,
-                        }
-                    );
+                    console.log("topSellingProduct response.error ----------------- ", response.error);
+                    res.send([]);
                 } 
             }).catch((err) => {
                 next(err);

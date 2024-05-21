@@ -415,7 +415,7 @@ class UpdateOrderService {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
 
-            lokiLogger.info(`protocolUpdateResponse_onUpdateStatus---1121>>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
+            lokiLogger.info(`onUpdate protocolUpdateResponse_onUpdateStatus ----------------${JSON.stringify(protocolUpdateResponse)}`)
 
             const totalRefundAmount = (protocolUpdateResponses) => {
                 let totalAmount = 0;
@@ -567,7 +567,7 @@ class UpdateOrderService {
         try {
 
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-
+            lokiLogger.info(`-----------------onUpdateDbOperation -------------- ${messageId}`)
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
