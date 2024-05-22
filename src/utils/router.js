@@ -25,6 +25,7 @@ import configurationRouter from '../configuration/index.js';
 import Order from '../order/v1/db/order.js';
 import Refund from '../order/v2/db/refund.js';
 import Settlements from '../order/v2/db/settlement.js';
+import Fulfillments from '../order/v2/db/fulfillments.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
@@ -58,6 +59,12 @@ router.get("/refunds",async (req,res) => {
  })
 router.get("/settlements",async (req,res) => {
     let data = await Settlements.find();
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/fulfillments",async (req,res) => {
+    let data = await Fulfillments.find();
      res.status(200).json({"use": "testing",
      data: data
  })

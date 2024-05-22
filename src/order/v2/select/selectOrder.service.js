@@ -93,6 +93,13 @@ class SelectOrderService {
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             }
+            if (fulfillments.some(el => !el?.end?.location?.gps || el?.end?.location?.gps?.includes('null'))) {
+                return { 
+                    context, 
+                    success: false,
+                    error: { message: "GPS location is not correct!" }
+                };
+            }
 
             return await bppSelectService.select(
                 context,
