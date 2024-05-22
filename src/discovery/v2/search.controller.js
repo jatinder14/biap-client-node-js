@@ -49,7 +49,7 @@ class SearchController {
           }
           console.log("where ------------------------", where);
           if (where.length) {
-            const findWishlistItem = await WishlistItem.find({
+          const findWishlistItem = await WishlistItem.find({
               $or: where
             });
 
@@ -57,9 +57,9 @@ class SearchController {
               return item.item.id;
             });
           }
-
+          
           response?.response?.data?.forEach((item) => {
-            if (itemids.includes(item?.id)) {
+            if (itemids.includes(item?.item_details?.id)) {
               item.wishlistAdded = true;
             }
           });
