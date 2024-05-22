@@ -358,16 +358,66 @@ class UpdateOrderService {
         }
     }
 
+    // calculateRefundAmount(obj) {
+    //     let fulfillments = obj?.message?.order?.fulfillments || [];
+    //     let stateFilter = ["Return_Picked", "Return_Delivered"];
+    //     let sumOfNegativeValues = 0;
+    //     fulfillments.forEach(fulfillment => {
+    //         let stateCode = fulfillment?.state?.descriptor?.code;
+    //         if (stateFilter.includes(stateCode)) {
+    //             fulfillment?.tags?.forEach(tag => {
+    //                 if (tag?.code === "quote_trail") {
+    //                     tag?.list?.forEach(item => {
+    //                         if (item?.code === "value") {
+    //                             let value = parseFloat(item?.value);
+    //                             if (!isNaN(value) && value < 0) {
+    //                                 sumOfNegativeValues += value;
+    //                             }
+    //                         }
+    //                     });
+
+    //                 }
+    //             });
+    //         }
+    //     });
+    //     console.log("Sum of negative values:", sumOfNegativeValues);
+    //     // full order cancellation We need to return auxilliary charges amount as well
+
+    //     let totalCharges = 0;
+    //     let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
+
+    //     let full_Cancel = false;
+    //     quoteBreakup.forEach(breakupItem => {
+    //         if (breakupItem?.["@ondc/org/item_quantity"]?.count === 0)
+    //             full_Cancel = true;
+    //     });
+    //     if (full_Cancel) {
+
+    //         quoteBreakup.forEach(breakupItem => {
+    //             totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+    //         });
+
+
+    //     }
+
+    //     lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
+    //     let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+    //     lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+    //     return totalRefundAmount;
+
+    // }
     calculateRefundAmount(obj) {
-        let fulfillments = obj?.message?.order?.fulfillments || [];
-        let stateFilter = ["Return_Picked", "Return_Delivered"];
+        let fulfillments = obj[0]?.message?.order?.fulfillments || [];
+        // let stateFilter = ["Return_Picked", "Return_Delivered"];
+        let stateFilter = ["Liquidated", "Return_Picked"];
         let sumOfNegativeValues = 0;
-        fulfillments.forEach(fulfillment => {
+        fulfillments.forEach((fulfillment) => {
             let stateCode = fulfillment?.state?.descriptor?.code;
+
             if (stateFilter.includes(stateCode)) {
-                fulfillment?.tags?.forEach(tag => {
+                fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
-                        tag?.list?.forEach(item => {
+                        tag?.list?.forEach((item) => {
                             if (item?.code === "value") {
                                 let value = parseFloat(item?.value);
                                 if (!isNaN(value) && value < 0) {
@@ -375,7 +425,6 @@ class UpdateOrderService {
                                 }
                             }
                         });
-
                     }
                 });
             }
@@ -384,28 +433,27 @@ class UpdateOrderService {
         // full order cancellation We need to return auxilliary charges amount as well
 
         let totalCharges = 0;
-        let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
+        let quoteBreakup = obj[0]?.message?.order?.quote?.breakup || [];
 
-        let full_Cancel = false;
-        quoteBreakup.forEach(breakupItem => {
-            if (breakupItem?.["@ondc/org/item_quantity"]?.count === 0)
-                full_Cancel = true;
+        let full_Cancel = true;
+        quoteBreakup.forEach((breakupItem) => {
+            if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                full_Cancel = false;
         });
-        if (full_Cancel) {
 
-            quoteBreakup.forEach(breakupItem => {
+        if (full_Cancel) {
+            console.log(`jaitnder -----${full_Cancel}`);
+
+            quoteBreakup.forEach((breakupItem) => {
                 totalCharges += parseFloat(breakupItem?.price?.value) || 0;
             });
-
-
         }
-
         lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
         let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
         lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
         return totalRefundAmount;
-
     }
+
 
     /**
     * on cancel order
@@ -501,11 +549,12 @@ class UpdateOrderService {
 
 
                     if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'cancelled') {
-                        // totalAmount = totalRefundAmount(protocolUpdateResponse)
-                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
+                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        // totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     }
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
-                        totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
+                        totalAmount = totalRefundAmount(protocolUpdateResponse)
+                        // totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
                     } 
                     
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
@@ -568,6 +617,7 @@ class UpdateOrderService {
 
             let protocolUpdateResponse = await onUpdateStatus(messageId);
             lokiLogger.info(`-----------------onUpdateDbOperation -------------- ${messageId}`)
+
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -587,10 +637,33 @@ class UpdateOrderService {
                 if (!(protocolUpdateResponse?.[0].error)) {
 
 
+                    let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
 
                     console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
                     console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
+                    lokiLogger.info(`-----------------refundAmount -------------- ${refundAmount}`)
+                    razorPayService
+                    .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
+                    .then((response) => {
+                        lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
+                        const refundDetails = new Refund({
+                            orderId: dbResponse.id,
+                            refundId: response.id,
+                            refundedAmount: (response.amount) / 100,
+                            itemId: dbResponse.items[0].id,
+                            itemQty: dbResponse.items[0].quantity.count,
+                            isRefunded: true,
+                            transationId: dbResponse?.transactionId,
+                            razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
+        
+                        })
+                        lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
+                    })
+                    .catch((err) => {
+                        lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
+                        throw err
+                    });
 
                     const dbResponse = await OrderMongooseModel.find({
                         transactionId: protocolUpdateResponse.context.transaction_id,
