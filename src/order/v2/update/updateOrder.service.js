@@ -612,27 +612,30 @@ class UpdateOrderService {
                     if (!(dbResponse || dbResponse.length))
                         throw new NoRecordFoundError();
                     else {
-                        razorPayService
-                        .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
-                        .then((response) => {
-                            lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
-                            const refundDetails = new Refund({
-                                orderId: dbResponse.id,
-                                refundId: response.id,
-                                refundedAmount: (response.amount) / 100,
-                                itemId: dbResponse.items[0].id,
-                                itemQty: dbResponse.items[0].quantity.count,
-                                isRefunded: true,
-                                transationId: dbResponse?.transactionId,
-                                razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
-            
+                        if (razorpayPaymentId && refundAmount) {
+                            razorPayService
+                            .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
+                            .then((response) => {
+                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
+                                const refundDetails = new Refund({
+                                    orderId: dbResponse.id,
+                                    refundId: response.id,
+                                    refundedAmount: (response.amount) / 100,
+                                    itemId: dbResponse.items[0].id,
+                                    itemQty: dbResponse.items[0].quantity.count,
+                                    isRefunded: true,
+                                    transationId: dbResponse?.transactionId,
+                                    razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
+                
+                                })
+                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
                             })
-                            lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
-                        })
-                        .catch((err) => {
-                            lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
-                            throw err
-                        });
+                            .catch((err) => {
+                                lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
+                                throw err
+                            });
+                        }
+                        
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;
                         }
