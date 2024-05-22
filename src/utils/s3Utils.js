@@ -41,10 +41,11 @@ async function getSignedUrl(fileKey){
             signatureVersion: process.env.S3_VERSION
     });
 
-    const url = s3.getSignedUrl('getObject', {
-        Bucket: process.env.S3_BUCKET ,
-        Key: fileKey,
-        // Expires: signedUrlExpireSeconds
+    const url = s3.createPresignedPost({
+        Bucket: process.env.S3_BUCKET,
+        Fields: {
+            key: fileKey
+        }
     });
     return url;
     // console.log(url,"bhaskalhfalsdh",fileKey)
