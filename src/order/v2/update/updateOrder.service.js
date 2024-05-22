@@ -358,55 +358,8 @@ class UpdateOrderService {
         }
     }
 
-    // calculateRefundAmount(obj) {
-    //     let fulfillments = obj?.message?.order?.fulfillments || [];
-    //     let stateFilter = ["Return_Picked", "Return_Delivered"];
-    //     let sumOfNegativeValues = 0;
-    //     fulfillments.forEach(fulfillment => {
-    //         let stateCode = fulfillment?.state?.descriptor?.code;
-    //         if (stateFilter.includes(stateCode)) {
-    //             fulfillment?.tags?.forEach(tag => {
-    //                 if (tag?.code === "quote_trail") {
-    //                     tag?.list?.forEach(item => {
-    //                         if (item?.code === "value") {
-    //                             let value = parseFloat(item?.value);
-    //                             if (!isNaN(value) && value < 0) {
-    //                                 sumOfNegativeValues += value;
-    //                             }
-    //                         }
-    //                     });
-
-    //                 }
-    //             });
-    //         }
-    //     });
-    //     console.log("Sum of negative values:", sumOfNegativeValues);
-    //     // full order cancellation We need to return auxilliary charges amount as well
-
-    //     let totalCharges = 0;
-    //     let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
-
-    //     let full_Cancel = false;
-    //     quoteBreakup.forEach(breakupItem => {
-    //         if (breakupItem?.["@ondc/org/item_quantity"]?.count === 0)
-    //             full_Cancel = true;
-    //     });
-    //     if (full_Cancel) {
-
-    //         quoteBreakup.forEach(breakupItem => {
-    //             totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-    //         });
-
-
-    //     }
-
-    //     lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
-    //     let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-    //     lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
-    //     return totalRefundAmount;
-
-    // }
     calculateRefundAmount(obj) {
+        if(obj){
         let fulfillments = obj[0]?.message?.order?.fulfillments || [];
         // let stateFilter = ["Return_Picked", "Return_Delivered"];
         let stateFilter = ["Liquidated", "Return_Picked"];
@@ -452,6 +405,8 @@ class UpdateOrderService {
         let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
         lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
         return totalRefundAmount;
+    }
+    return 0 ;
     }
 
 
