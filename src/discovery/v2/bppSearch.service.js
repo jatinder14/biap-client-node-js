@@ -191,7 +191,10 @@ class BppSearchService {
 
     async getProviders(searchRequest) {
         try {
-
+            if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
+            else searchRequest.limit = 18
+            if (searchRequest?.page) searchRequest.pageNumber = Number(searchRequest?.page)
+            else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
             
 

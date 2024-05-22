@@ -17,7 +17,7 @@ class BppUpdateService {
             if (!essentialDashboardUri || !context?.transaction_id || !context.bap_id) {
                 return;
             }
-
+            context.subscriber_id = "buyer-app-stage.thewitslab.com" // context.bap_id - Need to fix this once id will subscribe
             const payload = {
                 "0": {
                     "json": {
