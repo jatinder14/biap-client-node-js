@@ -612,6 +612,9 @@ class UpdateOrderService {
                     if (!(dbResponse || dbResponse.length))
                         throw new NoRecordFoundError();
                     else {
+                        lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
+
+                        lokiLogger.info(`totalAmount_onUpdate-----, ${refundAmount}`)
                         if (razorpayPaymentId && refundAmount) {
                             razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
