@@ -56,10 +56,19 @@ class UpdateOrderService {
                 code = 'return_request'
             }
 
+            const reason_descriptions = {
+                "001" : "Buyer does not want product any more",
+                "002" : "Product available at lower than order price",
+                "003" : "Product damaged or not in usable state",
+                "004" : "Product is of incorrect quantity or size",
+                "005" : "Product delivered is different from what was shown and ordered"
+            }
+
             let fulfillmentId;
             let tags = []
             for (let item of orderRequest.message.order.items) {
-
+                const reason_id = item.tags.reason_code
+                const reason_desc = reason_descriptions[reason_id] || "No description provided"
                 if (!fulfillmentId) {
                     fulfillmentId = dbFulfillment._id;
                 }
@@ -89,7 +98,7 @@ class UpdateOrderService {
                             },
                             {
                                 "code": "reason_desc",
-                                "value": "detailed description for return"
+                                "value": reason_desc
                             },
                             {
                                 "code": "images",
@@ -112,7 +121,7 @@ class UpdateOrderService {
                 dbFulfillment.parent_item_id = item.tags.parent_item_id ?? ""
                 dbFulfillment.item_quantity = item.quantity.count
                 dbFulfillment.reason_id = item.tags.reason_code
-                dbFulfillment.reason_desc = 'detailed description for return'
+                dbFulfillment.reason_desc = reason_desc
                 dbFulfillment.images = item.tags.image
                 dbFulfillment.type = type
                 dbFulfillment.id = fulfillmentId;
