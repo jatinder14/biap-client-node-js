@@ -41,7 +41,7 @@ class TopSellingController {
                             return item.item.id;
                         });
                         response.forEach((item) => {
-                            if (itemids.includes(item.id)) {
+                            if (itemids.includes(item?.item_details?.id)) {
                                 item.wishlistAdded = true;
                             }
                         });
