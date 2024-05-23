@@ -193,7 +193,7 @@ class BppSearchService {
         try {
             if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
             else searchRequest.limit = 18
-            if (searchRequest?.page) searchRequest.pageNumber = Number(searchRequest?.page)
+            if (searchRequest?.pageNumber) searchRequest.pageNumber = Number(searchRequest?.pageNumber)
             else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
             

@@ -2,6 +2,7 @@ import SearchService from "./search.service.js";
 import BadRequestParameterError from "../../lib/errors/bad-request-parameter.error.js";
 import NoRecordFoundError from "../../lib/errors/no-record-found.error.js";
 import WishlistItem from "../../order/v2/db/wishlistItem.js"
+import WishList from '../../order/v2/db/wishlist.js';
 import { SSE_CONNECTIONS } from "../../utils/sse.js";
 
 const searchService = new SearchService();
@@ -40,20 +41,18 @@ class SearchController {
           const wishlistKey = req.query.wishlist_key || req.query.deviceId
           console.log("userId ------------------------", userId);
           console.log("wishlistKey ------------------------", wishlistKey);
-          let where = [], itemids = []
-          if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
-            where = [...where, { "item.userId": userId }]
-          }
+          let itemids = [], wishlist, wishlist2, wishlistIds = [];
           if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
-            where = [...where, { "item.wishlist_key": wishlistKey }]
+            wishlist = await WishList.findOne({ wishlist_key: wishlistKey });
           }
-          console.log("where ------------------------", where);
-          if (where.length) {
-            const findWishlistItem = await WishlistItem.find({
-              $or: where
-            });
-
-            itemids = findWishlistItem.map((item) => {
+          if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+            wishlist2 = await WishList.findOne({ userId: userId });
+          }
+          if (wishlist?._id) wishlistIds.push(wishlist?._id)
+          if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
+          let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
+          if (wishlistData.length) {
+            itemids = wishlistData.map((item) => {
               return item.item.id;
             });
           }
