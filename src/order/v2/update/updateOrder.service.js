@@ -368,16 +368,13 @@ class UpdateOrderService {
     }
 
     calculateRefundAmount(obj) {
-        if(obj){
-        let fulfillments = obj[0]?.message?.order?.fulfillments || [];
-        // let stateFilter = ["Return_Picked", "Return_Delivered"];
-        let stateFilter = ["Liquidated"];
-        let sumOfNegativeValues = 0;
-        fulfillments.forEach((fulfillment) => {
-            let stateCode = fulfillment?.state?.descriptor?.code;
-
-            if (stateFilter.includes(stateCode)) {
-                fulfillment?.tags?.forEach((tag) => {
+        if (obj) {
+            let sumOfNegativeValues = 0;
+            let fulfillments = obj[0]?.message?.order?.fulfillments || [];
+            let latest_fulfillment =
+                obj[0]?.message?.order?.fulfillments[fulfillments.length - 1];
+            if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
+                latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
                         tag?.list?.forEach((item) => {
                             if (item?.code === "value") {
@@ -390,32 +387,31 @@ class UpdateOrderService {
                     }
                 });
             }
-        });
-        console.log("Sum of negative values:", sumOfNegativeValues);
-        // full order cancellation We need to return auxilliary charges amount as well
+            logger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
+            // full order cancellation We need to return auxilliary charges amount as well
 
-        let totalCharges = 0;
-        let quoteBreakup = obj[0]?.message?.order?.quote?.breakup || [];
+            let totalCharges = 0;
+            let quoteBreakup = obj[0]?.message?.order?.quote?.breakup || [];
 
-        let full_Cancel = true;
-        quoteBreakup.forEach((breakupItem) => {
-            if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
-                full_Cancel = false;
-        });
-
-        if (full_Cancel) {
-            console.log(`jaitnder -----${full_Cancel}`);
-
+            let full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
-                totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+                if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                    full_Cancel = false;
             });
+
+            if (full_Cancel) {
+                console.log(`jaitnder -----${full_Cancel}`);
+
+                quoteBreakup.forEach((breakupItem) => {
+                    totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+                });
+            }
+            lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
+            let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+            lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+            return totalRefundAmount;
         }
-        lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
-        let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-        lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
-        return totalRefundAmount;
-    }
-    return 0 ;
+        return 0;
     }
 
 
@@ -603,7 +599,8 @@ class UpdateOrderService {
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
                     let fulfillments = protocolUpdateResponse[0]?.message?.order?.fulfillments || [];
                     let latest_fulfillment =protocolUpdateResponse[0]?.message?.order?.fulfillments[fulfillments.length - 1];
-                    console.log("latest_fulfillment Items:", latest_fulfillment);
+                    lokiLogger.info(`----------fulfillments-Items-------------: ${fulfillments}`);
+                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${latest_fulfillment}`);
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
 
                     console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
