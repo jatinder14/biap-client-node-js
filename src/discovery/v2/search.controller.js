@@ -58,7 +58,7 @@ class SearchController {
           }
           
           response?.response?.data?.forEach((item) => {
-            if (itemids.includes(item?.item_details?.id)) {
+            if (itemids.includes(item?.id)) {
               item.wishlistAdded = true;
             }
           });

@@ -368,11 +368,13 @@ class UpdateOrderService {
     }
 
     calculateRefundAmount(obj) {
+        let totalRefundAmount = 0
+        lokiLogger.info(`obj ======  ${obj}`);
         if (obj) {
             let sumOfNegativeValues = 0;
-            let fulfillments = obj[0]?.message?.order?.fulfillments || [];
-            let latest_fulfillment =
-                obj[0]?.message?.order?.fulfillments[fulfillments.length - 1];
+            let fulfillments = obj?.message?.order?.fulfillments || [];
+            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
+            lokiLogger.info(`latest_fulfillment ======  ${latest_fulfillment}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
@@ -387,11 +389,10 @@ class UpdateOrderService {
                     }
                 });
             }
-            logger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
-            // full order cancellation We need to return auxilliary charges amount as well
+            lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
 
             let totalCharges = 0;
-            let quoteBreakup = obj[0]?.message?.order?.quote?.breakup || [];
+            let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
 
             let full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
@@ -400,18 +401,18 @@ class UpdateOrderService {
             });
 
             if (full_Cancel) {
-                console.log(`jaitnder -----${full_Cancel}`);
+                lokiLogger.info(`full_Cancel ---->> :  ${full_Cancel}`);
 
                 quoteBreakup.forEach((breakupItem) => {
                     totalCharges += parseFloat(breakupItem?.price?.value) || 0;
                 });
             }
             lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
-            let totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+            totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
             lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
             return totalRefundAmount;
         }
-        return 0;
+        return totalRefundAmount;
     }
 
 
@@ -580,6 +581,7 @@ class UpdateOrderService {
             lokiLogger.info(`onUpdateprotocolresponse----------------${JSON.stringify(protocolUpdateResponse)}`)
 
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
+                lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
                     messageId: messageId,
@@ -595,13 +597,15 @@ class UpdateOrderService {
                 };
             }
             else {
+                lokiLogger.info(`protocolUpdateResponse?.[0].error ----------------${protocolUpdateResponse?.[0].error}`)
                 if (!(protocolUpdateResponse?.[0].error)) {
+                    protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
-                    let fulfillments = protocolUpdateResponse[0]?.message?.order?.fulfillments || [];
-                    let latest_fulfillment =protocolUpdateResponse[0]?.message?.order?.fulfillments[fulfillments.length - 1];
+                    lokiLogger.info(`----------refundAmount-------------: ${refundAmount}`);
+                    let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
+                    let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
                     lokiLogger.info(`----------fulfillments-Items-------------: ${fulfillments}`);
                     lokiLogger.info(`----------latest_fulfillment-Items----------------: ${latest_fulfillment}`);
-                    protocolUpdateResponse = protocolUpdateResponse?.[0];
 
                     console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
                     console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
@@ -853,12 +857,13 @@ class UpdateOrderService {
 
                     }
                 }
-
+                lokiLogger.info(`protocolUpdateResponse final ----------------${protocolUpdateResponse}`)
                 return protocolUpdateResponse;
             }
 
         }
         catch (err) {
+            lokiLogger.info(`onUpdateDbOperation Error ------------------ ${err}`)
             throw err;
         }
     }
