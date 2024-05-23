@@ -55,12 +55,22 @@ class UpdateOrderService {
 
             let fulfillmentId;
             let tags = []
+
+            const reason_descriptions = {
+                "001" : "Buyer does not want product any more",
+                "002" : "Product available at lower than order price",
+                "003" : "Product damaged or not in usable state",
+                "004" : "Product is of incorrect quantity or size",
+                "005" : "Product delivered is different from what was shown and ordered"
+            }
             for(let item of orderRequest.message.order.items){
 
+                const reason_id = item.tags.reason_code
+                const reason_desc = reason_descriptions[reason_id] || "No description provided"
                 if(!fulfillmentId){
                    fulfillmentId=dbFulfillment._id;
                 }
-                let returnRequest =                                 {
+                let returnRequest = {
                     "code":code,
                     "list":
                         [
@@ -86,7 +96,7 @@ class UpdateOrderService {
                             },
                             {
                                 "code":"reason_desc",
-                                "value":"detailed description for return"
+                                "value":reason_desc
                             },
                             {
                                 "code":"images",
@@ -109,7 +119,7 @@ class UpdateOrderService {
                 dbFulfillment.parent_item_id = item.tags.parent_item_id??""
                 dbFulfillment.item_quantity = item.quantity.count
                 dbFulfillment.reason_id = item.tags.reason_code
-                dbFulfillment.reason_desc = 'detailed description for return'
+                dbFulfillment.reason_desc = reason_desc
                 dbFulfillment.images = item.tags.image
                 dbFulfillment.type =type
                 dbFulfillment.id =fulfillmentId;
@@ -304,7 +314,7 @@ class UpdateOrderService {
     async onUpdate(messageId) {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-
+            
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -331,9 +341,29 @@ class UpdateOrderService {
 
                     if (!(dbResponse || dbResponse.length))
                         throw new NoRecordFoundError();
-                    else {
-                    }
                 }
+                if (protocolUpdateResponse?.context?.transaction_id && protocolUpdateResponse?.message?.order?.fulfillments?.length) {
+                    const dbResponse = await OrderMongooseModel.findOne({
+                        transactionId: protocolUpdateResponse.context.transaction_id,
+                        id: protocolUpdateResponse.message.order.id
+                    });
+                    dbResponse.fulfillments = protocolUpdateResponse.message.order.fulfillments
+
+                    const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
+
+                    const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
+
+                    const fullfillmentHistory = new FulfillmentHistory({
+                        id: dbResponse.id,
+                        type: latestFullfilement.type,
+                        state: latestFullfilement.state.descriptor.code,
+                        orderId: protocolUpdateResponse.message.order.id
+                    })
+
+                    dbResponse.save()
+                    fullfillmentHistory.save()
+                }
+
                 return protocolUpdateResponse;
             }
         }
