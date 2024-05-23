@@ -6,9 +6,11 @@ const logErrors = (err, req, res, next) => {
 
     err.status = err.status || ERRORS.INTERNAL_SERVER_ERROR.status;
     response = response.status(err.status);
-    
+    response.header("Access-Control-Allow-Origin", "*");
     response.json({
         status: err.status, 
+        success: false,
+        message: "Something went wrong!, Please try again later...",
         error: {
             name: err.name,
             message: err.message

@@ -11,11 +11,12 @@ import {PAYERDETAIL} from '../../utils/constants.js'
 import { validate_schema_collector_recon_NTS10_for_json } from "../../shared/schemaValidator.js";
 // Import Underscore.js in a JavaScript module environment
 import _ from "underscore";
-
+import Notification from "../../order/v2/db/notification.js"
+import {sendEmail} from "../../shared/mailer.js"
 // import { logger } from "../../shared/logger";
 // const uuid = uuidv4();
 
-export const initiateRsp = async () => {
+export const initiate_collector_recon = async () => {
   try {
     const date = new Date().toISOString();
 
@@ -58,7 +59,29 @@ export const initiateRsp = async () => {
     let orderIds = []
     const groupedData = groupedByBapId(orderDetails);
     const arrayOfArrays = Object.values(groupedData);
-    await Promise.all(
+    const onConfirmWholeData = await OnConfirmData.find({});
+// Map orderDetailsData
+const orderDetailsData = orderDetails.map(data => ({
+  BPPID: data.bppId,
+  ORDERID: data.id
+}));
+
+// Filter matchedOnConfirmData based on conditions
+const matchedOnConfirmData = onConfirmWholeData.filter(onConfirm =>
+  orderDetailsData.some(orderData =>
+      orderData.BPPID === onConfirm.context.bpp_id && orderData.ORDERID === onConfirm.message.order.id && !onConfirm.message.order.emailSendToSeller
+  )
+);
+
+// Map matchedEmails
+let matchedEmails = matchedOnConfirmData.map(onConfirm => ({
+  email: onConfirm.message.order.fulfillments[0].start.contact.email,
+}));
+let matchedOrderIds = matchedOnConfirmData.map(onConfirm => ({
+  orderId: onConfirm.message.order.id
+}));
+
+    await Promise.allSettled(
       arrayOfArrays.map(async (el) => {
         const request_body = {};
         const baseUrl = "collector_recon";
@@ -245,9 +268,58 @@ export const initiateRsp = async () => {
         console.log('`${rsp_uri}/${baseUrl}`', `${rsp_uri}/${baseUrl}`)
         console.log('typeof request_body', typeof request_body)
         try {
-          let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
+          const userEmails = matchedEmails.map(emailObj => emailObj.email);
+          const orderIds = matchedOrderIds.map(orderObj => orderObj.orderId);
+        //   Notification.create({
+        //   event_type: 'collector-recon',
+        //   details: `settlement is send to the RSP`,
+        //   // name:userName
+        //   }).then(notification => {
+        //   console.log('Notification created:', notification);
+        //  }).catch(error => {
+        //  console.error('Error creating notification:', error);
+        // });
+        // Convert matchedEmails and matchedOrderIds to arrays of strings
+       
+
+if(userEmails && userEmails.length>0 && orderIds && orderIds.length>0){
+  await sendEmail({
+  userEmails: userEmails,
+  orderIds: orderIds,
+  HTMLtemplate: '/template/collector.ejs',
+  userName: '',
+  subject: 'Payment Settlements | To the Seller',
+});
+
+for (let orderId of orderIds) {
+  try {
+
+   const updatedOnConfirmData = await OnConfirmData.findOneAndUpdate(
+      {
+        "message.order.id": orderId,
+      },
+      {
+        $set: { "message.order.emailSendToSeller": true },
+      } ,
+      { new: true }
+    );
+    console.log("updatedOnConfirmData",updatedOnConfirmData)
+  } catch (error) {
+    console.error(
+      `Error updating OnConfirmData for orderId ${orderId}: ${error.message}`
+    );
+  }
+}
+
+
+let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
+console.log('axiosRes------->', axiosRes.data)
+}
+else{
+  let axiosRes = await axios.post(`${rsp_uri}/${baseUrl}`, request_body)
           console.log('axiosRes------->', axiosRes.data)
-        } catch (error) {
+    
+        }} catch (error) {
           return { success: false };
         }
         await recordCollectorReconStatus(orderIds)
@@ -300,8 +372,6 @@ export const isObjectEmpty = (obj) => {
   return Object.keys(obj).length === 0;
 };
 export const validateSchema = (domain, api, data) => {
-  // logger.info(`Inside Schema Validation for domain: ${domain}, api: ${api}`)
-  console.log(`Inside Schema Validation for domain: ${domain}, api: ${api}`);
   const errObj = {};
   const schmaVldtr = validate_schema_for_retail_json(domain, api, data);
 
@@ -316,22 +386,13 @@ export const validateSchema = (domain, api, data) => {
       i++;
     }
     console.log(`Schema Validation`, errObj);
-    // logger.error(`Schema Validation`, errObj)
     return errObj;
   } else return "error";
 };
 
 const validate_schema_for_retail_json = (vertical, api, data) => {
-  console.log("validate_schema_for_retail_json>>>>", vertical, api, data);
-  console.log(
-    "validate_schema_collector_recon_NTS10_for_json>>>>1234",
-    data.context.timestamp
-  );
   const res = validate_schema_collector_recon_NTS10_for_json(data);
-  console.log("275>>>>>>>>>>>", `validate_schema_${api}_${vertical}_for_json`);
-
   try {
-    console.log("res>>>>>>>>>>>>>", res);
     return res;
   } catch (error) {
     console.log(error);

@@ -23,7 +23,6 @@ class MapController {
 
       res.send(result.data);
     } catch (error) {
-      console.log("[ProjectController] [getUploadUrl] Error -", error);
       next(error);
     }
   }
@@ -55,7 +54,6 @@ class MapController {
         },
       });
     } catch (err) {
-      console.log("err", err);
       next(err);
     }
   }
@@ -77,6 +75,7 @@ class MapController {
       const { country, city, postcode } = result?.data?.features[0]?.properties;
 
       if (result?.data?.features[0]?.properties == undefined) {
+        res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({
           success: false,
           message: "Invalid Coordinates",
@@ -91,6 +90,7 @@ class MapController {
         },
       });
     } catch (err) {
+      res.header("Access-Control-Allow-Origin", "*");
       return res.status(400).json({
         success: false,
         message: "Invalid Coordinates",

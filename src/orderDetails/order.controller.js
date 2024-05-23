@@ -3,7 +3,6 @@ import FulfillmentHistory from "../order/v2/db/fulfillmentHistory.js"
 import { parseDuration } from "../utils/stringHelper.js";
 
     export async function getOrdersHandler(req, res) {
-        console.log("Insidssd")
         try {
             const apiKey = req.headers['wil-api-key'];
 
@@ -21,22 +20,18 @@ import { parseDuration } from "../utils/stringHelper.js";
 
             const orderCount = await OrderModel.countDocuments({ is_order_confirmed: true })
             const allOrders = await OrderModel.find({ is_order_confirmed: true }).sort({ createdAt: -1 })
+            const fulfillment = await FulfillmentHistory.find({})
 
             let orderData = allOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, fulfillments,
                 settle_status, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
                 counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code, customer,
                 updatedQuote, payment }) => {
-                // const fulfillment_state = fulfillments.map(fulfillment => {
-                //     if (fulfillment.state) {
-                //         return fulfillment?.state?.descriptor?.code;
-                //     } else {
-                //         return null;
-                //     }
-                // });
+                
 
-                const fulfillment = await FulfillmentHistory.find({ orderId: id }).sort({ updatedAt: -1 }).lean()
-                const fulfillment_state = fulfillment.length ? fulfillment[0] : {}
+                const orderFulfillmentData = fulfillment.filter(data => data?.orderId === id);
 
+                const fulfillment_state = orderFulfillmentData.length?orderFulfillmentData[orderFulfillmentData.length - 1]:{};
+                
                 const logistics_details = fulfillments.find(fulfillment => {
                     if (fulfillment?.agent) {
                         return { agent_name: fulfillment?.agent?.name || "", vehicle: fulfillment?.vehicle?.registration || "" }

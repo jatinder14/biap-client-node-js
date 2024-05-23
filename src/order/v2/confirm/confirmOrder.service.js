@@ -14,6 +14,9 @@ import JuspayService from "../../../payment/juspay.service.js";
 import CartService from "../cart/v2/cart.service.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import lokiLogger from '../../../utils/logger.js';
+import getCityCode from "../../../utils/AreaCodeMap.js";
+
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
 const juspayService = new JuspayService();
@@ -67,13 +70,18 @@ class ConfirmOrderService {
      * @param {Object} dbResponse 
      * @param {Object} confirmResponse 
      */
-    async updateOrder(dbResponse, confirmResponse, paymentType) {
-        let orderSchema = dbResponse?.toJSON() || {};
+    async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {    
+    let orderSchema = dbResponse?.toJSON() || {};
 
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
+        
+        if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
+        console.log('orderSchema :>> ', orderSchema);
+
+        lokiLogger.info("orderSchema :>>",orderSchema)
 
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
@@ -88,19 +96,24 @@ class ConfirmOrderService {
      * @param {Boolean} confirmPayment
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
+        console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
+        lokiLogger.info('confirmAndUpdateOrder>payment-------- :>>',orderRequest?.message?.payment)
         const {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
-        let paymentStatus = {}
+        requestContext.city = getCityCode(requestContext?.city)
 
-        // console.log("message---------------->",orderRequest.message)
+        let paymentStatus = {}
 
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
 
-        console.log("dbResponse---------------->", dbResponse)
+        console.log("dbResponse??---------------->", dbResponse)
 
-        if (dbResponse?.paymentStatus === null) {
+        lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
+        console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
+
+        if (!dbResponse?.paymentStatus) {
 
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
@@ -136,17 +149,22 @@ class ConfirmOrderService {
             // }else{
             paymentStatus = { txn_id: requestContext?.transaction_id }
             // }
+           console.log('dbResponse=============>  :>> ', order);
 
+           lokiLogger.info('dbResponse=============> :>>' ,order)
+           
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
-                { ...order, jusPayTransactionId: paymentStatus.txn_id },
+                { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
                 dbResponse
             );
 
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
+            
+            lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
 
             if (bppConfirmResponse?.message?.ack)
-                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type);
+                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
 
             return bppConfirmResponse;
 
@@ -324,7 +342,7 @@ class ConfirmOrderService {
 
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
-
+                console.log("dbResponse.userId --------------------------------------- ", dbResponse.userId);
                 cartService.clearCart({ userId: dbResponse.userId });
             }
 
@@ -341,6 +359,7 @@ class ConfirmOrderService {
     * @param {Object} orderRequest
     */
     async confirmOrder(orderRequest) {
+        
         try {
             const { context: requestContext, message: order = {} } = orderRequest || {};
 
@@ -355,18 +374,21 @@ class ConfirmOrderService {
             if (!(order?.items?.length)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "Empty order received" }
                 };
             }
             else if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             } else if (await this.arePaymentsPending(
@@ -376,6 +398,7 @@ class ConfirmOrderService {
             )) {
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "BAP hasn't received payment yet",
                         status: "BAP_015",
@@ -400,7 +423,8 @@ class ConfirmOrderService {
      * confirm multiple orders
      * @param {Array} orders 
      */
-    async confirmMultipleOrder(orders) {
+    async confirmMultipleOrder(orders) {    
+        console.log('orders--------- :>> ', orders);
         let total = 0;
         orders.forEach(order => {
             total += order?.message?.payment?.paid_amount;
@@ -419,7 +443,21 @@ class ConfirmOrderService {
                 }
                 catch (err) {
                     console.log("error confirmMultipleOrder ----", err)
-                    return err?.response?.data;
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while confirming this order with seller!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while confirming this order with seller!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -459,6 +497,7 @@ class ConfirmOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -484,7 +523,22 @@ class ConfirmOrderService {
                         return await this.processOnConfirmResponse(protocolConfirmResponse);
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onConfirmMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while confirming this order with seller!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while confirming this order with seller!"
+                            }
+                        }
+                        
                     }
                 })
             );
@@ -492,7 +546,10 @@ class ConfirmOrderService {
             return onConfirmOrderResponse;
         }
         catch (err) {
-            throw err;
+            return {
+                success: false,
+                message: "We are encountering issue while confirming this order with seller!"
+            }
         }
     }
 }

@@ -48,7 +48,22 @@ class SupportService {
                     return supportResponse;
                 }
                 catch (err) {
-                    throw err;
+                    console.log("error supportMultipleOrder ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with your request!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with your request!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -74,6 +89,7 @@ class SupportService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -98,7 +114,22 @@ class SupportService {
                         return { ...onSupportResponse };
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error supportMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with your request!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with your request!"
+                            }
+                        }
+                        
                     }
                 })
             );

@@ -42,7 +42,7 @@ const TimeRangeSchema = new mongoose.Schema(
 const TimeSchema = new mongoose.Schema(
     {
         label: { type: String },
-        timestamp: { type: Date },
+        timestamp: { type: Date, default: Date.now },
         duration: { type: String },
         range: { type: TimeRangeSchema },
         days: { type: String },
@@ -99,7 +99,7 @@ const PersonSchema = new mongoose.Schema(
         dob: { type: Date },
         gender: { type: String },
         cred: { type: String },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -182,7 +182,7 @@ const ContactSchema = new mongoose.Schema(
     {
         phone: { type: String },
         email: { type: String },
-        tags: { type: Map }
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -227,7 +227,7 @@ const FulfillmentSchema = new mongoose.Schema(
         end: { type: FulfillmentEndSchema },
         purpose: { type: String },
         customer: { type: CustomerSchema },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -265,6 +265,7 @@ const ItemsSchema = new mongoose.Schema(
         fulfillment_status: { type: String, required: false },
         cancellation_status: { type: String, required: false },
         return_status: { type: String, required: false },
+        returned_item_count: { type: String, required: false },
         fulfillment_id: { type: String },
         parent_item_id: { type: String }
     },
@@ -354,6 +355,7 @@ const OrderSchema = new mongoose.Schema(
         settle_status: { type: String },
         is_order_confirmed: { type: Boolean, default: false },
         is_settlement_sent: { type: Boolean, default: false },
+        is_settlement_done: { type: Boolean, default: false },
         settlement_id: { type: String },
         settlement_reference_no: { type: String },
         order_recon_status: { type: String },

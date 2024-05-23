@@ -34,11 +34,31 @@ class InitOrderController {
 
         if (orderRequests && orderRequests.length) {
             console.log("orderRequests-->",orderRequests)
-            initOrderService.initMultipleOrder(orderRequests, user).then(response => {
-                res.json(response);
-            }).catch((err) => {
-                next(err);
-            });
+            const missing_location = orderRequests.filter(x => {
+                if (x?.message?.items?.length && x?.message?.items?.some(el => !el?.provider?.locations?.length)) {
+                    return x;
+                }
+            })
+            console.log("missing_location ======", missing_location)
+            if (missing_location.length) {
+                res.header("Access-Control-Allow-Origin", "*");
+                res.status(400).json({
+                    success: false,
+                    messgae: "Provider location is required while initialising the order!"
+                });
+            } else {
+                initOrderService.initMultipleOrder(orderRequests, user).then(response => {
+                    if (response?.some(el => el.success == false || el.status == 'failed')) {
+                        res.header("Access-Control-Allow-Origin", "*");
+                        res.status(400).json(response);
+                    } else {
+                        res.json(response);
+                    }
+                    
+                }).catch((err) => {
+                    next(err);
+                });
+            }
 
         }
         else
@@ -77,8 +97,13 @@ class InitOrderController {
         if (messageIds && messageIds.length && messageIds.trim().length) {
             const messageIdArray = messageIds.split(",");
 
-            initOrderService.onInitMultipleOrder(messageIdArray).then(orders => {
-                res.json(orders);
+            initOrderService.onInitMultipleOrder(messageIdArray).then(response => {
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });

@@ -4,6 +4,7 @@ import { sendSSEResponse } from '../../utils/sse.js';
 import OrderStatusService from "../../order/v2/status/orderStatus.service.js";
 import UpdateOrderService from "../../order/v2/update/updateOrder.service.js";
 import CancelOrderService from "../../order/v2/cancel/cancelOrder.service.js";
+import lokiLogger from "../../utils/logger.js";
 const orderStatusService = new OrderStatusService();
 const updateOrderService = new UpdateOrderService();
 const cancelOrderService = new CancelOrderService();
@@ -246,7 +247,7 @@ class SseProtocol {
                 PROTOCOL_CONTEXT.ON_UPDATE,
                 response,
             );
-
+            lokiLogger.info(`updateOrderService.onUpdateDbOperation --------------------------- ${messageId}`)
             await updateOrderService.onUpdateDbOperation(messageId);
 
             return {

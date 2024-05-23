@@ -20,20 +20,22 @@ class OrderHistoryService {
             let totalCount = 1;
 
             let {
-                limit = 10,
+                limit = limit || 10,
                 orderId,
                 orderStatus,
-                pageNumber = 1,
+                pageNumber,
+                page,
                 parentOrderId,
                 state,
                 transactionId,
                 userId
             } = params;
+            let pageNo = pageNumber ? pageNumber: (page || 1)
 
 
             orderStatus = orderStatus??ORDER_STATUS.COMPLETED
             limit = parseInt(limit);
-            let skip = (pageNumber - 1) * limit;
+            let skip = (pageNo - 1) * limit;
             
             let clonedFilterObj = {};
 
@@ -50,8 +52,8 @@ class OrderHistoryService {
 
            // if (_.isEmpty(clonedFilterObj))
                 clonedFilterObj = {...clonedFilterObj, userId: user.decodedToken.uid };
+                console.log("clonedFilter obj --->",clonedFilterObj)
 
-            console.log("clonedFilter obj --->",clonedFilterObj)
             switch (orderStatus) {
                 case ORDER_STATUS.COMPLETED:
                     clonedFilterObj = { ...clonedFilterObj, id: { "$ne": null } };
@@ -63,10 +65,58 @@ class OrderHistoryService {
                     break;
             }
             
-            orders = await OrderMongooseModel.find({ ...clonedFilterObj }).sort({createdAt: -1}).limit(limit).skip(skip).lean();
-            totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
+            if (clonedFilterObj.state["$in"].includes("Return")) {
+                // Aggregation to get total count
+                const countAggregation = await OrderMongooseModel.aggregate([
+                    {
+                        $addFields: {
+                            lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] },
+                        },
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$lastFulfillment.type", "Return"],
+                            },
+                        },
+                    },
+                    {
+                        $count: "totalCount",
+                    },
+                ]).exec();
 
-            return { orders, totalCount };
+                totalCount = countAggregation.length > 0 ? countAggregation[0].totalCount : 0;
+
+                // Aggregation to get orders with pagination
+                orders = await OrderMongooseModel.aggregate([
+                    {
+                        $addFields: {
+                            lastFulfillment: { $arrayElemAt: ["$fulfillments", -1] },
+                        },
+                    },
+                    {
+                        $match: {
+                            $expr: {
+                                $eq: ["$lastFulfillment.type", "Return"],
+                            },
+                        },
+                    },
+                ])
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .exec();
+
+                return { orders, totalCount };
+            } else {
+                orders = await OrderMongooseModel.find({ ...clonedFilterObj })
+                    .sort({ createdAt: -1 })
+                    .skip(skip)
+                    .limit(limit)
+                    .lean();
+                totalCount = await OrderMongooseModel.countDocuments({ ...clonedFilterObj });
+                return { orders, totalCount };
+            }
         }
         catch (err) {
             throw err;

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../utils/constants.js";
 import {protocolConfirm, protocolGetDumps} from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../../v1/db/order.js";
+import lokiLogger from '../../../utils/logger.js';
 
 class BppConfirmService {
 
@@ -17,7 +18,7 @@ class BppConfirmService {
             const response = await protocolConfirm(confirmRequest);
 
             if(response.error){
-                return { message: response.data ,error:response.error};
+                return { success: false, message: response.data ,error:response.error};
             }else{
                 return { context: confirmRequest.context, message: response.message };
             }
@@ -26,7 +27,7 @@ class BppConfirmService {
         catch (err) {
 
             //set confirm request in error data
-            err.response.data.confirmRequest =confirmRequest
+            // err.response.data.confirmRequest =confirmRequest
             throw err;
         }
     }
@@ -117,7 +118,7 @@ class BppConfirmService {
      * @param {Object} storedOrder 
      * @returns 
      */
-    async confirmV2(context, order = {}, storedOrder = {}) {
+    async confirmV2(context, order = {}, storedOrder = {}) {  
         try {
             storedOrder = storedOrder?.toJSON();
 
@@ -129,6 +130,8 @@ class BppConfirmService {
             //get TAT object from select request
 
             let on_select = await protocolGetDumps({type:"on_select",transaction_id:context.transaction_id})
+          console.log('order-???? :>> ', order);
+
 
             console.log("on_select------------->",on_select)
 
@@ -260,6 +263,7 @@ class BppConfirmService {
                             tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 "http/get":
                                 undefined,
+                            razorpayPaymentId :order?.payment?.razorpayPaymentId,    
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
@@ -276,9 +280,9 @@ class BppConfirmService {
                                 PAYMENT_COLLECTED_BY.BPP,
                             '@ondc/org/buyer_app_finder_fee_type': process.env.BAP_FINDER_FEE_TYPE,
                             '@ondc/org/buyer_app_finder_fee_amount':  process.env.BAP_FINDER_FEE_AMOUNT,
-                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis']??undefined,
-                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window']??undefined,
-                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount']??undefined,
+                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis']?? "delivery",
+                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window']?? "P1D",
+                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount']?? "0",
                             "@ondc/org/settlement_details":order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 storedOrder?.settlementDetails?.["@ondc/org/settlement_details"]:
                                 order.payment['@ondc/org/settlement_details'],
@@ -297,7 +301,12 @@ class BppConfirmService {
 
 
             console.log({confirmRequest})
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmRequest)
+            
             let confirmResponse = await this.confirm(confirmRequest);
+
+            lokiLogger.info('bppConfirm.service.js_confirmResponseAfterConfirm',confirmResponse)
 
             if(confirmResponse.error){
                 //retrial attempt

@@ -20,49 +20,46 @@ class TopSellingController {
 
         const { pageNumber = 1 } = query;
 
-        if(pageNumber > 0) {
-            console.log("21>>>>>>>>>>>")
+        if (pageNumber > 0) {
             topSellingService.getTopOrderList().then(async response => {
-                if(!response.error) {
-                    const userId=req.params.userId
-                    console.log("userId:",userId)
-                    const findWishlistItem = await WishlistItem.find({
-                      "item.userId": userId
-                  });  
-                  console.log("findWishlistItem>>>",findWishlistItem)     
-                  const itemids = findWishlistItem.map((item) => {
-                    return item.item.id; // Assuming the id is nested inside the item object
-                });
-                console.log("itemids>>>",itemids)     
+                if (!response.error) {
+                    const userId = req.params.userId
+                    const wishlistKey = req.query.wishlist_key || req.query.deviceId
+                    let where = [], itemids = []
+                    if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+                        where = [...where, { "item.userId": userId }]
+                    }
+                    if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
+                        where = [...where, { "item.wishlist_key": wishlistKey }]
+                    }
+                    if (where.length) {
+                        const findWishlistItem = await WishlistItem.find({
+                            $or: where
+                        });
 
-                
-                const itemDetaildata = response
-                console.log("itemDetaildata",itemDetaildata)     
-
-                response.forEach((item) => {
-      if (itemids.includes(item.id)) {
-          console.log("Matched item id:", item.id);
-          item.wishlistAdded = true;
-      }
-  });       
-  res.send(response)
-}
-                else
-
-                    res.status(404).json(
-                        {
-                            totalCount: 0,
-                            orders: [],
-                            error: response.error,
-                        }
-                    );
+                        itemids = findWishlistItem.map((item) => {
+                        return item?.item?.id;
+                        });
+                        response.forEach((item) => {
+                            if (itemids.includes(item?.item_details?.id)) {
+                                item.wishlistAdded = true;
+                            }
+                        });
+                    }
+                    
+                    res.send(response)
+                }
+                else {
+                    console.log("topSellingProduct response.error ----------------- ", response.error);
+                    res.send([]);
+                } 
             }).catch((err) => {
                 next(err);
             });
         }
         else
             throw new BadRequestParameterError();
-     }
+    }
   
 }
 

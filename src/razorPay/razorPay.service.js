@@ -98,9 +98,9 @@ class RazorPayService {
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-
+      const finalAmount = Number(amount) * 100
       const options = {
-        amount: amount * 100,
+        amount: parseInt(finalAmount),
         currency: currency,
       };
 
@@ -108,6 +108,32 @@ class RazorPayService {
       return orderDetail;
     } catch (e) {
       throw e;
+    }
+  }
+
+  /**
+   * refund payment
+   * @param {string} amount
+   * @param {String} paymentId
+   */
+  async refundOrder(paymentId, amount) {
+    try {
+
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      const refund = await instance.payments.refund(paymentId, {
+        "amount": `${amount}`,
+        "speed": "optimum",
+      })
+      return refund
+    }
+    catch (error) {
+      console.log("error -------------- ", paymentId, amount, error);
+      throw error;
+
     }
   }
 

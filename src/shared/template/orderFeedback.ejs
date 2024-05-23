@@ -1,84 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Feedback</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BHARATAM</title>
     <style>
-        @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
-
-        body {
-            font-family: "Poppins";
-        }
-
-        .container {
-            max-width: 750px;
-            width: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 0 auto;
-        }
-
-        .header {
-            background-color: #eaf1f3;
-            min-height: 290px;
-            padding: 20px;
-            text-align: center;
-        }
-
-        .feedback {
-            background-color: #608c9b;
-            min-height: 270px;
-            padding: 20px;
-            color: #ffffff;
-        }
-
-        .social-icons img {
-            margin-right: 10px;
-            width: 30px;
-            height: 30px;
-        }
-
-        .help-info {
-            font-size: 12px;
-            font-weight: 400;
-            text-align: center;
-            margin-top: 18px;
-        }
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+      body {
+        font-family: "Poppins";
+      }
     </style>
-</head>
-<body>
-<div class="container">
-    <div class="header">
-        <img src="https://r2.easyimg.io/ns08xjr66/logo.png" alt="Logo image" width="200px" height="50px">
-        <img src="https://r2.easyimg.io/rz9gnq7sd/emailbox.png" alt="Email image" width="286px" height="286px">
+  </head>
+
+  <body>
+    <div
+      style="
+        max-width: 600px;
+        width: 100%;
+        overflow: hidden;
+        background: #f1f5f6;
+      "
+    >
+      <div style="min-height: 290px; padding: 20px">
+        <div style="display: flex; margin: 10px 0 20px 0">
+          <div>
+            <img src="https://res.cloudinary.com/djmulfeid/image/upload/v1714458149/logo_n5d52z.png" alt="Logo image" width="122px" height="30px"/>
+          </div>
+          <div style="text-align: end">
+            <!-- <div style="display: inline-block">
+              <img
+                src="facebook.png"
+                alt="Logo image"
+                width="30px"
+                height="30px"
+                style="margin-right: 10px"
+              />
+              <img
+                src="twitter.png"
+                alt="Logo image"
+                width="30px"
+                height="30px"
+                style="margin-right: 10px"
+              />
+              <img
+                src="linkedin.png"
+                alt="Logo image"
+                width="30px"
+                height="30px"
+                style="margin-right: 10px"
+              />
+              <img
+                src="facebook.png"
+                alt="Logo image"
+                width="30px"
+                height="30px"
+              />
+            </div> -->
+          </div>
+        </div>
+        <div
+          style="
+            background-color: #ffffff;
+            min-height: 270px;
+            color: #ffffff;
+            border-radius: 12px;
+          "
+        >
+          <div>
+            <img
+              src="https://i.ibb.co/BPgkkfG/illustration.png"
+              alt="illustration"
+              style=" max-width: 100%;"
+            />
+          </div>
+          <div style="padding: 40px">
+            <div
+              style="
+                font-size: 18px;
+                font-weight: 600;
+                line-height: 32px;
+                color: #1d1d1d;
+              "
+            >
+            Hi <%= userName %>,
+            </div>
+            <div
+              style="
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 22px;
+                color: #434343;
+                margin: 24px 0;
+              "
+            >
+            We hope you are satisfied with your recent order. Your feedback is valuable to us! </div>
+            <div
+              style="
+                font-size: 14px;
+                font-weight: 400;
+                line-height: 22px;
+                margin: 24px 0;
+                color:black
+              "
+            >
+                         </div>
+
+            <div style="width: 100%">
+              <div style="display: flex; gap: 20px; margin: 0 auto">
+                <a
+                  href="<%=profile_site_url%>"
+                  target="_blank"
+                  style="
+                    width: 107px;
+                    padding: 10px;
+                    border-radius: 8px;
+                    background-color: #115469;
+                    outline: none;
+                    border: none;
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: #fff;
+                    text-decoration: none;
+                    display: inline-block;
+                    text-align: center;
+                  "
+                >
+                Track Here
+                </a>
+              </div>
+            </div>
+            <div
+            style="
+              font-size: 14px;
+              font-weight: 400;
+              line-height: 22px;
+              color: #434343;
+              margin: 24px 0;
+            "
+          >
+            Regards
+            <div>Bharatham Team</span>
+          </div>
+          </div>
+        </div>
+      </div>
+      <div
+        style="
+          font-size: 14px;
+          line-height: 22px;
+          font-weight: 400;
+          text-align: center;
+          margin: 30px 0 10px 0;
+        "
+      >
+        Need Help? Ask at team@thewitslab.com or
+        <div>visit our help center</div>
+      </div>
     </div>
-    <div class="feedback">
-        <div style="font-size: 24px; font-weight: 600; line-height: 32px; text-align: center;">
-            Hi "<%= userName %>",
-        </div>
-        <div style="font-size: 16px; font-weight: 400; text-align: center; margin: 16px 0;">
-            We hope you are satisfied with your recent order. Your feedback is valuable to us!
-        </div>
-        <div style="text-align: center; margin: 18px auto;">
-            <a href="#" target="_blank" class="social-icons">
-                <img src="https://r2.easyimg.io/sdrflrwvz/facebook.png" alt="Facebook">
-            </a>
-            <a href="#" target="_blank" class="social-icons">
-                <img src="https://r2.easyimg.io/x8wn55mdw/twitter.png" alt="Twitter">
-            </a>
-            <a href="#" target="_blank" class="social-icons">
-                <img src="https://r2.easyimg.io/nod4r8s3x/linkedin.png" alt="LinkedIn">
-            </a>
-            <a href="#" target="_blank" class="social-icons">
-                <img src="https://r2.easyimg.io/sdrflrwvz/facebook.png" alt="Facebook">
-            </a>
-        </div>
-    </div>
-</div>
-<div class="help-info">
-    Need Help? Ask at <span style="color: #b5cad1">support@bharatham.com</span> or visit our
-    <span style="color: #b5cad1">help center</span>.
-</div>
-</body>
+  </body>
 </html>

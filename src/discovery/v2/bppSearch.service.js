@@ -23,9 +23,36 @@ class BppSearchService {
      */
     async search(searchRequest) {
         try {
+            let {
+                page,
+                limit,
+                categoryId,
+                name
+            } = searchRequest
+            const p_no = page ? Number(page): 1
+            const payload = {
+                ...searchRequest,
+                page_number: p_no,
+                pageNumber: p_no,
+                page: p_no,
+                limit: limit ? Number(limit): 10,
+                categoryIds: categoryId,
+                name,
+            }
+            const response = await protocolSearchItems(payload);
 
-            const response = await protocolSearchItems(searchRequest);
+            if (!response) {
+                return {
+                    response: {
+                        count: 0,
+                        data: [],
+                        pages: 0
 
+                    }
+                };
+
+            }
+            
             return { response };
         }
         catch (err) {
@@ -164,8 +191,12 @@ class BppSearchService {
 
     async getProviders(searchRequest) {
         try {
-
+            if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
+            else searchRequest.limit = 18
+            if (searchRequest?.page) searchRequest.pageNumber = Number(searchRequest?.page)
+            else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
+            
 
             return { response };
         }

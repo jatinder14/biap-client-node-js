@@ -7,7 +7,13 @@ class CartController {
     async addItem(req, res, next) {
         
         try {
-           return res.send(await cartService.addItem({...req.body, ...req.params}));
+            const { cart_key, userId } = req.params
+            if ((!userId || userId == "guestUser") && (!cart_key || ['null', 'undefined'].includes(cart_key))) {
+                res.header("Access-Control-Allow-Origin", "*");
+                return res.status(400).json({ success: false, message: "Rquired parameters are missing!" })
+            }
+            const result = await cartService.addItem({...req.body, ...req.params})
+            res.send(result);
         }
         catch (err) {
            next(err);
@@ -16,6 +22,11 @@ class CartController {
 
     async getCartItem(req, res, next) {
         try {
+            const { cart_key, userId } = req.params
+            if ((!userId || userId == "guestUser") && (!cart_key || ['null', 'undefined'].includes(cart_key))) {
+                res.header("Access-Control-Allow-Origin", "*");
+                return res.status(400).json({ success: false, message: "Rquired parameters are missing!" })
+            }
             const cartItem=await cartService.getCartItem({...req.query,...req.params })
             req.body.responseData = cartItem;
             next()

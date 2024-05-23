@@ -4,6 +4,7 @@ import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId,getOrderByTr
 
 import BppInitService from "./bppInit.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppInitService = new BppInitService();
 
@@ -35,8 +36,8 @@ class InitOrderService {
      */
     async createOrder(response, userId = null, orderRequest) {
         if (response) {
-            const provider = orderRequest?.items?.[0]?.provider || {};
-
+            const provider = orderRequest?.items?.[0]?.provider || [];
+            
             const providerDetails = {
                 id: provider.local_id,
                 descriptor:provider.descriptor,
@@ -80,7 +81,7 @@ class InitOrderService {
                 let selectitem = {
                     id: item?.local_id?.toString(),
                     quantity: item?.quantity,
-                    location_id: provider?.locations[0].local_id?.toString()
+                    location_id: provider?.locations[0]?.local_id?.toString()
                 }
                 let tag=undefined
                 if(item.tags && item.tags.length>0){
@@ -140,6 +141,8 @@ class InitOrderService {
                 response.context.transaction_id,provider.local_id,
                 {
                     userId: userId,
+                    // cart_key: cart_key,
+                    // wishlist_key: wishlist_key,
                     messageId: response?.context?.message_id,
                     transactionId: response?.context?.transaction_id,
                     parentOrderId: response?.context?.parent_order_id,
@@ -242,6 +245,8 @@ class InitOrderService {
         try {
             const { context: requestContext = {}, message: order = {} } = orderRequest || {};
             const parentOrderId = requestContext?.transaction_id; //FIXME: verify usage
+            console.log('requestContext?.city---------------------',requestContext?.city)
+            requestContext.city = getCityCode(requestContext?.city)
 
             console.log("order--->",orderRequest)
             const contextFactory = new ContextFactory();
@@ -260,18 +265,21 @@ class InitOrderService {
             if (!(order?.items?.length)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "Empty order received" }
                 };
             }
             else if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             }
@@ -307,8 +315,22 @@ class InitOrderService {
                     return bppResponse;
                 }
                 catch (err) {
-                    console.log(err)
-                    return err.response.data;
+                    console.log("error initMultipleOrder ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!"
+                        }
+                    }
+                    
                 }
 
             })
@@ -337,6 +359,7 @@ class InitOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -382,7 +405,22 @@ class InitOrderService {
                         return protocolInitResponse;
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onInitMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!"
+                            }
+                        }
+                        
                     }
                 })
             );
