@@ -369,12 +369,12 @@ class UpdateOrderService {
 
     calculateRefundAmount(obj) {
         let totalRefundAmount = 0
-        lokiLogger.info(`obj ======  ${obj}`);
+        lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
         if (obj) {
             let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
-            lokiLogger.info(`latest_fulfillment ======  ${latest_fulfillment}`);
+            lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
@@ -396,8 +396,10 @@ class UpdateOrderService {
 
             let full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
-                if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
-                    full_Cancel = false;
+                if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
+                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                        full_Cancel = false;
+                }
             });
 
             if (full_Cancel) {
@@ -538,7 +540,7 @@ class UpdateOrderService {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
                             .then((response) => {
-                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
+                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                 const refundDetails = new Refund({
                                     orderId: dbResponse.id,
                                     refundId: response.id,
@@ -550,7 +552,7 @@ class UpdateOrderService {
                                     razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
 
                                 })
-                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
+                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
                             })
                             .catch((err) => {
                                 lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
@@ -604,8 +606,8 @@ class UpdateOrderService {
                     lokiLogger.info(`----------refundAmount-------------: ${refundAmount}`);
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                     let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
-                    lokiLogger.info(`----------fulfillments-Items-------------: ${fulfillments}`);
-                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${latest_fulfillment}`);
+                    lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
+                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
 
                     console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
                     console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
@@ -645,14 +647,14 @@ class UpdateOrderService {
                                     (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
                                 )?.quantity?.count;
                             if (return_item_count <= left_order_item_count)
-                            lokiLogger.info(`------------------liquidated condition -- ${data}`)
+                            lokiLogger.info(`------------------liquidated condition -- ${JSON.stringify(data)}`)
                             lokiLogger.info(`------------------return_item_count  -- ${return_item_count}`)
                             lokiLogger.info(`------------------left_order_item_count -- ${left_order_item_count}`)
                                 if (razorpayPaymentId && refundAmount) {
                                     razorPayService
                                     .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
                                     .then((response) => {
-                                        lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
+                                        lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                         const refundDetails = new Refund({
                                             orderId: dbResponse.id,
                                             refundId: response.id,
@@ -664,7 +666,7 @@ class UpdateOrderService {
                                             razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
                         
                                         })
-                                        lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
+                                        lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
                                     })
                                     .catch((err) => {
                                         lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
@@ -828,7 +830,7 @@ class UpdateOrderService {
                         for (let item of protocolItems) {
                             let updatedItem = {}
                             let fulfillmentStatus = await Fulfillments.findOne({ id: item.fulfillment_id, orderId: protocolUpdateResponse.message.order.id }); //TODO: additional filter of order id required
-                            lokiLogger.info(`--------fulfillmentStatus--------------- ${fulfillmentStatus}`)
+                            lokiLogger.info(`--------fulfillmentStatus--------------- ${JSON.stringify(fulfillmentStatus)}`)
 
                             // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO TEMP testing
                             updatedItem = orderSchema.items.filter(element => element.id === item.id);
@@ -857,7 +859,7 @@ class UpdateOrderService {
 
                     }
                 }
-                lokiLogger.info(`protocolUpdateResponse final ----------------${protocolUpdateResponse}`)
+                lokiLogger.info(`protocolUpdateResponse final ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 return protocolUpdateResponse;
             }
 
