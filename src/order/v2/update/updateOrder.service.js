@@ -555,7 +555,7 @@ class UpdateOrderService {
                                 lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
                             })
                             .catch((err) => {
-                                lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${JSON.stringify(err)}`)
+                                lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
                                 throw err
                             });
 
@@ -669,7 +669,7 @@ class UpdateOrderService {
                                         lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
                                     })
                                     .catch((err) => {
-                                        lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${JSON.stringify(err)}`)
+                                        lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
                                         throw err
                                     });
                                 }
@@ -865,7 +865,7 @@ class UpdateOrderService {
 
         }
         catch (err) {
-            lokiLogger.info(`onUpdateDbOperation Error ------------------ ${JSON.stringify(err)}`)
+            lokiLogger.info(`onUpdateDbOperation Error ------------------ ${err}`)
             throw err;
         }
     }
