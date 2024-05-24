@@ -23,7 +23,7 @@ class UploadController {
             const result = await uploadService.download(
                 req.params.fileKey
             );
-            res.json(result);
+            res.send(result);
         } catch (e) {
             next(e);
         }
