@@ -30,4 +30,11 @@ router.get(
   razorPayController.keys
 );
 
+//Make refund
+router.post(
+  "/v2/razorpay/refund/item",
+  razorPayController.refundPayment
+);
+
+
 export default router;

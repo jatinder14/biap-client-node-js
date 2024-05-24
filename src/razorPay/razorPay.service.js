@@ -118,12 +118,12 @@ class RazorPayService {
    */
   async refundOrder(paymentId, amount) {
     try {
-
+      console.log(`-------------------inside-refundOrder--------------${process.env.RAZORPAY_KEY_ID}`)
+      console.log(`-------------------inside-refundOrder--------------${process.env.RAZORPAY_KEY_SECRET}`)
       const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-      lokiLogger.info(`-------------------inside-refundOrder--------------`)
       
       const refund = await instance.payments.refund(paymentId, {
         "amount": `${amount}`,
