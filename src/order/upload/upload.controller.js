@@ -16,6 +16,18 @@ class UploadController {
             next(e);
         }
     }
+
+    async download(req, res, next) {
+        try {
+            console.log("req.params.type------>",req.params.fileKey)
+            const result = await uploadService.download(
+                req.params.fileKey
+            );
+            res.json(result);
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 export default UploadController;

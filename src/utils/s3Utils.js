@@ -23,7 +23,9 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
         // Upload the image to S3
         const data = await s3.upload(params).promise();
         console.log('Image uploaded successfully:', data);
-        let imageUrl= await getSignedUrl(data.Key);
+        // let imageUrl= await getSignedUrl(data.Key);
+        const fileKey = data.Location.replace(/^.*\//, ''); 
+        const imageUrl = `${process.env.BAP_URL}/clientApis/v2/getResource/${fileKey}`;
         return { success: true, message: 'Image uploaded successfully', imageUrl: imageUrl };
         
     } catch (err) {
@@ -41,11 +43,10 @@ async function getSignedUrl(fileKey){
             signatureVersion: process.env.S3_VERSION
     });
 
-    const url = s3.createPresignedPost({
-        Bucket: process.env.S3_BUCKET,
-        Fields: {
-            key: fileKey
-        }
+    const url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.S3_BUCKET ,
+        Key: fileKey,
+        // Expires: signedUrlExpireSeconds
     });
     return url;
     // console.log(url,"bhaskalhfalsdh",fileKey)
@@ -138,4 +139,31 @@ const keyName = `${uuidv4()}-${data.fileType.originalname}`; // Specify the key 
     // }
 };
 
-export default getSignedUrlForUpload;
+async function downloadResourceFromS3(fileKey) {
+    const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID ,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.S3_REGION ,
+            signatureVersion: process.env.S3_VERSION
+    });
+
+    const params = {
+        Bucket: process.env.S3_BUCKET,
+        Key: fileKey
+    };
+
+    return new Promise((resolve, reject) => {
+        // Use the getObject method to retrieve the file from S3
+        const getObjectPromise = s3.getObject(params).promise();
+        getObjectPromise
+            .then(data => {
+                console.log('Successfully downloaded file from S3');
+                resolve(data.Body);
+            })
+            .catch(err => {
+                console.error('Error downloading file from S3:', err);
+                reject(err);
+            });
+    });
+}
+export  {getSignedUrlForUpload,downloadResourceFromS3};
