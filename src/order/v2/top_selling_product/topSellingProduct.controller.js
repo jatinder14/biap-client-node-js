@@ -2,6 +2,7 @@ import TopSellingService from './topSellingProduct.service.js';
 
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 import WishlistItem from "../db/wishlistItem.js"
+import WishList from '../db/wishlist.js';
 
 const topSellingService = new TopSellingService();
 
@@ -25,23 +26,22 @@ class TopSellingController {
                 if (!response.error) {
                     const userId = req.params.userId
                     const wishlistKey = req.query.wishlist_key || req.query.deviceId
-                    let where = [], itemids = []
-                    if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
-                        where = [...where, { "item.userId": userId }]
-                    }
+                    let itemids = [], wishlist, wishlist2, wishlistIds = [];
                     if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
-                        where = [...where, { "item.wishlist_key": wishlistKey }]
+                        wishlist = await WishList.findOne({ wishlist_key: wishlistKey });
                     }
-                    if (where.length) {
-                        const findWishlistItem = await WishlistItem.find({
-                            $or: where
-                        });
-
-                        itemids = findWishlistItem.map((item) => {
-                        return item?.item?.id;
+                    if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+                        wishlist2 = await WishList.findOne({ userId: userId });
+                    }
+                    if (wishlist?._id) wishlistIds.push(wishlist?._id)
+                    if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
+                    let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
+                    if (wishlistData.length) {
+                        itemids = wishlistData.map((item) => {
+                            return item.item.id;
                         });
                         response.forEach((item) => {
-                            if (itemids.includes(item.id)) {
+                            if (itemids.includes(item?.id)) {
                                 item.wishlistAdded = true;
                             }
                         });

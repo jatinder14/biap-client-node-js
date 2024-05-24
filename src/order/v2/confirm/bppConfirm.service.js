@@ -118,58 +118,43 @@ class BppConfirmService {
      * @param {Object} storedOrder 
      * @returns 
      */
-    async confirmV2(context, order = {}, storedOrder = {}) {  
+    async confirmV2(context, order = {}, storedOrder = {}) {
         try {
             storedOrder = storedOrder?.toJSON();
-
             const n = new Date();
-            const count = await OrderMongooseModel.count({
-            });
+            const count = await OrderMongooseModel.count({});
+            let on_select = await protocolGetDumps({ type: "on_select", transaction_id: context.transaction_id })
+            console.log('order-???? :>> ', order);
+            console.log("on_select------------->", on_select)
 
+            let on_select_fulfillments = on_select.request?.message?.order?.fulfillments ?? []
+            let orderId = `${n.getFullYear()}-${this.pad(n.getMonth() + 1)}-${this.pad(n.getDate())}-${Math.floor(100000 + Math.random() * 900000)}`;
+            let qoute = { ...(order?.quote || storedOrder?.quote) }
 
-            //get TAT object from select request
-
-            let on_select = await protocolGetDumps({type:"on_select",transaction_id:context.transaction_id})
-          console.log('order-???? :>> ', order);
-
-
-            console.log("on_select------------->",on_select)
-
-            let on_select_fulfillments = on_select.request?.message?.order?.fulfillments??[]
-
-
-            let orderId = `${n.getFullYear()}-${this.pad(n.getMonth()+1)}-${this.pad(n.getDate())}-${Math.floor(100000 + Math.random() * 900000)}`;
-
-            let qoute = {...(order?.quote || storedOrder?.quote)}
-
-            let value = ""+qoute?.price?.value
+            let value = "" + qoute?.price?.value
             qoute.price.value = value
 
-
-            //find terms from init call
-
             let bpp_term = storedOrder?.tags?.find(x => x.code === 'bpp_terms')
-
             let tax_number = bpp_term?.list?.find(x => x.code === 'tax_number')
 
-            let bpp_terms =[
+            let bpp_terms = [
                 {
-                    code:"bpp_terms",
+                    code: "bpp_terms",
                     list:
                         [
                             {
-                                "code":"tax_number",
-                                "value":tax_number?.value
+                                "code": "tax_number",
+                                "value": tax_number?.value
                             }
                         ]
                 },
                 {
-                    code:"bap_terms",
+                    code: "bap_terms",
                     list:
                         [
                             {
-                                "code":"tax_number",
-                                "value":"GSTIN1234567890"
+                                "code": "tax_number",
+                                "value": process.env.BAP_GSTNO
                             }
                         ]
                 }
@@ -181,13 +166,30 @@ class BppConfirmService {
             // Completed - when all fulfillments completed
             // Cancelled - when order cancelled
 
-            console.log({id:storedOrder?.provider.id,locations:storedOrder?.provider.locations})
+            let settlement_details = order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                storedOrder?.settlementDetails?.["@ondc/org/settlement_details"] :
+                order.payment['@ondc/org/settlement_details']
+            const finder_fee = process.env.BAP_FINDER_FEE_AMOUNT ? 0 : Number(process.env.BAP_FINDER_FEE_AMOUNT)
+            const buyerPercentage = Number(order?.payment?.paid_amount) * (finder_fee / 100)
+            const withHoldAmount = !order.payment['@ondc/org/withholding_amount'] ? 0 : Number(order.payment['@ondc/org/withholding_amount'])
+
+            const settlementAmount = process.env.BAP_FINDER_FEE_TYPE?.toLowerCase() == 'percent' ?
+                Number(order?.payment?.paid_amount) - buyerPercentage - withHoldAmount
+                : Number(order?.payment?.paid_amount) - finder_fee - withHoldAmount
+
+            // settlement_details = settlement_details.map(el => {
+            //     el.settlement_status = PROTOCOL_PAYMENT["NOT-PAID"]
+            //     el.beneficiary_address = storedOrder?.billing?.address?.city
+            //     el.settlement_amount = settlementAmount
+            //     return el
+            // })
+
             const confirmRequest = {
                 context: context,
                 message: {
                     order: {
                         id: orderId,
-                        state:"Created",
+                        state: "Created",
                         billing: {
                             address: {
                                 name: storedOrder?.billing?.address?.name,
@@ -202,8 +204,8 @@ class BppConfirmService {
                             phone: storedOrder?.billing?.phone,
                             name: storedOrder?.billing?.name,
                             email: storedOrder?.billing?.email,
-                            created_at:storedOrder?.billing?.created_at,
-                            updated_at:storedOrder?.billing?.updated_at
+                            created_at: storedOrder?.billing?.created_at,
+                            updated_at: storedOrder?.billing?.updated_at
                         },
                         items: storedOrder?.items && storedOrder?.items?.length &&
                             [...storedOrder?.items].map(item => {
@@ -213,24 +215,18 @@ class BppConfirmService {
                                         count: item.quantity.count
                                     },
                                     fulfillment_id: item.fulfillment_id,
-                                    tags:item.tags,
-                                    parent_item_id:item.parent_item_id??undefined
+                                    tags: item.tags,
+                                    parent_item_id: item.parent_item_id ?? undefined
                                 };
                             }) || [],
-                        provider: {id:storedOrder?.provider.id,locations:storedOrder?.provider.locations},
+                        provider: { id: storedOrder?.provider.id, locations: storedOrder?.provider.locations },
                         fulfillments: [...storedOrder.fulfillments].map((fulfillment) => {
-
-                            console.log(on_select_fulfillments)
-                            console.log(fulfillment)
-                           let mappedFulfillment = on_select_fulfillments.find((data)=>{return data.id==fulfillment?.id});
-
-                            console.log("mappedFulfillment",mappedFulfillment)
-                            console.log(mappedFulfillment)
+                            let mappedFulfillment = on_select_fulfillments.find((data) => { return data.id == fulfillment?.id });
 
                             return {
-                                '@ondc/org/TAT':mappedFulfillment['@ondc/org/TAT'],
+                                '@ondc/org/TAT': mappedFulfillment['@ondc/org/TAT'],
                                 id: fulfillment?.id,
-                                tracking: fulfillment?.tracking??false,
+                                tracking: fulfillment?.tracking ?? false,
                                 end: {
                                     contact: {
                                         email: fulfillment?.end?.contact?.email,
@@ -257,67 +253,58 @@ class BppConfirmService {
                             }
                         }),
                         payment: {
-                            uri:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                "https://razorpay.com/":
+                            uri: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? "https://razorpay.com/" :
                                 undefined, //In case of pre-paid collection by the buyer app, the payment link is rendered after the buyer app sends ACK for /on_init but before calling /confirm;
-                            tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                "http/get":
+                            tl_method: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                                "http/get" :
                                 undefined,
-                            razorpayPaymentId :order?.payment?.razorpayPaymentId,    
+                            razorpayPaymentId: order?.payment?.razorpayPaymentId,
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
-                                transaction_id:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                    order.jusPayTransactionId??uuidv4():
+                                transaction_id: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                                    order.jusPayTransactionId ?? uuidv4() :
                                     undefined//payment transaction id
                             },
                             status: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 PROTOCOL_PAYMENT.PAID :
                                 PROTOCOL_PAYMENT["NOT-PAID"],
                             type: order?.payment?.type,
-                            collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? 
-                                PAYMENT_COLLECTED_BY.BAP : 
+                            collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                                PAYMENT_COLLECTED_BY.BAP :
                                 PAYMENT_COLLECTED_BY.BPP,
                             '@ondc/org/buyer_app_finder_fee_type': process.env.BAP_FINDER_FEE_TYPE,
-                            '@ondc/org/buyer_app_finder_fee_amount':  process.env.BAP_FINDER_FEE_AMOUNT,
-                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis']?? "delivery",
-                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window']?? "P1D",
-                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount']?? "0",
-                            "@ondc/org/settlement_details":order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                storedOrder?.settlementDetails?.["@ondc/org/settlement_details"]:
-                                order.payment['@ondc/org/settlement_details'],
+                            '@ondc/org/buyer_app_finder_fee_amount': process.env.BAP_FINDER_FEE_AMOUNT,
+                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis'] ?? "delivery",
+                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window'] ?? "P1D",
+                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount'] ?? "0",
+                            "@ondc/org/settlement_details": settlement_details,
 
                         },
                         quote: {
                             ...(qoute)
                         },
                         tags: bpp_terms
-                            ,
-                        created_at:context.timestamp,
-                        updated_at:context.timestamp
+                        ,
+                        created_at: context.timestamp,
+                        updated_at: context.timestamp
                     }
                 }
             };
 
+            lokiLogger.info(`bppConfirm.service.js_confirmResponseBeforeConfirm --->> ${JSON.stringify(confirmRequest)}`)
 
-            console.log({confirmRequest})
-
-            lokiLogger.info('bppConfirm.service.js_confirmResponseBeforeConfirm',confirmRequest)
-            
             let confirmResponse = await this.confirm(confirmRequest);
 
-            lokiLogger.info('bppConfirm.service.js_confirmResponseAfterConfirm',confirmResponse)
+            lokiLogger.info(`bppConfirm.service.js_confirmResponseAfterConfirm --->> ${JSON.stringify(confirmResponse)}`)
 
-            if(confirmResponse.error){
+            if (confirmResponse.error) {
                 //retrial attempt
-                console.log("error--------->",confirmResponse.message);
-
-
+                console.log("confirmResponse.error--------->", confirmResponse.error);
             }
 
             return confirmResponse
-
-           // return await this.confirm(confirmRequest);
+            // return await this.confirm(confirmRequest);
         }
         catch (err) {
             throw err;

@@ -68,7 +68,27 @@ export const initiateRsp = async () => {
         if (protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email) {
           userEmails.push(protocolConfirmResponse?.message?.order?.fulfillments?.[0]?.start?.contact?.email)
         }
-        console.log("el?.payment?.time ------------------ ", el?.payment, el?.payment?.time);
+        const confirm_order_payment = protocolConfirmResponse?.message?.order?.payment
+        let settlement_details = confirm_order_payment['@ondc/org/settlement_details']
+        let buyer_app_finder_fee_type = confirm_order_payment['@ondc/org/buyer_app_finder_fee_type']
+        let buyer_app_finder_fee_amount = confirm_order_payment['@ondc/org/buyer_app_finder_fee_amount']
+        const finder_fee = buyer_app_finder_fee_amount ? 0 : Number(buyer_app_finder_fee_amount)
+        const buyerPercentage = Number(confirm_order_payment?.paid_amount) * (finder_fee / 100)
+        const withHoldAmount = !confirm_order_payment['@ondc/org/withholding_amount'] ? 0 : Number(confirm_order_payment['@ondc/org/withholding_amount'])
+
+        const settlementAmount = buyer_app_finder_fee_type?.toLowerCase() == 'percent' ?
+            Number(confirm_order_payment?.paid_amount) - buyerPercentage - withHoldAmount
+            : Number(confirm_order_payment?.paid_amount) - finder_fee - withHoldAmount
+
+        settlement_details = settlement_details.map(el => {
+            el.settlement_status = PROTOCOL_PAYMENT["NOT-PAID"]
+            el.beneficiary_address = storedOrder?.billing?.address?.city
+            el.settlement_amount = settlementAmount
+            return el
+        })
+        if (protocolConfirmResponse?.message?.order?.payment) protocolConfirmResponse.message.order.payment['@ondc/org/settlement_details'] = settlement_details
+            
+        console.log("el?.payment?.time ------------------ ", settlement_details, el?.payment, el?.payment?.time);
         return {
           transaction_details: {
             collector: {
