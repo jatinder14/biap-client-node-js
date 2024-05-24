@@ -25,7 +25,7 @@ async function uploadImageToS3(imagePath, bucketName, keyName) {
         console.log('Image uploaded successfully:', data);
         // let imageUrl= await getSignedUrl(data.Key);
         const fileKey = data.Location.replace(/^.*\//, ''); 
-        const imageUrl = `${process.env.BAP_URL}/clientApis/v2/getResource/${fileKey}`;
+        const imageUrl = `https://${process.env.BAP_URL}/clientApis/v2/getResource/${fileKey}`;
         return { success: true, message: 'Image uploaded successfully', imageUrl: imageUrl };
         
     } catch (err) {
