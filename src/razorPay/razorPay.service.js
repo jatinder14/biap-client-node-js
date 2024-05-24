@@ -6,7 +6,7 @@ import { pad } from "../utils/stringHelper.js";
 import Razorpay from "razorpay";
 import { RAZORPAY_STATUS } from "../utils/constants.js";
 import crypto from "crypto";
-
+import lokiLogger from "../utils/logger.js";
 class RazorPayService {
   /**
    * create payment
@@ -123,7 +123,8 @@ class RazorPayService {
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-
+      lokiLogger.info(`-------------------inside-refundOrder--------------`)
+      
       const refund = await instance.payments.refund(paymentId, {
         "amount": `${amount}`,
         "speed": "optimum",
@@ -132,6 +133,7 @@ class RazorPayService {
     }
     catch (error) {
       console.log("error -------------- ", paymentId, amount, error);
+      lokiLogger.info(`---------------error-caused----inside-refundOrder--------------`)
       throw error;
 
     }
