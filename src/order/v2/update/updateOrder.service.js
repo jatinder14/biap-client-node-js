@@ -603,7 +603,6 @@ class UpdateOrderService {
                 if (!(protocolUpdateResponse?.[0].error)) {
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
-                    lokiLogger.info(`----------refundAmount-------------: ${refundAmount}`);
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                     let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
                     lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
@@ -611,7 +610,6 @@ class UpdateOrderService {
 
                     console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
                     console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
-                    lokiLogger.info(`-----------------refundAmount -------------- ${refundAmount}`)
 
                     const dbResponse = await OrderMongooseModel.find({
                         transactionId: protocolUpdateResponse.context.transaction_id,
@@ -638,7 +636,7 @@ class UpdateOrderService {
                             let return_item_count = data?.list?.find(
                                 (el) => el?.code == "item_quantity",
                             )?.value;
-                            let items = obj[0]?.message?.order?.items;
+                            let items = protocolUpdateResponse?.message?.order?.items;
                             let left_order_item_count =
                                 items?.find(
                                     (el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id,
@@ -650,6 +648,7 @@ class UpdateOrderService {
                             lokiLogger.info(`------------------liquidated condition -- ${JSON.stringify(data)}`)
                             lokiLogger.info(`------------------return_item_count  -- ${return_item_count}`)
                             lokiLogger.info(`------------------left_order_item_count -- ${left_order_item_count}`)
+                            lokiLogger.info(`------------------amount-passed-to-razorpay-- ${ Math.abs(refundAmount).toFixed(2)*100}`)
                                 if (razorpayPaymentId && refundAmount) {
                                     razorPayService
                                     .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
