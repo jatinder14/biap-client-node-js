@@ -832,8 +832,8 @@ class UpdateOrderService {
                             if (fulfillmentStatus.type === 'Return' || fulfillmentStatus.type === 'Cancel') {
                                 item.return_status = fulfillmentStatus?.state?.descriptor?.code;
                                 item.cancellation_status = fulfillmentStatus?.state?.descriptor?.code;
-                                item.returned_item_count = fulfillmentStatus?.item_quantity || 0
-                                lokiLogger.info(`--------returned_item_count--------------- ${item.returned_item_count}`)
+                                // item.returned_item_count = fulfillmentStatus?.item_quantity || 0
+                                // lokiLogger.info(`--------returned_item_count--------------- ${item.returned_item_count}`)
                                 // orderSchema.settle_status = SETTLE_STATUS.DEBIT
                             }
                             item.fulfillment_status = fulfillmentStatus?.state?.descriptor?.code;
