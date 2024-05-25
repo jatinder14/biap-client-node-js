@@ -8,7 +8,8 @@ const RefundSchema = mongoose.Schema({
         itemQty:{ type: String },
         isRefunded:{ type: String, default: false},
         transationId:{ type: String },
-        razorpayPaymentId:{ type: String }
+        razorpayPaymentId:{ type: String },
+        created_at:{ type: String }
 },
 )
 

@@ -1,6 +1,7 @@
 import RazorPayService from "./razorPay.service.js";
 import lokiLogger from "../utils/logger.js";
 //import {Payment} from "../models";
+import Refund from "../order/v2/db/refund.js";
 
 const razorPayService = new RazorPayService();
 
@@ -70,18 +71,15 @@ class RazorPayController {
           let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
           console.log(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
           let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
-          lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
-          // const refundDetails = new Refund({
-          //     orderId: dbResponse.id,
-          //     refundId: response.id,
-          //     refundedAmount: (response.amount) / 100,
-          //     itemId: dbResponse.items[0].id,
-          //     itemQty: dbResponse.items[0].quantity.count,
-          //     isRefunded: true,
-          //     transationId: dbResponse?.transactionId,
-          //     razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
-          // })
-          // lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
+          console.log(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+          const refundDetails = await Refund.create({
+              refundId: response.id,
+              refundedAmount: (response.amount) / 100,
+              isRefunded: true,
+              razorpayPaymentId: response?.payment_id,
+              created_at: response?.created_at,
+          })
+          console.log(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
           console.log(`--------response---${JSON.stringify(response)}`)
           return res.json({
             status: true,
