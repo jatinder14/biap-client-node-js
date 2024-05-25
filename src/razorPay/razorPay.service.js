@@ -141,7 +141,7 @@ class RazorPayService {
 
   async fetchPayment(paymentId) {
     try {
-            const instance = new Razorpay({
+        const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });

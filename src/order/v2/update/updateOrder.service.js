@@ -539,9 +539,9 @@ class UpdateOrderService {
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
-                            .then((response) => {
+                            .then(async (response) => {
                                 lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
-                                const refundDetails = new Refund({
+                                const refundDetails = await Refund.create({
                                     orderId: dbResponse.id,
                                     refundId: response.id,
                                     refundedAmount: (response.amount) / 100,
@@ -653,7 +653,7 @@ class UpdateOrderService {
                                     lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                     let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
                                     lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
-                                    const refundDetails = new Refund({
+                                    const refundDetails = await Refund.create({
                                         orderId: dbResponse.id,
                                         refundId: response.id,
                                         refundedAmount: (response.amount) / 100,
