@@ -139,6 +139,21 @@ class RazorPayService {
     }
   }
 
+  async fetchPayment(paymentId) {
+    try {
+            const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const payment = await instance.payments.fetch(paymentId);
+      console.log('Payment details:', payment);
+      return payment;
+    } catch (error) {
+      console.error('Error fetching payment:', error);
+      throw error;
+    }
+  }
+
   /**
    * verify payment
    * @param {Object} data

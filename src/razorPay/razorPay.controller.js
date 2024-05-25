@@ -60,23 +60,15 @@ class RazorPayController {
       });
   }
   async refundPayment(req, res, next) {
-    try{
-    console.log(`-------------refundPayment-----------`)
     const data = req?.body;
     const razorpayPaymentId = data?.paymentId;
     const refundAmount = data?.amount;
-    // const signature = req?.headers["x-razorpay-signature"];
-    // razorPayService
-    //   .verifyPayment(signature, data)
-    //   .then((user) => {
-    //     res.json({ data: user });
-    //   })
-    //   .catch((err) => {
-    //     next(err);
-    //   });
-      if (razorpayPaymentId && refundAmount) {
+    try{
+    console.log(`-------------refundPayment-----------${refundAmount}`)
+    const payment = razorPayService.fetchPayment(razorpayPaymentId);  
+      if (payment && razorpayPaymentId && refundAmount) {
           let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
-          lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
+          console.log(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
           let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
           lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
           // const refundDetails = new Refund({
@@ -93,7 +85,7 @@ class RazorPayController {
           console.log(`--------response---${JSON.stringify(response)}`)
           return res.json({
             status: true,
-            message: `refund amount of ${response} is successfull`
+            message: `refund amount of ${refundAmount} is successfull`
           }) 
       }
       return res.json({
@@ -103,9 +95,10 @@ class RazorPayController {
     }catch(e){
       lokiLogger.info(`error found in refunding the money ------${JSON.stringify(e)}`);
       console.log(`error found in refunding the money ------${JSON.stringify(e)}`);
+      // status code 400 represents that the refunded amoount asked is greater than the actual total payment amount or the left amount that is present in the specific payment id or if the order is already fully refunded
       return res.json({
         status: false,
-        message: e?.error?.description
+        message: (e?.statusCode == 404) ? `paymnet with ${razorpayPaymentId} does not exists` : (e?.statusCode == 400) ? `${e?.error?.description}` : `Internal server error`
       })
     }
   }
