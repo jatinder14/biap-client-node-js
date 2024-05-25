@@ -7,7 +7,8 @@ const razorPayController = new RazorPayController();
 const checkReferer = (req, res, next) => {
   const referer = req?.host;
   console.log(`referer..........${referer}`);
-  if (referer && referer.startsWith(process.env.REFERER)) {
+  //remove localhost after frontend integration
+  if (referer && referer.startsWith(process.env.REFERER || 'localhost')) {
     next();
   } else {
     res.status(403).json({ 
