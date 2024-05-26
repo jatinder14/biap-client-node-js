@@ -4,6 +4,7 @@ import { authentication } from "../middlewares/index.js";
 const router = new Router();
 
 const razorPayController = new RazorPayController();
+
 const checkReferer = (req, res, next) => {
   const referer = req?.host;
   console.log(`referer..........${referer}`);
@@ -11,9 +12,9 @@ const checkReferer = (req, res, next) => {
   if (referer && referer.startsWith(process.env.REFERER || 'localhost')) {
     next();
   } else {
-    res.status(403).json({ 
+    res.status(403).json({
       success: false,
-      message: 'Forbidden' 
+      message: 'Forbidden'
     });
   }
 };
@@ -47,7 +48,7 @@ router.get(
 router.post(
   "/v2/razorpay/refund/order",
   authentication(),
-  checkReferer,
+  // checkReferer, - We have hosted multiple UI with this BE so will enable after development
   razorPayController.refundPayment
 );
 

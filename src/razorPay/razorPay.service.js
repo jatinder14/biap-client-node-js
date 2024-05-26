@@ -1,15 +1,17 @@
-import BadRequestParameterError from "../lib/errors/bad-request-parameter.error.js";
+import Razorpay from "razorpay";
 import { uuid } from "uuidv4";
+import crypto from "crypto";
 import Transaction from "./db/transaction.js";
 import Order from "../order/v1/db/order.js";
 import { pad } from "../utils/stringHelper.js";
-import Razorpay from "razorpay";
+import BadRequestParameterError from "../lib/errors/bad-request-parameter.error.js";
 import { RAZORPAY_STATUS } from "../utils/constants.js";
-import crypto from "crypto";
 import lokiLogger from "../utils/logger.js";
+
 class RazorPayService {
+
   /**
-   * create payment
+   * INFO: create payment
    * @param {Object} data
    * @param {Integer} data.amount
    * @param {String} data.receiptNo
@@ -50,9 +52,8 @@ class RazorPayService {
           const lastTransactionNumber = lastHumanReadableID.split("-");
 
           //get humanReadable id
-          humanReadableID = `transactionId_${
-            parseInt(lastTransactionNumber.slice(-1)) + 1
-          }`;
+          humanReadableID = `transactionId_${parseInt(lastTransactionNumber.slice(-1)) + 1
+            }`;
         } else {
           humanReadableID = `transactionId_${pad(1, 4)}`;
         }
@@ -92,6 +93,11 @@ class RazorPayService {
     }
   }
 
+  /**
+   * INFO: create order with razorpay
+   * @param {Integer} amount
+   * @param {String} currency
+   */
   async createOrder(amount, currency) {
     try {
       const instance = new Razorpay({
@@ -112,7 +118,7 @@ class RazorPayService {
   }
 
   /**
-   * refund payment
+   * INFO: refund payment
    * @param {string} amount
    * @param {String} paymentId
    */
@@ -124,7 +130,7 @@ class RazorPayService {
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-      
+
       const refund = await instance.payments.refund(paymentId, {
         "amount": `${amount}`,
         "speed": "optimum",
@@ -139,9 +145,13 @@ class RazorPayService {
     }
   }
 
+  /**
+   * INFO: get payment details from razorpay by id
+   * @param {String} paymentId
+   */
   async fetchPayment(paymentId) {
     try {
-        const instance = new Razorpay({
+      const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
@@ -155,10 +165,9 @@ class RazorPayService {
   }
 
   /**
-   * verify payment
-   * @param {Object} data
-   * @param {Integer} data.amount
-   * @param {String} data.receiptNo
+   * INFO: verify payment
+   * @param {String} signature
+   * @param {Object} responseData
    */
   async verifyPayment(signature, responseData) {
     try {
@@ -236,4 +245,3 @@ class RazorPayService {
 
 export default RazorPayService;
 
-// webhooks
