@@ -10,15 +10,15 @@ export const createConfiguration = async (req, res, next) => {
                 message: `Subscriber id is required!`,
             })
         }
-        if (accountNumber) {
-            if (!bankName || !ifscCode || !bankAddress || !accountHolderName) {
+        if (payload?.accountNumber) {
+            if (!payload?.bankName || !payload?.ifscCode || !payload?.bankAddress || !payload?.accountHolderName) {
                 return res.status(400).json({
                     success: false,
                     message: `Bank details should be valid!`,
                 })
             }
         }
-        if (finderFee && !finderFeeType) {
+        if (payload?.finderFee && !payload?.finderFeeType) {
             return res.status(400).json({
                 success: false,
                 message: `Finder fee should be valid!`,

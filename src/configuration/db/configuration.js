@@ -6,6 +6,7 @@ const contentSchema = new mongoose.Schema({
 }, { _id: false })
 
 const ConfigurationSchema = new mongoose.Schema({
+    bapId: { type: String, requred: true },
     name: { type: String, default: null },
     logo: { type: String, default: null },
     color: { type: String, default: null },

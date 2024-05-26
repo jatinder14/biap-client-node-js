@@ -5,6 +5,6 @@ const configurationRouter = new Router();
 
 configurationRouter.post('/addConfiguration', createConfiguration)
 
-configurationRouter.post('/getConfigurations/:type', getConfigurations)
+configurationRouter.get('/getConfigurations/:type', getConfigurations)
 
 export default configurationRouter;
