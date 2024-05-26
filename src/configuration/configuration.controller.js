@@ -1,8 +1,15 @@
 import Configuration from "./db/configuration.js"
 
-export const add = async (req, res, next) => {
+export const createConfiguration = async (req, res, next) => {
     try {
         let payload = req?.body;
+        let bapId = payload?.bapId;
+        if (!bapId) {
+            return res.status(400).json({
+                success: false,
+                message: `Subscriber id is required!`,
+            })
+        }
         if (accountNumber) {
             if (!bankName || !ifscCode || !bankAddress || !accountHolderName) {
                 return res.status(400).json({
@@ -72,8 +79,10 @@ export const add = async (req, res, next) => {
                 message: "Cancellation policy should be valid!",
             })
         }
-        let data = await Configuration.create({
-            "bapId": payload?.bapId || "buyer-app-stage.thewitslab.com",
+
+        let existingConfig = await Configuration.findOne({ bapId });
+        let updateObject = {
+            "bapId": bapId,
             "name": payload?.name,
             "logo": payload?.logo,
             "color": payload?.color,
@@ -84,17 +93,25 @@ export const add = async (req, res, next) => {
             "bankAddress": payload?.bankAddress,
             "accountHolderName": payload?.accountHolderName,
             "finderFee": payload?.finderFee,
-            "finderFeeType": payload?.accountNumber,
+            "finderFeeType": payload?.finderFeeType,
             "faq": payload?.faq,
             "aboutus": payload?.aboutus,
             "tandc": payload?.tandc,
             "shippingpolicy": payload?.shippingpolicy,
             "cancelpolicy": payload?.cancelpolicy,
-        })
+        };
+        Object.keys(updateObject).forEach(key => updateObject[key] === undefined && delete updateObject[key]);
+        if (existingConfig) {
+            existingConfig.set(updateObject);
+            await existingConfig.save();
+        } else {
+            await Configuration.create(updateObject);
+        }
+
         res.status(200).json({
             success: true,
-            data: data
-        })
+            message: existingConfig ? "Configuration updated successfully!" : "Configuration created successfully!",
+        });
 
     } catch (error) {
         res.status(500).json({
@@ -107,7 +124,8 @@ export const add = async (req, res, next) => {
 
 export const getConfigurations = async (req, res) => {
     try {
-        const { bapId = "buyer-app-stage.thewitslab.com", type = "basic" } = req.query;
+        const { type = "basic" } = req.params;
+        const { bapId = "buyer-app-stage.thewitslab.com" } = req.query;
         if (!["basic", "bank", "finder", "faq", "aboutus", "tandc", "shippingpolicy", "cancelpolicy"].includes(type)) {
             return res.status(200).json({
                 success: true,
