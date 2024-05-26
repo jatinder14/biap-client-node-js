@@ -4,6 +4,19 @@ import { authentication } from "../middlewares/index.js";
 const router = new Router();
 
 const razorPayController = new RazorPayController();
+const checkReferer = (req, res, next) => {
+  const referer = req?.host;
+  console.log(`referer..........${referer}`);
+  //remove localhost after frontend integration
+  if (referer && referer.startsWith(process.env.REFERER || 'localhost')) {
+    next();
+  } else {
+    res.status(403).json({ 
+      success: false,
+      message: 'Forbidden' 
+    });
+  }
+};
 
 //Make Order
 router.post(
@@ -29,5 +42,14 @@ router.get(
   // authentication(),
   razorPayController.keys
 );
+
+//Make refund
+router.post(
+  "/v2/razorpay/refund/order",
+  authentication(),
+  checkReferer,
+  razorPayController.refundPayment
+);
+
 
 export default router;

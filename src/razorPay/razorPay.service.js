@@ -118,12 +118,12 @@ class RazorPayService {
    */
   async refundOrder(paymentId, amount) {
     try {
-
+      console.log(`-------------------inside-refundOrder--------------${process.env.RAZORPAY_KEY_ID}`)
+      console.log(`-------------------inside-refundOrder--------------${process.env.RAZORPAY_KEY_SECRET}`)
       const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-      lokiLogger.info(`-------------------inside-refundOrder--------------`)
       
       const refund = await instance.payments.refund(paymentId, {
         "amount": `${amount}`,
@@ -136,6 +136,21 @@ class RazorPayService {
       lokiLogger.info(`---------------error-caused----inside-refundOrder--------------`)
       throw error;
 
+    }
+  }
+
+  async fetchPayment(paymentId) {
+    try {
+        const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const payment = await instance.payments.fetch(paymentId);
+      console.log('Payment details:', payment);
+      return payment;
+    } catch (error) {
+      console.error('Error fetching payment:', error);
+      throw error;
     }
   }
 
