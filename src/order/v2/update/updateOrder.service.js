@@ -24,14 +24,12 @@ const razorPayService = new RazorPayService()
 class UpdateOrderService {
 
     /**
-    * cancel order
+    * INFO: cancel/return order
     * @param {Object} orderRequest
     */
     
     async update(orderRequest) {
         try {
-
-
             const orderDetails = await getOrderById(orderRequest.message.order.id);
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
@@ -128,16 +126,13 @@ class UpdateOrderService {
                 await dbFulfillment.save();
             }
 
-            let fulfilment =
-            {
+            let fulfilment = {
                 "type": type,
                 "tags": tags
             }
-
             fulfilments.push(fulfilment);
 
-            //1. create a new fullfillment
-
+            // create a new fullfillment
             let order = {
                 "update_target": "item",
                 "order":
@@ -152,17 +147,10 @@ class UpdateOrderService {
             const request = data.data
             const requestType = data.context.action
             const orderSaved = new OrderRequestLogMongooseModel({ requestType, transactionId, messageId, request })
-
             await orderSaved.save();
-
-            const { message = {} } = orderRequest || {};
-            //const { update_target,order } = message || {};
-
             if (!(context?.bpp_id)) {
                 throw new CustomError("BPP Id is mandatory");
             }
-
-
             return await bppUpdateService.update(
                 context,
                 type,
@@ -176,8 +164,9 @@ class UpdateOrderService {
     }
 
     /**
-    * cancel order
+    * INFO: cancel order
     * @param {Object} orderRequest
+    * @param {Object} protocolUpdateResponse
     */
     async updateForPaymentObject(orderRequest, protocolUpdateResponse) {
         try {
@@ -310,10 +299,9 @@ class UpdateOrderService {
     }
 
     /**
-     * Send return to dashboard
+     * INFO: Send return to dashboard
      * @param {Object} order
      */
-
     async updateReturnOnEssentialDashboard(order) {
         try {
             const lastFulfillment =
@@ -327,8 +315,6 @@ class UpdateOrderService {
             const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
 
             const returnType = lastFulfillment?.type;
-
-            // const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             if (
                 validReturnStates.includes(returnState) &&
@@ -367,6 +353,11 @@ class UpdateOrderService {
         }
     }
 
+    /**
+     * INFO: Function to calculate refund amount
+     * @param {Object} obj 
+     * @returns 
+     */
     calculateRefundAmount(obj) {
         let totalRefundAmount = 0
         lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
@@ -419,8 +410,8 @@ class UpdateOrderService {
 
 
     /**
-    * on cancel order
-    * @param {Object} messageId
+    * INFO: on cancel/return order
+    * @param {String} messageId
     */
     async onUpdate(messageId) {
         try {
@@ -449,8 +440,6 @@ class UpdateOrderService {
                     return Math.abs(totalAmount)
                   }
             }
-            // let totalRefundAmount = this.calculateRefundAmount(protocolUpdateResponse);
-
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -575,13 +564,15 @@ class UpdateOrderService {
         }
     }
 
+    /**
+     * INFO: Function to update cancel/refund into db
+     * @param {String} messageId 
+     * @returns 
+     */
     async onUpdateDbOperation(messageId) {
         try {
 
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-            lokiLogger.info(`-----------------onUpdateDbOperation -------------- ${messageId}`)
-            lokiLogger.info(`onUpdateprotocolresponse----------------${JSON.stringify(protocolUpdateResponse)}`)
-
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 const contextFactory = new ContextFactory();
@@ -607,10 +598,6 @@ class UpdateOrderService {
                     let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
                     lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                     lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
-
-                    console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
-                    console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
-
                     const dbResponse = await OrderMongooseModel.find({
                         transactionId: protocolUpdateResponse.context.transaction_id,
                         id: protocolUpdateResponse.message.order.id
