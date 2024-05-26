@@ -1,14 +1,9 @@
-import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
-import moment from "moment";
 import _ from "underscore";
 import order from "../../order/v1/db/order.js";
-import OnConfirmData from "../../order/v1/db/onConfirmDump.js";
-import { rsp_constants } from "../../utils/rspConstant.js";
-import { PAYERDETAIL } from "../../utils/constants.js";
+import { PROTOCOL_PAYMENT } from "../../utils/constants.js";
 import { ajv_validate } from "../../middlewares/validator.js";
 import { sendEmail } from "../../shared/mailer.js";
-import logger from "../../utils/logger.js";
 import { onOrderConfirm } from "../../utils/protocolApis/index.js";
 import prepareReconSchema from "../rsp_schema/prepare_recon.js";
 
@@ -73,22 +68,21 @@ export const initiateRsp = async () => {
         let buyer_app_finder_fee_type = confirm_order_payment['@ondc/org/buyer_app_finder_fee_type']
         let buyer_app_finder_fee_amount = confirm_order_payment['@ondc/org/buyer_app_finder_fee_amount']
         const finder_fee = buyer_app_finder_fee_amount ? 0 : Number(buyer_app_finder_fee_amount)
-        const buyerPercentage = Number(confirm_order_payment?.paid_amount) * (finder_fee / 100)
+        const buyerPercentage = Number(confirm_order_payment?.params?.amount) * (finder_fee / 100)
         const withHoldAmount = !confirm_order_payment['@ondc/org/withholding_amount'] ? 0 : Number(confirm_order_payment['@ondc/org/withholding_amount'])
 
         const settlementAmount = buyer_app_finder_fee_type?.toLowerCase() == 'percent' ?
-            Number(confirm_order_payment?.paid_amount) - buyerPercentage - withHoldAmount
-            : Number(confirm_order_payment?.paid_amount) - finder_fee - withHoldAmount
+            Number(confirm_order_payment?.params?.amount) - buyerPercentage - withHoldAmount
+            : Number(confirm_order_payment?.params?.amount) - finder_fee - withHoldAmount
 
         settlement_details = settlement_details.map(el => {
             el.settlement_status = PROTOCOL_PAYMENT["NOT-PAID"]
-            el.beneficiary_address = storedOrder?.billing?.address?.city
+            el.beneficiary_address = protocolConfirmResponse?.message?.order?.billing?.address?.city
             el.settlement_amount = settlementAmount
             return el
         })
         if (protocolConfirmResponse?.message?.order?.payment) protocolConfirmResponse.message.order.payment['@ondc/org/settlement_details'] = settlement_details
-            
-        console.log("el?.payment?.time ------------------ ", settlement_details, el?.payment, el?.payment?.time);
+
         return {
           transaction_details: {
             collector: {
@@ -129,7 +123,6 @@ export const initiateRsp = async () => {
     const request_body = {
       orders: prepare_payload
     }
-    console.log("==================================================", JSON.stringify(request_body));
     const { valid, validate } = ajv_validate(
       { body: request_body },
       prepareReconSchema,
@@ -159,7 +152,7 @@ export const initiateRsp = async () => {
     
     return { success: true };
   } catch (error) {
-    console.error(`initiateRsp error.rsp: Cron : ${error.message}`);
+    console.error(`initiateRsp error.rsp: Cron : `, error);
     return error;
   }
 };
