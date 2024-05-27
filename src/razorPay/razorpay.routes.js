@@ -5,6 +5,20 @@ const router = new Router();
 
 const razorPayController = new RazorPayController();
 
+const checkReferer = (req, res, next) => {
+  const referer = req?.host;
+  console.log(`referer..........${referer}`);
+  //remove localhost after frontend integration
+  if (referer && referer.startsWith(process.env.REFERER || 'localhost')) {
+    next();
+  } else {
+    res.status(403).json({
+      success: false,
+      message: 'Forbidden'
+    });
+  }
+};
+
 //Make Order
 router.post(
   "/v2/razorpay/createOrder",
@@ -29,5 +43,14 @@ router.get(
   // authentication(),
   razorPayController.keys
 );
+
+//Make refund
+router.post(
+  "/v2/razorpay/refund/order",
+  authentication(),
+  // checkReferer, - We have hosted multiple UI with this BE so will enable after development
+  razorPayController.refundPayment
+);
+
 
 export default router;

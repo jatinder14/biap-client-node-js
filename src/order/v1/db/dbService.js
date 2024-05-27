@@ -3,17 +3,13 @@ import OrderMongooseModel from './order.js';
 import OrderRequestLogMongooseModel from "./orderRequestLog.js";
 import OrderHistory from "../../v2/db/orderHistory.js";
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
-import lokiLogger from '../../../utils/logger.js'
 
 /**
-* update order
+* INFO: upsert order based on transaction id
  * @param {String} transactionId 
  * @param {Object} orderSchema 
  */
 const addOrUpdateOrderWithTransactionId = async (transactionId, orderSchema = {}) => {
-
-
-    // console.log("items------------------->",transactionId,orderSchema.items)
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId
@@ -23,49 +19,58 @@ const addOrUpdateOrderWithTransactionId = async (transactionId, orderSchema = {}
         },
         { upsert: true }
     );
-
 };
 
+/**
+ * INFO: Order upsert based on transaction and provider id
+ * @param {String} transactionId 
+ * @param {String} providerId 
+ * @param {Object} orderSchema 
+ * @returns 
+ */
 const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, providerId, orderSchema = {}) => {
-
-
-    // console.log("items------------------->",transactionId,orderSchema.items)
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId,
-            "provider.id":providerId
+            "provider.id": providerId
         },
         {
             ...orderSchema
         },
         { upsert: true }
     );
-
 };
 
+/**
+ * INFO: Order upsert based on order and transaction id
+ * @param {String} transactionId 
+ * @param {String} orderId 
+ * @param {Object} orderSchema 
+ * @returns 
+ */
 const addOrUpdateOrderWithTransactionIdAndOrderId = async (transactionId, orderId, orderSchema = {}) => {
-
-
-    // console.log("items------------------->",transactionId,orderSchema.items)
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId,
-            "id":orderId
+            "id": orderId
         },
         {
             ...orderSchema
         },
         { upsert: true }
     );
-
 };
-const addOrUpdateOrderWithdOrderId = async ( orderId, orderSchema = {}) => {
 
-
-    // console.log("items------------------->",transactionId,orderSchema.items)
+/**
+ * INFO: Upsert order details
+ * @param {String} orderId 
+ * @param {Object} orderSchema 
+ * @returns 
+ */
+const addOrUpdateOrderWithdOrderId = async (orderId, orderSchema = {}) => {
     return await OrderMongooseModel.findOneAndUpdate(
         {
-            "id":orderId
+            "id": orderId
         },
         {
             ...orderSchema
@@ -90,10 +95,17 @@ const getOrderByTransactionId = async (transactionId) => {
     else
         return order?.[0];
 };
+
+/**
+ * INFO: get order by tranction and provider id
+ * @param {String} transactionId 
+ * @param {String} providerId 
+ * @returns 
+ */
 const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
-        "provider.id":providerId
+        "provider.id": providerId
     });
 
     if (!(order || order.length))
@@ -102,62 +114,73 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
         return order?.[0];
 };
 
+/**
+ * INFO: get order details by id
+ * @param {String} orderId 
+ * @returns 
+ */
 const getOrderById = async (orderId) => {
-    try{
+    try {
         let order = await OrderMongooseModel.find({
             id: orderId
         }).lean();
-        
-        lokiLogger.info('orderByID_dbService.js----------->',order)
-        
+
         if (!(order || order.length))
             throw new NoRecordFoundError();
-        else{
+        else {
             // order = order.toJSON();
-            let orderHistory =await OrderHistory.find({orderId:orderId})
-            let fulfillmentHistory =await FulfillmentHistory.find({orderId:orderId})
+            let orderHistory = await OrderHistory.find({ orderId: orderId })
+            let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId })
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
-            console.log({orderHistory,fulfillmentHistory})
-            lokiLogger.info('orderByID_FulfillmentHistoryAddedbService.js----------->',order)
             return order;
         }
     }
-    catch(error){
-return error
+    catch (error) {
+        return error
     }
 
 };
 
+/**
+ * INFO: Save order requirest
+ * @param {Object} data 
+ * @returns 
+ */
 const saveOrderRequest = async (data) => {
-
-    //console.log("data---to save----->",data);
-    //console.log("data---to save----->",data.context);
-
-    const transactionId= data.context.transaction_id
-    const messageId= data.context.message_id
+    const transactionId = data.context.transaction_id
+    const messageId = data.context.message_id
     const request = data.data
     const requestType = data.context.action
-    const order =new OrderRequestLogMongooseModel({requestType,transactionId,messageId,request})
-
+    const order = new OrderRequestLogMongooseModel({ requestType, transactionId, messageId, request })
     await order.save();
 
     return order;
 };
 
+/**
+ * INFO: Get order requirest
+ * @param {Object} data 
+ * @returns 
+ */
 const getOrderRequest = async (data) => {
-    const transactionId= data.transaction_id
-    const messageId= data.message_id
-    const requestType= data.requestType
-    const order = await OrderRequestLogMongooseModel.findOne({transactionId,messageId,requestType})
+    const transactionId = data.transaction_id
+    const messageId = data.message_id
+    const requestType = data.requestType
+    const order = await OrderRequestLogMongooseModel.findOne({ transactionId, messageId, requestType })
     return order;
 };
 
+/**
+ * INFO: Get order requirest in Descending order on added date
+ * @param {Object} data 
+ * @returns 
+ */
 const getOrderRequestLatestFirst = async (data) => {
-    const transactionId= data.transaction_id
-    const requestType= data.requestType
-    const order = await OrderRequestLogMongooseModel.findOne({transactionId,requestType}).sort({"createdAt":-1})
+    const transactionId = data.transaction_id
+    const requestType = data.requestType
+    const order = await OrderRequestLogMongooseModel.findOne({ transactionId, requestType }).sort({ "createdAt": -1 })
     return order;
 };
 
-export {getOrderRequest,addOrUpdateOrderWithdOrderId,getOrderRequestLatestFirst,saveOrderRequest,addOrUpdateOrderWithTransactionIdAndOrderId,addOrUpdateOrderWithTransactionId,getOrderByTransactionIdAndProvider, getOrderByTransactionId,getOrderById,addOrUpdateOrderWithTransactionIdAndProvider };
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider };

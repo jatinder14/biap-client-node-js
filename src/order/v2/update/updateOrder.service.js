@@ -24,14 +24,12 @@ const razorPayService = new RazorPayService()
 class UpdateOrderService {
 
     /**
-    * cancel order
+    * INFO: cancel/return order
     * @param {Object} orderRequest
     */
     
     async update(orderRequest) {
         try {
-
-
             const orderDetails = await getOrderById(orderRequest.message.order.id);
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
@@ -128,16 +126,13 @@ class UpdateOrderService {
                 await dbFulfillment.save();
             }
 
-            let fulfilment =
-            {
+            let fulfilment = {
                 "type": type,
                 "tags": tags
             }
-
             fulfilments.push(fulfilment);
 
-            //1. create a new fullfillment
-
+            // create a new fullfillment
             let order = {
                 "update_target": "item",
                 "order":
@@ -152,17 +147,10 @@ class UpdateOrderService {
             const request = data.data
             const requestType = data.context.action
             const orderSaved = new OrderRequestLogMongooseModel({ requestType, transactionId, messageId, request })
-
             await orderSaved.save();
-
-            const { message = {} } = orderRequest || {};
-            //const { update_target,order } = message || {};
-
             if (!(context?.bpp_id)) {
                 throw new CustomError("BPP Id is mandatory");
             }
-
-
             return await bppUpdateService.update(
                 context,
                 type,
@@ -176,8 +164,9 @@ class UpdateOrderService {
     }
 
     /**
-    * cancel order
+    * INFO: cancel order
     * @param {Object} orderRequest
+    * @param {Object} protocolUpdateResponse
     */
     async updateForPaymentObject(orderRequest, protocolUpdateResponse) {
         try {
@@ -310,10 +299,9 @@ class UpdateOrderService {
     }
 
     /**
-     * Send return to dashboard
+     * INFO: Send return to dashboard
      * @param {Object} order
      */
-
     async updateReturnOnEssentialDashboard(order) {
         try {
             const lastFulfillment =
@@ -327,8 +315,6 @@ class UpdateOrderService {
             const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
 
             const returnType = lastFulfillment?.type;
-
-            // const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             if (
                 validReturnStates.includes(returnState) &&
@@ -367,14 +353,19 @@ class UpdateOrderService {
         }
     }
 
+    /**
+     * INFO: Function to calculate refund amount
+     * @param {Object} obj 
+     * @returns 
+     */
     calculateRefundAmount(obj) {
         let totalRefundAmount = 0
-        lokiLogger.info(`obj ======  ${obj}`);
+        lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
         if (obj) {
             let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
-            lokiLogger.info(`latest_fulfillment ======  ${latest_fulfillment}`);
+            lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
@@ -396,8 +387,10 @@ class UpdateOrderService {
 
             let full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
-                if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
-                    full_Cancel = false;
+                if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
+                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                        full_Cancel = false;
+                }
             });
 
             if (full_Cancel) {
@@ -417,8 +410,8 @@ class UpdateOrderService {
 
 
     /**
-    * on cancel order
-    * @param {Object} messageId
+    * INFO: on cancel/return order
+    * @param {String} messageId
     */
     async onUpdate(messageId) {
         try {
@@ -447,8 +440,6 @@ class UpdateOrderService {
                     return Math.abs(totalAmount)
                   }
             }
-            // let totalRefundAmount = this.calculateRefundAmount(protocolUpdateResponse);
-
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -537,9 +528,9 @@ class UpdateOrderService {
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
                             .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
-                            .then((response) => {
-                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
-                                const refundDetails = new Refund({
+                            .then(async (response) => {
+                                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+                                const refundDetails = await Refund.create({
                                     orderId: dbResponse.id,
                                     refundId: response.id,
                                     refundedAmount: (response.amount) / 100,
@@ -550,7 +541,7 @@ class UpdateOrderService {
                                     razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
 
                                 })
-                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
+                                lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
                             })
                             .catch((err) => {
                                 lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
@@ -573,13 +564,15 @@ class UpdateOrderService {
         }
     }
 
+    /**
+     * INFO: Function to update cancel/refund into db
+     * @param {String} messageId 
+     * @returns 
+     */
     async onUpdateDbOperation(messageId) {
         try {
 
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-            lokiLogger.info(`-----------------onUpdateDbOperation -------------- ${messageId}`)
-            lokiLogger.info(`onUpdateprotocolresponse----------------${JSON.stringify(protocolUpdateResponse)}`)
-
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 const contextFactory = new ContextFactory();
@@ -601,16 +594,10 @@ class UpdateOrderService {
                 if (!(protocolUpdateResponse?.[0].error)) {
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
-                    lokiLogger.info(`----------refundAmount-------------: ${refundAmount}`);
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                     let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
-                    lokiLogger.info(`----------fulfillments-Items-------------: ${fulfillments}`);
-                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${latest_fulfillment}`);
-
-                    console.log("orderDetails?.updatedQuote?.price?.value----->", protocolUpdateResponse.message.order.quote?.price?.value)
-                    console.log("orderDetails?.updatedQuote?.price?.value---message id-->", protocolUpdateResponse.context.message_id)
-                    lokiLogger.info(`-----------------refundAmount -------------- ${refundAmount}`)
-
+                    lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
+                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                     const dbResponse = await OrderMongooseModel.find({
                         transactionId: protocolUpdateResponse.context.transaction_id,
                         id: protocolUpdateResponse.message.order.id
@@ -627,7 +614,7 @@ class UpdateOrderService {
 
                         lokiLogger.info(`totalAmount_onUpdate-----, ${refundAmount}`)
 
-                        if (latest_fulfillment?.state?.descriptor?.code == "Liquidated") {
+                        if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked") {
                             let data = latest_fulfillment.tags?.find(
                                 (el) => el?.code == "return_request",
                             );
@@ -636,7 +623,7 @@ class UpdateOrderService {
                             let return_item_count = data?.list?.find(
                                 (el) => el?.code == "item_quantity",
                             )?.value;
-                            let items = obj[0]?.message?.order?.items;
+                            let items = protocolUpdateResponse?.message?.order?.items;
                             let left_order_item_count =
                                 items?.find(
                                     (el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id,
@@ -644,33 +631,29 @@ class UpdateOrderService {
                                 items?.find(
                                     (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
                                 )?.quantity?.count;
-                            if (return_item_count <= left_order_item_count)
-                            lokiLogger.info(`------------------liquidated condition -- ${data}`)
-                            lokiLogger.info(`------------------return_item_count  -- ${return_item_count}`)
-                            lokiLogger.info(`------------------left_order_item_count -- ${left_order_item_count}`)
+                            if (return_item_count <= left_order_item_count) {
+                                lokiLogger.info(`------------------liquidated condition -- ${JSON.stringify(data)}`)
+                                lokiLogger.info(`------------------return_item_count  -- ${return_item_count}`)
+                                lokiLogger.info(`------------------left_order_item_count -- ${left_order_item_count}`)
                                 if (razorpayPaymentId && refundAmount) {
-                                    razorPayService
-                                    .refundOrder(razorpayPaymentId, Math.abs(refundAmount).toFixed(2)*100)
-                                    .then((response) => {
-                                        lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${response}`)
-                                        const refundDetails = new Refund({
-                                            orderId: dbResponse.id,
-                                            refundId: response.id,
-                                            refundedAmount: (response.amount) / 100,
-                                            itemId: dbResponse.items[0].id,
-                                            itemQty: dbResponse.items[0].quantity.count,
-                                            isRefunded: true,
-                                            transationId: dbResponse?.transactionId,
-                                            razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
-                        
-                                        })
-                                        lokiLogger.info(`refundDetails>>>>>>>>>>, ${refundDetails}`)
+                                    let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
+                                    lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
+                                    let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                                    lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+                                    const refundDetails = await Refund.create({
+                                        orderId: dbResponse.id,
+                                        refundId: response.id,
+                                        refundedAmount: (response.amount) / 100,
+                                        itemId: dbResponse.items[0].id,
+                                        itemQty: dbResponse.items[0].quantity.count,
+                                        isRefunded: true,
+                                        transationId: dbResponse?.transactionId,
+                                        razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
                                     })
-                                    .catch((err) => {
-                                        lokiLogger.info(`err_response_razorpay_on_update>>>>>>>>>>, ${err}`)
-                                        throw err
-                                    });
+                                    lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
+
                                 }
+                            }
                         }
                         
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
@@ -828,7 +811,7 @@ class UpdateOrderService {
                         for (let item of protocolItems) {
                             let updatedItem = {}
                             let fulfillmentStatus = await Fulfillments.findOne({ id: item.fulfillment_id, orderId: protocolUpdateResponse.message.order.id }); //TODO: additional filter of order id required
-                            lokiLogger.info(`--------fulfillmentStatus--------------- ${fulfillmentStatus}`)
+                            lokiLogger.info(`--------fulfillmentStatus--------------- ${JSON.stringify(fulfillmentStatus)}`)
 
                             // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO TEMP testing
                             updatedItem = orderSchema.items.filter(element => element.id === item.id);
@@ -836,8 +819,8 @@ class UpdateOrderService {
                             if (fulfillmentStatus.type === 'Return' || fulfillmentStatus.type === 'Cancel') {
                                 item.return_status = fulfillmentStatus?.state?.descriptor?.code;
                                 item.cancellation_status = fulfillmentStatus?.state?.descriptor?.code;
-                                item.returned_item_count = fulfillmentStatus?.item_quantity || 0
-                                lokiLogger.info(`--------returned_item_count--------------- ${item.returned_item_count}`)
+                                // item.returned_item_count = fulfillmentStatus?.item_quantity || 0
+                                // lokiLogger.info(`--------returned_item_count--------------- ${item.returned_item_count}`)
                                 // orderSchema.settle_status = SETTLE_STATUS.DEBIT
                             }
                             item.fulfillment_status = fulfillmentStatus?.state?.descriptor?.code;
@@ -857,7 +840,7 @@ class UpdateOrderService {
 
                     }
                 }
-                lokiLogger.info(`protocolUpdateResponse final ----------------${protocolUpdateResponse}`)
+                lokiLogger.info(`protocolUpdateResponse final ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 return protocolUpdateResponse;
             }
 

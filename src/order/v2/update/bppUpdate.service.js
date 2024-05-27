@@ -3,10 +3,10 @@ import axios from "axios"
 class BppUpdateService {
 
     /**
-     * 
+     * INFO: Send return data to admin
      * @param {Object} context 
-     * @param {String} orderId 
-     * @param {String} cancellationReasonId 
+     * @param {Object} order 
+     * @param {Object} orderDetails 
      * @returns 
      */
     async sendDataToEssentialDashboard(context, order, orderDetails) {
@@ -17,6 +17,8 @@ class BppUpdateService {
             if (!essentialDashboardUri || !context?.transaction_id || !context.bap_id) {
                 return;
             }
+            const returnFulfillment = order?.order?.fulfillments.find(fulfillment => fulfillment?.type === "Return");
+            const idValue = returnFulfillment?.tags?.[0]?.list?.find(item => item.code === "id")?.value?.toString();
             context.subscriber_id = "buyer-app-stage.thewitslab.com" // context.bap_id - Need to fix this once id will subscribe
             const payload = {
                 "0": {
@@ -30,6 +32,7 @@ class BppUpdateService {
                         "context": context,
                         "message": {
                             "update_target": order.update_target,
+                            "return_id": idValue,
                             "order": {
                                 "id": order.order.id,
                                 "fulfillments": order.order.fulfillments
@@ -49,34 +52,30 @@ class BppUpdateService {
                 },
                 data: data,
             };
-
             const response = await axios.request(config);
-            console.log("Response from Essential Dashboard API:", JSON.stringify(response.data));
             return response.data;
         } catch (error) {
-            console.error("Error sending data to Essential Dashboard:", error);
+            console.error("Error sending data to Essential Dashboard >>>", error);
             throw error;
         }
     }
 
+    /**
+     * INFO: Update call for order update
+     * @param {Object} context 
+     * @param {String} update_target 
+     * @param {Object} order 
+     * @param {Object} orderDetails 
+     * @returns 
+     */
     async update(context, update_target, order, orderDetails) {
         try {
-
             const cancelRequest = {
                 context: context,
                 message: order
             }
-
             const response = await protocolUpdate(cancelRequest);
-            console.log("update_target----------------------->",update_target)
-            console.log("response----------------------->",response)
-            console.log("context----------------------->",context)
-            console.log("order----------------------->",JSON.stringify(order))
-            console.log("orderDetails----------------------->",JSON.stringify(orderDetails))
-
             if (update_target == 'Return') await this.sendDataToEssentialDashboard(context, order, orderDetails);
-
-
             return { context: context, message: response.message };
         }
         catch (err) {
