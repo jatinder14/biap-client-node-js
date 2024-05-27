@@ -533,7 +533,7 @@ class UpdateOrderService {
                                 const refundDetails = await Refund.create({
                                     orderId: dbResponse.id,
                                     refundId: response.id,
-                                    refundedAmount: (response.amount) / 100,
+                                    refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
                                     itemId: dbResponse.items[0].id,
                                     itemQty: dbResponse.items[0].quantity.count,
                                     isRefunded: true,
@@ -640,15 +640,16 @@ class UpdateOrderService {
                                     lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                     let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
                                     lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+                                    let order_details = dbResponse[0];
                                     const refundDetails = await Refund.create({
-                                        orderId: dbResponse.id,
-                                        refundId: response.id,
-                                        refundedAmount: (response.amount) / 100,
-                                        itemId: dbResponse.items[0].id,
-                                        itemQty: dbResponse.items[0].quantity.count,
+                                        orderId: order_details?.id,
+                                        refundId: response?.id,
+                                        refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                                        // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
+                                        // itemQty: dbResponse.items[0].quantity.count,
                                         isRefunded: true,
-                                        transationId: dbResponse?.transactionId,
-                                        razorpayPaymentId: dbResponse?.payment?.razorpayPaymentId
+                                        transationId: order_details?.transactionId,
+                                        razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                                     })
                                     lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
 
