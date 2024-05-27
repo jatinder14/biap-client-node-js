@@ -55,37 +55,29 @@ class UpdateOrderService {
                 tags?.filter(tag => tag?.code === 'return_request').forEach(({ list }) => {
                     if (!processedReturnRequest) { // Only process return_request tag if it hasn't been processed yet
                         let itemId, itemQuantity;
-                        for (let i = 0; i < list.length; i++) {
-                            const tag = list[i];
+                        list.forEach(tag => {
                             if (tag.code === 'item_id') {
                                 itemId = tag.value;
-                                console.log('itemId64', itemId)
                             } else if (tag.code === 'item_quantity') {
                                 itemQuantity = parseInt(tag.value, 10);
-                                console.log('itemQuantity67', itemQuantity)
+    
+                                // If both itemId and itemQuantity are found, update returnQuantities
+                                if (itemId && itemQuantity !== undefined) {
+                                    returnQuantities[itemId] = (returnQuantities[itemId] || 0) + itemQuantity;
+                                    itemId = undefined;  // Reset itemId and itemQuantity for the next pair
+                                    itemQuantity = undefined;
+                                }
                             }
-                            // If both itemId and itemQuantity are found, update returnQuantities and reset variables
-                            if (itemId && itemQuantity !== undefined) {
-                                returnQuantities[itemId] = (returnQuantities[itemId] || 0) + itemQuantity;
-                                itemId = undefined;  // Reset itemId and itemQuantity for the next pair
-                                itemQuantity = undefined;
-                            }
-                        }
+                        });
                         processedReturnRequest = true; // Set flag to true after processing return_request tag
                     }
                 });
             });
-    
-    
-            console.log('returnQuantities', returnQuantities)
-    
+        
             const itemsData = orderRequest?.message?.order?.items?.map(item => ({
-                itemId: item?.id ,
+                itemId: item?.id,
                 currentReturnQuantity: item?.quantity?.count ?? 0
             })) ?? [];
-            
-            console.log(itemsData);
-            
     
             let anyItemFailed = false; // Flag to track if any item fails the condition
     
