@@ -10,7 +10,7 @@ const onCollectonschema = {
         action: { type: "string" },
         core_version: { type: "string" },
         bap_id: { type: "string" },
-        bap_uri: { type: "string", default: "https://buyer-app-stage.thewitslab.com/" },
+        bap_uri: { type: "string" },
         bpp_id: { type: "string" },
         bpp_uri: { type: "string"},
         transaction_id: { type: "string" },

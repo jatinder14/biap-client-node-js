@@ -155,6 +155,8 @@ rootRouter.get('/v2/on_update', authentication(), updateOrderController.onUpdate
 
 rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), upload.single('file'), uploadController.upload);
 
+rootRouter.get('/v2/getResource/:fileKey', uploadController.download);
+
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
 rootRouter.post('/v2/feedback/:orderId',  orderFeedbackController.feedback);
 rootRouter.post('/v2/contact', orderFeedbackController.contactUs);

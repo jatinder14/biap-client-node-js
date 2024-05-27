@@ -16,8 +16,6 @@ class UpdateOrderController {
         const onUpdateOrderResponse = await Promise.all(
             orders.map(async order => {
                 try {
-
-                    console.log("update orders--------------->", order);
                     return await cancelOrderService.update(order);
                 } catch (err) {
                     console.log("error update order ----", err)
@@ -46,7 +44,7 @@ class UpdateOrderController {
     }
 
     /**
-    * on cancel order
+    * INFO: on update order
     * @param {*} req    HTTP request object
     * @param {*} res    HTTP response object
     * @param {*} next   Callback argument to the middleware function
