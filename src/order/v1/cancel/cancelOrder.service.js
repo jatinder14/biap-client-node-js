@@ -128,7 +128,7 @@ class CancelOrderService {
                         throw new NoRecordFoundError();
                     else {
                         const orderSchema = dbResponse?.[0].toJSON();
-                        orderSchema.state = protocolCancelResponse?.message?.order?.state;  
+                        orderSchema.state = protocolCancelResponse?.message?.order?.state;
                         if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.COMPLETED) {
                             orderSchema.settle_status = SETTLE_STATUS.CREDIT
                         }
