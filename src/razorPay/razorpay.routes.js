@@ -8,8 +8,9 @@ const razorPayController = new RazorPayController();
 const checkReferer = (req, res, next) => {
   const referer = req?.host;
   console.log(`referer..........${referer}`);
-  //remove localhost after frontend integration
-  if (referer && referer.startsWith(process.env.REFERER || 'localhost')) {
+  //remove localhost after frontend integration -- Todo
+  if (referer && [process.env.REFERER,'localhost',process.env.ONDC_BASE_API_URL].includes(referer)) {
+    // process.env.ONDC_BASE_API_URL is for IGM Refund scneario as we need to hit client service from IGM service
     next();
   } else {
     res.status(403).json({
@@ -51,6 +52,5 @@ router.post(
   // checkReferer, - We have hosted multiple UI with this BE so will enable after development
   razorPayController.refundPayment
 );
-
 
 export default router;
