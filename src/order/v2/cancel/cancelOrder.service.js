@@ -248,6 +248,7 @@ class CancelOrderService {
           else {
             const orderSchema = dbResponse?.[0].toJSON();
             orderSchema.state = protocolCancelResponse?.message?.order?.state;
+            orderSchema.fulfillments=[...orderSchema.fulfillments ,protocolCancelResponse?.message?.order?.fulfillments].flat()
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
               ORDER_STATUS.COMPLETED
