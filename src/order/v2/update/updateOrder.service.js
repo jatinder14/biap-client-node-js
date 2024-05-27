@@ -79,10 +79,13 @@ class UpdateOrderService {
     
             console.log('returnQuantities', returnQuantities)
     
-            const itemsData = orderRequest.message.order.items.map(item => ({
-                itemId: item.id,
-                currentReturnQuantity: item.quantity.count
-            }));
+            const itemsData = orderRequest?.message?.order?.items?.map(item => ({
+                itemId: item?.id ,
+                currentReturnQuantity: item?.quantity?.count ?? 0
+            })) ?? [];
+            
+            console.log(itemsData);
+            
     
             let anyItemFailed = false; // Flag to track if any item fails the condition
     
