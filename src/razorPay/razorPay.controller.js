@@ -70,7 +70,7 @@ class RazorPayController {
     try {
       if(orderId){
          let razorpayPayment= await Order.findOne({ id: orderId }).select('payment.razorpayPaymentId').lean().exec();
-         razorpayPaymentId = razorpayPayment?.payment?.razorpayPaymentId;
+         razorpayPaymentId = (razorpayPayment?.payment?.razorpayPaymentId) ? razorpayPayment?.payment?.razorpayPaymentId : razorpayPaymentId;
          console.log(`-------------razorpayPaymentId-----------${JSON.stringify(razorpayPaymentId)}`)
       }
       console.log(`-------------refundPayment-----------${refundAmount}`)
@@ -82,7 +82,7 @@ class RazorPayController {
         console.log(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
         const refundDetails = await Refund.create({
           refundId: response.id,
-          refundedAmount: (response.amount) / 100,
+          refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
           isRefunded: true,
           razorpayPaymentId: response?.payment_id,
           created_at: response?.created_at,
