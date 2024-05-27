@@ -27,10 +27,91 @@ class UpdateOrderService {
     * cancel order
     * @param {Object} orderRequest
     */
+    async checkQuantityReturn(orderRequest) {
+    
+        // Extract item IDs from the order request
+        const itemIds = orderRequest?.message?.order?.items.map(item => item?.id);
+    
+        // Fetch the existing order using the transaction ID
+        const returnExits = await OrderMongooseModel.findOne({ transactionId: orderRequest?.context?.transaction_id });
+    
+        // Check if the latest fulfillment is of type "Return"
+        if (returnExits?.fulfillments?.[returnExits.fulfillments.length - 1]?.type === "Return") {
+    
+            // Aggregate the total quantity of each item in the order
+            const orderQuantities = await OrderMongooseModel.aggregate([
+                { $match: { transactionId: orderRequest.context.transaction_id } },
+                { $unwind: '$items' },
+                { $match: { 'items.id': { $in: itemIds } } },
+                { $group: { _id: '$items.id', totalQuantity: { $sum: '$items.quantity.count' } } }
+            ]);
+            console.log('orderQuantities', orderQuantities)
+            // Initialize an object to keep track of return quantities
+            const returnQuantities = {};
+    
+            
+            returnExits.fulfillments.forEach(({ tags }) => {
+                let processedReturnRequest = false; // Flag to track if return_request tag has been processed
+                tags?.filter(tag => tag?.code === 'return_request').forEach(({ list }) => {
+                    if (!processedReturnRequest) { // Only process return_request tag if it hasn't been processed yet
+                        let itemId, itemQuantity;
+                        for (let i = 0; i < list.length; i++) {
+                            const tag = list[i];
+                            if (tag.code === 'item_id') {
+                                itemId = tag.value;
+                                console.log('itemId64', itemId)
+                            } else if (tag.code === 'item_quantity') {
+                                itemQuantity = parseInt(tag.value, 10);
+                                console.log('itemQuantity67', itemQuantity)
+                            }
+                            // If both itemId and itemQuantity are found, update returnQuantities and reset variables
+                            if (itemId && itemQuantity !== undefined) {
+                                returnQuantities[itemId] = (returnQuantities[itemId] || 0) + itemQuantity;
+                                itemId = undefined;  // Reset itemId and itemQuantity for the next pair
+                                itemQuantity = undefined;
+                            }
+                        }
+                        processedReturnRequest = true; // Set flag to true after processing return_request tag
+                    }
+                });
+            });
+    
+    
+            console.log('returnQuantities', returnQuantities)
+    
+            const itemsData = orderRequest.message.order.items.map(item => ({
+                itemId: item.id,
+                currentReturnQuantity: item.quantity.count
+            }));
+    
+            let anyItemFailed = false; // Flag to track if any item fails the condition
+    
+            // Check if any item is already returned beyond its ordered quantity
+            for (const item of itemsData) {
+                const { itemId, currentReturnQuantity } = item;
+                const totalQuantity = orderQuantities.find(order => order._id === itemId)?.totalQuantity || 0;
+                const totalReturnQuantity = returnQuantities[itemId] || 0;
+                const remainingQuantity = totalQuantity - totalReturnQuantity;
+    
+                
+                if (remainingQuantity < currentReturnQuantity) {
+                    anyItemFailed = true;
+                    break;
+                }
+            }
+    
+            // Throw an error if any item fails the condition
+            if (anyItemFailed) {
+                throw new Error(`One or more items have already been returned.`);
+            }
+        }
+    }
+    
     
     async update(orderRequest) {
         try {
 
+            await this.checkQuantityReturn(orderRequest);
 
             const orderDetails = await getOrderById(orderRequest.message.order.id);
             const contextFactory = new ContextFactory();
