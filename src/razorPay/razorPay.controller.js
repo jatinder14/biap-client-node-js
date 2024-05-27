@@ -2,6 +2,7 @@ import RazorPayService from "./razorPay.service.js";
 import lokiLogger from "../utils/logger.js";
 //import {Payment} from "../models";
 import Refund from "../order/v2/db/refund.js";
+import Order from "../order/v1/db/order.js";
 
 const razorPayService = new RazorPayService();
 
@@ -63,9 +64,15 @@ class RazorPayController {
 
   async refundPayment(req, res, next) {
     const data = req?.body;
-    const razorpayPaymentId = data?.paymentId;
+    let razorpayPaymentId = data?.paymentId;
     const refundAmount = data?.amount;
+    const orderId = data?.orderId;
     try {
+      if(orderId){
+         let razorpayPayment= await Order.findOne({ id: orderId }).select('payment.razorpayPaymentId').lean().exec();
+         razorpayPaymentId = razorpayPayment?.payment?.razorpayPaymentId;
+         console.log(`-------------razorpayPaymentId-----------${JSON.stringify(razorpayPaymentId)}`)
+      }
       console.log(`-------------refundPayment-----------${refundAmount}`)
       const payment = razorPayService.fetchPayment(razorpayPaymentId);
       if (payment && razorpayPaymentId && refundAmount) {
