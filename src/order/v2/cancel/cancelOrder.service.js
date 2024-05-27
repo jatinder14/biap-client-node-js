@@ -20,6 +20,7 @@ import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
+import FulfillmentHistory from "../db/fulfillmentHistory.js";
 
 
 
@@ -248,7 +249,17 @@ class CancelOrderService {
           else {
             const orderSchema = dbResponse?.[0].toJSON();
             orderSchema.state = protocolCancelResponse?.message?.order?.state;
-            orderSchema.fulfillments=[...orderSchema.fulfillments ,protocolCancelResponse?.message?.order?.fulfillments].flat()
+            protocolResponse?.message?.order?.fulfillments.map((fulfillment)=>{
+              if(fulfillment?.state?.descriptor?.code?.toLowerCase()=='cancelled' && fulfillment?.type?.toLowerCase()=='cancel'){
+                const fullfillmentHistory = new FulfillmentHistory({
+                  id: dbResponse.id,
+                  type: fulfillment.type,
+                  state: fulfillment.state.descriptor.code,
+                  orderId: fulfillment.id,
+              })
+              fullfillmentHistory.save()
+              }
+            })
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
               ORDER_STATUS.COMPLETED
