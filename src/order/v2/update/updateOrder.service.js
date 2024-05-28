@@ -3,7 +3,8 @@ import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
     getOrderById, saveOrderRequest, getOrderRequest,
-    addOrUpdateOrderWithdOrderId
+    addOrUpdateOrderWithdOrderId,
+    getOrderByTransactionAndOrderId
 } from "../../v1/db/dbService.js";
 import lokiLogger from '../../../utils/logger.js'
 import BppUpdateService from "./bppUpdate.service.js";
@@ -373,7 +374,6 @@ class UpdateOrderService {
                 order?.message?.order?.fulfillments[
                 order?.message?.order?.fulfillments.length - 1
                 ];
-            console.log("lastFulfillment --------------------", lastFulfillment);
             let returnState = lastFulfillment?.state?.descriptor?.code;
             const returnId = lastFulfillment?.id;
 
@@ -408,7 +408,6 @@ class UpdateOrderService {
                     data: data,
                 };
                 const response = await axios.request(config);
-                console.log("Response from Essential Dashboard API:", JSON.stringify(response.data));
             } else {
                 return;
             }
@@ -635,7 +634,7 @@ class UpdateOrderService {
      */
     async onUpdateDbOperation(messageId) {
         try {
-
+            await new Promise((resolve) => setTimeout(resolve, 30000))
             let protocolUpdateResponse = await onUpdateStatus(messageId);
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
@@ -654,26 +653,22 @@ class UpdateOrderService {
                 };
             }
             else {
-                lokiLogger.info(`protocolUpdateResponse?.[0].error ----------------${protocolUpdateResponse?.[0].error}`)
-                if (!(protocolUpdateResponse?.[0].error)) {
+                if (!(protocolUpdateResponse?.[0]?.error)) {
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                     let latest_fulfillment = protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
                     lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                     lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
-                    const dbResponse = await OrderMongooseModel.find({
-                        transactionId: protocolUpdateResponse.context.transaction_id,
-                        id: protocolUpdateResponse.message.order.id
-                    });
 
+                    const dbResponse = await getOrderByTransactionAndOrderId(protocolUpdateResponse.context.transaction_id, protocolUpdateResponse.message.order.id);
                     lokiLogger.info(`----------------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
 
 
                     if (!(dbResponse || dbResponse.length))
                         throw new NoRecordFoundError();
                     else {
-                        let razorpayPaymentId = dbResponse[0]?.payment?.razorpayPaymentId
+                        let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
                         lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
                         lokiLogger.info(`totalAmount_onUpdate-----, ${refundAmount}`)
@@ -704,7 +699,7 @@ class UpdateOrderService {
                                     lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                     let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
                                     lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
-                                    let order_details = dbResponse[0];
+                                    let order_details = dbResponse;
                                     const refundDetails = await Refund.create({
                                         orderId: order_details?.id,
                                         refundId: response?.id,
@@ -724,7 +719,7 @@ class UpdateOrderService {
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;
                         }
-                        const orderSchema = dbResponse?.[0].toJSON();
+                        const orderSchema = dbResponse;
                         orderSchema.state = protocolUpdateResponse?.message?.order?.state;
 
                         if (protocolUpdateResponse?.message?.order?.quote) {
@@ -745,7 +740,7 @@ class UpdateOrderService {
                          * scenario #10. more than 4 item is purchased and returned 2 cancelled 2 items one by one
                          */
 
-                        let protocolItems = protocolUpdateResponse?.message?.order.items
+                        let protocolItems = protocolUpdateResponse?.message?.order.items || []
 
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments
 
