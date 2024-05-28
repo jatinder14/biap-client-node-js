@@ -51,7 +51,7 @@ class BppInitService {
                 let selectitem = {
                     id: item?.local_id?.toString(),
                     quantity: item?.quantity,
-                    location_id: item?.product?.location_id?.toString()
+                    // location_id: item?.product?.location_id?.toString()
                 }
                 locationSet.add(item?.product?.location_id?.toString());
                 let tag=undefined
@@ -127,7 +127,7 @@ class BppInitService {
                             type: order.delivery_info.type,
                             end: {
                                 contact: {
-                                    email: order.delivery_info.email,
+                                    // email: order.delivery_info.email,
                                     phone: order.delivery_info.phone
                                 },
                                 location: {
