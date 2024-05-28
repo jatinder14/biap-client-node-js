@@ -79,6 +79,17 @@ export const createConfiguration = async (req, res, next) => {
                 message: "Cancellation policy should be valid!",
             })
         }
+        if (payload?.returnpolicy && !Array.isArray(payload?.returnpolicy)) {
+            return res.status(400).json({
+                success: false,
+                message: "Return and refund policy should be array!",
+            })
+        } else if (payload?.returnpolicy && Array.isArray(payload?.returnpolicy) && !payload?.returnpolicy?.every(el => el.heading && el.content)) {
+            return res.status(400).json({
+                success: false,
+                message: "Return and refund policy should be valid!",
+            })
+        }
 
         let existingConfig = await Configuration.findOne({ bapId });
         let updateObject = {
@@ -99,6 +110,7 @@ export const createConfiguration = async (req, res, next) => {
             "tandc": payload?.tandc,
             "shippingpolicy": payload?.shippingpolicy,
             "cancelpolicy": payload?.cancelpolicy,
+            "returnpolicy": payload?.returnpolicy,
         };
         Object.keys(updateObject).forEach(key => updateObject[key] === undefined && delete updateObject[key]);
         if (existingConfig) {
@@ -126,7 +138,7 @@ export const getConfigurations = async (req, res) => {
     try {
         const { type = "basic" } = req.params;
         const { bapId = "buyer-app-stage.thewitslab.com" } = req.query;
-        if (!["basic", "bank", "finder", "faq", "aboutus", "tandc", "shippingpolicy", "cancelpolicy"].includes(type)) {
+        if (!["basic", "bank", "finder", "faq", "aboutus", "tandc", "shippingpolicy", "cancelpolicy", "returnpolicy"].includes(type)) {
             return res.status(200).json({
                 success: true,
                 data: {},
@@ -148,6 +160,7 @@ export const getConfigurations = async (req, res) => {
         if (type == "tandc") response = configurations?.tandc
         if (type == "shippingpolicy") response = configurations?.shippingpolicy
         if (type == "cancelpolicy") response = configurations?.cancelpolicy
+        if (type == "returnpolicy") response = configurations?.returnpolicy
         res.status(200).json({
             success: true,
             data: { bapId: configurations?.bapId, [type]: response },

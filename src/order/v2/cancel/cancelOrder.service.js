@@ -227,22 +227,12 @@ class CancelOrderService {
       } else {
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
-
-          console.log(
-            "protocolCancelResponse----------------->",
-            protocolCancelResponse
-          );
-
-          // message: { order: { id: '7488750', state: 'Cancelled', tags: [Object] } }
           const dbResponse = await OrderMongooseModel.find({
             transactionId: protocolCancelResponse.context.transaction_id,
             id: protocolCancelResponse.message.order.id,
           });
-
-          console.log("dbResponse----------------->", dbResponse);
-
-          logger.info('dbResponseOnCancelOrderDbOperation----------------->', dbResponse)
-
+          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
+          logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {

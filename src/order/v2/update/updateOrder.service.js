@@ -24,21 +24,13 @@ const razorPayService = new RazorPayService()
 class UpdateOrderService {
 
     /**
-    * INFO: cancel/return order
-    * @param {Object} orderRequest
-    */
+     * INFO: Check if order returned already
+     * @param {Object} orderRequest 
+     */
     async checkQuantityReturn(orderRequest) {
-    
-        // Extract item IDs from the order request
         const itemIds = orderRequest?.message?.order?.items.map(item => item?.id);
-    
-        // Fetch the existing order using the transaction ID
         const returnExits = await OrderMongooseModel.findOne({ transactionId: orderRequest?.context?.transaction_id });
-    
-        // Check if the latest fulfillment is of type "Return"
         if (returnExits?.fulfillments?.[returnExits.fulfillments.length - 1]?.type === "Return") {
-    
-            // Aggregate the total quantity of each item in the order
             const orderQuantities = await OrderMongooseModel.aggregate([
                 { $match: { transactionId: orderRequest.context.transaction_id } },
                 { $unwind: '$items' },
@@ -46,79 +38,73 @@ class UpdateOrderService {
                 { $group: { _id: '$items.id', totalQuantity: { $sum: '$items.quantity.count' } } }
             ]);
             console.log('orderQuantities', orderQuantities)
-            // Initialize an object to keep track of return quantities
+
             const returnQuantities = {};
-    
-            
             returnExits.fulfillments.forEach(({ tags }) => {
-                let processedReturnRequest = false; // Flag to track if return_request tag has been processed
+                let processedReturnRequest = false;
                 tags?.filter(tag => tag?.code === 'return_request').forEach(({ list }) => {
-                    if (!processedReturnRequest) { // Only process return_request tag if it hasn't been processed yet
+                    if (!processedReturnRequest) {
                         let itemId, itemQuantity;
                         list.forEach(tag => {
                             if (tag.code === 'item_id') {
                                 itemId = tag.value;
                             } else if (tag.code === 'item_quantity') {
                                 itemQuantity = parseInt(tag.value, 10);
-    
-                                // If both itemId and itemQuantity are found, update returnQuantities
                                 if (itemId && itemQuantity !== undefined) {
                                     returnQuantities[itemId] = (returnQuantities[itemId] || 0) + itemQuantity;
-                                    itemId = undefined;  // Reset itemId and itemQuantity for the next pair
+                                    itemId = undefined;
                                     itemQuantity = undefined;
                                 }
                             }
                         });
-                        processedReturnRequest = true; // Set flag to true after processing return_request tag
+                        processedReturnRequest = true;
                     }
                 });
             });
-        
+
             const itemsData = orderRequest?.message?.order?.items?.map(item => ({
                 itemId: item?.id,
                 currentReturnQuantity: item?.quantity?.count ?? 0
             })) ?? [];
-    
-            let anyItemFailed = false; // Flag to track if any item fails the condition
-    
+            let anyItemFailed = false;
+
             // Check if any item is already returned beyond its ordered quantity
             for (const item of itemsData) {
                 const { itemId, currentReturnQuantity } = item;
                 const totalQuantity = orderQuantities.find(order => order._id === itemId)?.totalQuantity || 0;
                 const totalReturnQuantity = returnQuantities[itemId] || 0;
                 const remainingQuantity = totalQuantity - totalReturnQuantity;
-    
-                
                 if (remainingQuantity < currentReturnQuantity) {
                     anyItemFailed = true;
                     break;
                 }
             }
-    
-            // Throw an error if any item fails the condition
             if (anyItemFailed) {
                 throw new Error(`One or more items have already been returned.`);
             }
         }
     }
-    
-    
+
+    /**
+    * INFO: cancel/return order
+    * @param {Object} orderRequest
+    */
     async update(orderRequest) {
         try {
-
-            
+            // - Check if order already returned
             await this.checkQuantityReturn(orderRequest);
 
             const orderDetails = await getOrderById(orderRequest.message.order.id);
+            const order_detials = orderDetails?.[0] || {}
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.UPDATE,
-                bppId: orderDetails[0]?.bppId,
-                transactionId: orderDetails[0]?.transactionId,
-                bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0]?.city,
-                city: orderDetails[0]?.city,
-                domain: orderDetails[0]?.domain
+                bppId: order_detials?.bppId,
+                transactionId: order_detials?.transactionId,
+                bpp_uri: order_detials?.bpp_uri,
+                cityCode: order_detials?.city,
+                city: order_detials?.city,
+                domain: order_detials?.domain
             });
 
             orderRequest.context = { ...context }
@@ -134,11 +120,11 @@ class UpdateOrderService {
             }
 
             const reason_descriptions = {
-                "001" : "Buyer does not want product any more",
-                "002" : "Product available at lower than order price",
-                "003" : "Product damaged or not in usable state",
-                "004" : "Product is of incorrect quantity or size",
-                "005" : "Product delivered is different from what was shown and ordered"
+                "001": "Buyer does not want product any more",
+                "002": "Product available at lower than order price",
+                "003": "Product damaged or not in usable state",
+                "004": "Product is of incorrect quantity or size",
+                "005": "Product delivered is different from what was shown and ordered"
             }
 
             let fulfillmentId;
@@ -443,7 +429,7 @@ class UpdateOrderService {
         if (obj) {
             let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments || [];
-            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
+            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
             lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
                 latest_fulfillment?.tags?.forEach((tag) => {
@@ -502,22 +488,22 @@ class UpdateOrderService {
                 let totalAmount = 0;
                 if (protocolUpdateResponses?.fulfillments && Array.isArray(protocolUpdateResponses?.fulfillments)) {
                     protocolUpdateResponses?.fulfillments.forEach(fulfillment => {
-                      let tags = fulfillment?.tags;
-                      if (tags && Array.isArray(tags)) {
-                        tags.forEach(tag => {
-                            if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
-                                tag.list.forEach(trailItem => {
-                                    if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
-                                        totalAmount += parseFloat(trailItem.value);
-                                    }
-                                });
-                            }
-                        });
-                        
-                    }
+                        let tags = fulfillment?.tags;
+                        if (tags && Array.isArray(tags)) {
+                            tags.forEach(tag => {
+                                if (tag?.code === 'quote_trail' && Array.isArray(tag.list)) {
+                                    tag.list.forEach(trailItem => {
+                                        if (trailItem.code === 'value' && !isNaN(parseFloat(trailItem.value))) {
+                                            totalAmount += parseFloat(trailItem.value);
+                                        }
+                                    });
+                                }
+                            });
+
+                        }
                     });
                     return Math.abs(totalAmount)
-                  }
+                }
             }
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
@@ -563,7 +549,7 @@ class UpdateOrderService {
                         type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds:itemIds
+                        itemIds: itemIds
                     })
 
 
@@ -586,8 +572,8 @@ class UpdateOrderService {
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'liquidated') {
                         totalAmount = totalRefundAmount(protocolUpdateResponse)
                         // totalAmount = this.calculateRefundAmount(protocolUpdateResponse)
-                    } 
-                    
+                    }
+
                     else if (latestFullfilement?.state?.descriptor?.code?.toLowerCase() == 'return_picked') {
                         // What if, the single item returned from order which have multiple item
                         totalAmount = protocolUpdateResponse?.message?.order?.quote?.price?.value
@@ -606,7 +592,7 @@ class UpdateOrderService {
 
                     if (!orderRefunded && dbResponse?.id && razorpayPaymentId && totalAmount) {
                         razorPayService
-                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2)*100)
+                            .refundOrder(razorpayPaymentId, Math.abs(totalAmount).toFixed(2) * 100)
                             .then(async (response) => {
                                 lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                 const refundDetails = await Refund.create({
@@ -674,7 +660,7 @@ class UpdateOrderService {
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let refundAmount = this.calculateRefundAmount(protocolUpdateResponse);
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
-                    let latest_fulfillment =protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
+                    let latest_fulfillment = protocolUpdateResponse?.message?.order?.fulfillments[fulfillments.length - 1];
                     lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                     lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                     const dbResponse = await OrderMongooseModel.find({
@@ -735,7 +721,7 @@ class UpdateOrderService {
                                 }
                             }
                         }
-                        
+
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;
                         }
@@ -796,7 +782,7 @@ class UpdateOrderService {
                                 id: fl.id,
                                 state: fl.state.descriptor.code
                             })
-                            if (!existingFulfillment || existingFulfillment!=='null') {
+                            if (!existingFulfillment || existingFulfillment !== 'null') {
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
@@ -907,7 +893,7 @@ class UpdateOrderService {
                             item.product = temp.product;
                             //item.quantity = item.quantity.count
                             updateItems.push(item)
-                            }                                         
+                        }
                         console.log("updateItems", updateItems)
                         //get item from db and update state for item
                         orderSchema.items = updateItems;
