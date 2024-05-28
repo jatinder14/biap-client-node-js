@@ -793,16 +793,6 @@ class UpdateOrderService {
                             // }
 
                             if (fl?.state?.descriptor?.code === 'Cancelled' || fl?.state?.descriptor?.code === 'Return_Picked' || fl?.state?.descriptor?.code === 'Liquidated') {
-                                //calculate refund amount from qoute trail
-                                //check if settlement already done!
-
-                                // let qouteTrails = fl.tags.filter(i => i.code === 'quote_trail');
-                                // let refundAmount = 0;
-                                // for (let trail of qouteTrails) {
-                                //     let amount = trail?.list?.find(i => i.code === 'value')?.value ?? 0;
-                                //     refundAmount += parseFloat(amount);
-                                // }
-
                                 console.log("amount", refundAmount * -1);
 
                                 let oldSettlement = await Settlements.findOne({ orderId: dbFl.orderId, fulfillmentId: dbFl.id })
