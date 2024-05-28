@@ -258,7 +258,7 @@ class BppConfirmService {
                             tl_method: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 "http/get" :
                                 undefined,
-                            razorpayPaymentId: order?.payment?.razorpayPaymentId,
+                            // razorpayPaymentId: order?.payment?.razorpayPaymentId,
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
@@ -291,18 +291,11 @@ class BppConfirmService {
                     }
                 }
             };
-
-            lokiLogger.info(`bppConfirm.service.js_confirmResponseBeforeConfirm --->> ${JSON.stringify(confirmRequest)}`)
-
             let confirmResponse = await this.confirm(confirmRequest);
-
-            lokiLogger.info(`bppConfirm.service.js_confirmResponseAfterConfirm --->> ${JSON.stringify(confirmResponse)}`)
-
             if (confirmResponse.error) {
                 //retrial attempt
                 console.log("confirmResponse.error--------->", confirmResponse.error);
             }
-
             return confirmResponse
             // return await this.confirm(confirmRequest);
         }
