@@ -230,22 +230,12 @@ class CancelOrderService {
         lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
-
-          console.log(
-            "protocolCancelResponse----------------->",
-            protocolCancelResponse
-          );
-
-          // message: { order: { id: '7488750', state: 'Cancelled', tags: [Object] } }
           const dbResponse = await OrderMongooseModel.find({
             transactionId: protocolCancelResponse.context.transaction_id,
             id: protocolCancelResponse.message.order.id,
           });
-
-          console.log("dbResponse----------------->", dbResponse);
-
-          lokiLogger.info(`--------protocolCancelResponse--------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
-
+          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
+          logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {

@@ -23,6 +23,7 @@ const ConfigurationSchema = new mongoose.Schema({
     tandc: { type: [contentSchema] },
     shippingpolicy: { type: [contentSchema] },
     cancelpolicy: { type: [contentSchema] },
+    returnpolicy: { type: [contentSchema] },
 }, { timestamps: true });
 
 const Configuration = mongoose.model('configuration', ConfigurationSchema, "configuration");
