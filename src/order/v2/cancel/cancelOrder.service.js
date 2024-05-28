@@ -39,7 +39,12 @@ class CancelOrderService {
       lokiLogger.info('cancel order-------------->', orderRequest)
 
       const orderDetails = await getOrderById(orderRequest.message.order_id);
+      const cancelledOrders = orderDetails[0]?.state 
 
+      if(cancelledOrders=== "Cancelled"){
+        throw new Error("Order has already been cancelled");
+      }
+     else{
       const contextFactory = new ContextFactory();
       const context = contextFactory.create({
         action: PROTOCOL_CONTEXT.CANCEL,
@@ -65,7 +70,9 @@ class CancelOrderService {
         order_id,
         cancellation_reason_id,
         fulfillmentId
-      );
+      )
+    }
+
     } catch (err) {
       throw err;
     }
