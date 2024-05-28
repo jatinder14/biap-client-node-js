@@ -78,6 +78,7 @@ class CancelOrderService {
   async onCancelOrder(messageId) {
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
+      lokiLogger.info(`protocolCancelResponse--------- protocolCancelResponse ----------------${JSON.stringify(protocolCancelResponse)}`)
 
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
@@ -143,7 +144,7 @@ class CancelOrderService {
 
           lokiLogger.info("order_details_cancelOrder.service.js", order)
 
-          lokiLogger.info(`protocolCancelResponse_onCancelOrder----- ${protocolCancelResponse}`)
+          lokiLogger.info(`protocolCancelResponse_onCancelOrder----- ${JSON.stringify(protocolCancelResponse)}`)
 
           lokiLogger.info(`QuoteAmount_onCancelOrder----- ${QuoteAmount}`)
 
@@ -209,6 +210,7 @@ class CancelOrderService {
   async onCancelOrderDbOperation(messageId) {
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
+      lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
@@ -225,6 +227,7 @@ class CancelOrderService {
           },
         };
       } else {
+        lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
 
@@ -241,7 +244,7 @@ class CancelOrderService {
 
           console.log("dbResponse----------------->", dbResponse);
 
-          logger.info('dbResponseOnCancelOrderDbOperation----------------->', dbResponse)
+          lokiLogger.info(`--------protocolCancelResponse--------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
 
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
