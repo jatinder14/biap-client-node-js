@@ -17,6 +17,20 @@ class OrderFeedbackController {
       });
     }
   }
+  
+  async getfeedback(req, res, next) {
+    try {
+      const OrderId = req.params.orderId;
+      orderFeedbackSevice.getorderFeedback(OrderId).then((response) => {
+        res.send(response);
+      });
+    } catch (e) {
+      res.status(500).json({
+        success: false,
+        message: "Internal Server Error!"
+      });
+    }
+  }
 
   async contactUs(req, res, next) {
     try {

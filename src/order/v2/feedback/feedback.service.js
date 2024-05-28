@@ -49,6 +49,27 @@ class OrderFeedbackSevice {
     }
   }
 
+  async getorderFeedback(orderID, body) {
+    try {
+        const existingFeedback = await Feedback.findOne({ orderID });        
+        if (!existingFeedback) {
+            throw new Error("Feedback is not created for this order");
+        } else {
+            return {
+                success: true,
+                data: existingFeedback
+            };
+        }
+    } catch (error) {
+        console.error("Error in orderFeedback:", error.message);
+        return {
+            success: false,
+            message: error.message
+        };
+    }
+}
+
+
   async contactUs(payload) {
     try {
       const { email, subject, message, username } = payload;
