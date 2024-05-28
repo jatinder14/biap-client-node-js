@@ -793,7 +793,7 @@ class UpdateOrderService {
                             // }
 
                             if (fl?.state?.descriptor?.code === 'Cancelled' || fl?.state?.descriptor?.code === 'Return_Picked' || fl?.state?.descriptor?.code === 'Liquidated') {
-                                console.log("amount", refundAmount * -1);
+                                console.log("amount", refundAmount);
 
                                 let oldSettlement = await Settlements.findOne({ orderId: dbFl.orderId, fulfillmentId: dbFl.id })
                                 if (!oldSettlement) {
