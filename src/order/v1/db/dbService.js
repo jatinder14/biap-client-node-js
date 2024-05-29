@@ -267,4 +267,4 @@ const getTotalOrderedItemsCount = async (orderId) => {
         return totalItemsCountByActionData.totalQuantity;
 
 }
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount,getTotalItemsCountByAction };
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId,addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount,getTotalItemsCountByAction,getOrderByTransactionAndOrderId };

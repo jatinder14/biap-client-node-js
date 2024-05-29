@@ -1,4 +1,4 @@
-import FulfillmentHistory from "../../v2/db/fulfillmentHistory";
+import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
 
 const createNewFullfilmentObject = (
   fullfillmentHistoryData,
@@ -46,7 +46,7 @@ const getItemsIdsDataForFulfillment = (incomingFulfillment)=>{
             const itemIndex = orderData?.items?.findIndex((item)=>{
               item.id === acc.tempId
             });
-            acc.data[acc.tempId]?.quantity  = orderData.items[itemIndex]?.quantity?.count;
+            acc.data[acc.tempId].quantity  = orderData.items[itemIndex]?.quantity?.count;
           }
           acc.tempId = curr.value;
           break;
