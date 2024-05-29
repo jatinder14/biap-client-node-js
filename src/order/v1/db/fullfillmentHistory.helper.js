@@ -31,11 +31,11 @@ const createNewFullfilmentObject = (
 };
 
 const getItemsIdsDataForFulfillment = (incomingFulfillment,orderData)=>{
-  const quoteTrailIndex = incomingFulfillment.tags.findIndex(
+  const quoteTrailIndex = incomingFulfillment.tags?.findIndex(
     (tag) => tag.code === "quote_trail"
   );
 
-  let cancelledItemData = incomingFulfillment.tags?.[
+  let cancelledItemData = incomingFulfillment?.tags?.[
     quoteTrailIndex
   ]?.list.reduce(
     (acc, curr) => {
@@ -44,9 +44,9 @@ const getItemsIdsDataForFulfillment = (incomingFulfillment,orderData)=>{
           acc.data[curr.value] = { quantity: 0, value: 0 };
           if (acc.tempId && acc.data?.[acc?.tempId]?.quantity === 0) {
             const itemIndex = orderData?.items?.findIndex((item) => {
-              item.id === acc.tempId
+              item.id === acc?.tempId
             });
-            acc.data[acc.tempId].quantity = orderData.items[itemIndex]?.quantity?.count;
+            acc.data[acc.tempId].quantity = orderData?.items[itemIndex]?.quantity?.count;
           }
           acc.tempId = curr.value;
           break;
