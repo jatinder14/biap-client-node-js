@@ -159,6 +159,7 @@ class ConfirmOrderService {
                 { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
                 dbResponse
             );
+            dbResponse.payment = orderRequest?.message?.payment;
 
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
             lokiLogger.info(`bppConfirmResponse----------------> :>> ${JSON.stringify(bppConfirmResponse)}`)
