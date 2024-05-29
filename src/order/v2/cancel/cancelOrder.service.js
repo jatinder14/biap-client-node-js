@@ -186,8 +186,6 @@ class CancelOrderService {
                   razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                 })
                 lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
-
-
               }
             }
             const orderSchema = dbResponse?.[0].toJSON();

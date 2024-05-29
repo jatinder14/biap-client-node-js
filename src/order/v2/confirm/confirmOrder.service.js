@@ -72,16 +72,17 @@ class ConfirmOrderService {
      */
     async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {    
     let orderSchema = dbResponse?.toJSON() || {};
+    lokiLogger.info("---------------orderSchema before---------------------------:>>",orderSchema)
 
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
         
-        if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
+        if (razorpayPaymentId && orderSchema && orderSchema?.payment) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
         console.log('orderSchema :>> ', orderSchema);
 
-        lokiLogger.info("orderSchema :>>",orderSchema)
+        lokiLogger.info("---------------orderSchema after ==================:>>",orderSchema)
 
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
