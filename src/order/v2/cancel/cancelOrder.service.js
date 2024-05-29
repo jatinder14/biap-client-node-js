@@ -6,11 +6,11 @@ import {
 } from "../../../utils/constants.js";
 import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
-  addOrUpdateOrderWithTransactionId,
-  addOrUpdateOrderWithTransactionIdAndProvider,
   addOrUpdateOrderWithTransactionIdAndOrderId,
-  getOrderById,totalItemsOrderedCount,
-  totalCancelledItemsCount
+  getOrderById,
+  getTotalOrderedItemsCount,
+  getTotalItemsCountByAction,
+  getOrderByIdAndTransactionId
 } from "../../v1/db/dbService.js";
 
 import BppCancelService from "./bppCancel.service.js";
@@ -18,12 +18,11 @@ import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
+import FulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
-import FulfillmentHistory from "../db/fulfillmentHistory.js";
-import { totalItemsOrderedCount, orderDataByIdAndTransactionId, } from '../repository/order.repo.js'
-
+import {createNewFullfilmentObject} from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 
@@ -237,9 +236,10 @@ class CancelOrderService {
             "protocolCancelResponse----------------->",
             protocolCancelResponse
           );
-         
+          const responseOrderData  = protocolCancelResponse.message.order;
+          const dbResponse = await getOrderByIdAndTransactionId(transactionId,orderId)
           // message: { order: { id: '7488750', state: 'Cancelled', tags: [Object] } }
-
+         
 
           console.log("dbResponse----------------->", dbResponse);
 
@@ -249,61 +249,18 @@ class CancelOrderService {
             throw new NoRecordFoundError();
           else {
             const orderSchema = dbResponse?.[0].toJSON();
-
-            const dbResponse = await orderDataByIdAndTransactionId({
-              transactionId: protocolCancelResponse.context.transaction_id,
-              id: protocolCancelResponse.message.order.id
-            })
-
-            const totalItemsOrdered = await totalItemsOrderedCount(protocolCancelResponse.message.order.id)
-            const totalCancelledItems = await totalCancelledItemsCount(protocolCancelResponse.message.order.id)
+            const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
+            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id,"Cancelled")
 
 
             if (totalItemsOrdered == totalCancelledItems) {
-              orderSchema.state = 'Cancelled'
-            } else if ((totalItemsOrdered != totalCancelledItems) && protocolCancelResponse?.message?.order?.state.toLowerCase() !== 'cancelled') {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
-
-            orderSchema.state = protocolCancelResponse?.message?.order?.state;
-
-            const fullfillmentHistoryData = FulfillmentHistory.find({ orderId: orderSchema.id })
-            protocolResponse?.message?.order?.fulfillments.forEach((incomingFulfillment) => {
-
-              const filterFullfilment = fullfillmentHistoryData.filter((fullfillment) => {
-                incomingFulfillment.id == fullfillment.id && incomingFulfillment?.state?.descriptor?.code?.toLowerCase() == fullfillment.state
-              })
-              if (!filterFullfilment && incomingFulfillment?.state?.descriptor?.code?.toLowerCase() == 'cancelled' && incomingFulfillment?.type?.toLowerCase() == 'cancel') {
-
-                const quoteTrailIndex = incomingFulfillment.tags.findIndex(
-                  (tag) => tag.code === 'quote_trail'
-                );
-
-                let cancelledItemData = incomingFulfillment.tags?.[quoteTrailIndex]?.list.reduce((acc, curr) => {
-                  switch (curr.code.toLowerCase()) {
-                    case "id":
-                      acc.data[curr.value] = { "quantity": 0, "value": 0 };
-                      acc.tempId = curr.value;
-                      break;
-                    case "quantity":
-                      acc.data[acc.tempId].quantity = curr.value;
-                      break;
-                    case "price":
-                      acc.data[acc.tempId].value = curr.value;
-                      break;
-                  }
-                  return acc;
-                }, { tempId: null, data: {} })
-
-                const newfullfilment = new FulfillmentHistory({
-                  id: dbResponse.id,
-                  type: fulfillment.type,
-                  state: fulfillment.state.descriptor.code,
-                  orderId: fulfillment.id,
-                  itemIds: cancelledItemData.data
-                })
-                newfullfilment.save()
-              }
+            
+            const fullfillmentHistoryData = FulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            protocolResponse?.message?.order?.fulfillments.forEach(async(incomingFulfillment) => {
+                const newfullfilmentObject = await createNewFullfilmentObject(incomingFulfillment,fullfillmentHistoryData,orderSchema,responseOrderData.id)
+                newfullfilmentObject.save()
             })
 
             if (
@@ -328,8 +285,8 @@ class CancelOrderService {
 
 
             await addOrUpdateOrderWithTransactionIdAndOrderId(
-              protocolCancelResponse.context.transaction_id,
-              protocolCancelResponse.message.order.id,
+              transactionId,
+              orderId,
               { ...orderSchema }
             );
           }

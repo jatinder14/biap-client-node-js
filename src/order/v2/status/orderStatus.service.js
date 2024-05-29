@@ -16,6 +16,7 @@ import Fulfillments from "../db/fulfillments.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import OrderHistory from "../db/orderHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppOrderStatusService = new BppOrderStatusService();
 const bppUpdateService = new BppUpdateService();
@@ -245,12 +246,14 @@ class OrderStatusService {
                                             orderId:onOrderStatusResponse.message.order.id
                                         })
                                         if(!existingFulfillment){
+                                            const itemIdsData = getItemsIdsDataForFulfillment(fulfillment);
                                             await FulfillmentHistory.create({
                                                 orderId:onOrderStatusResponse.message.order.id,
                                                 type:fulfillment.type,
                                                 id:fulfillment.id,
                                                 state:fulfillment.state.descriptor.code,
-                                                updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
+                                                updatedAt:onOrderStatusResponse.message.order.updated_at.toString(),
+                                                itemIds:itemIdsData
                                             })
                                         }
                                         console.log("existingFulfillment--->",existingFulfillment);

@@ -17,6 +17,7 @@ import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import { v4 as uuidv4 } from "uuid";
 import Refund from "../db/refund.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppUpdateService = new BppUpdateService();
 const razorPayService = new RazorPayService()
@@ -717,12 +718,14 @@ class UpdateOrderService {
                                 state: fl.state.descriptor.code
                             })
                             if (!existingFulfillment || existingFulfillment!=='null') {
+                                const itemIdsData = getItemsIdsDataForFulfillment(fl);
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
                                     id: fl.id,
                                     state: fl.state.descriptor.code,
-                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at?.toString()
+                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at?.toString(),
+                                    itemIds:itemIdsData
                                 })
                             }
                             // }
