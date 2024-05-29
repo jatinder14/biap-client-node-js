@@ -73,16 +73,17 @@ class ConfirmOrderService {
      */
     async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {    
     let orderSchema = dbResponse?.toJSON() || {};
+    lokiLogger.info("---------------orderSchema before---------------------------:>>",orderSchema)
 
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
         
-        if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
+        if (razorpayPaymentId && orderSchema && orderSchema?.payment) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
         console.log('orderSchema :>> ', orderSchema);
 
-        lokiLogger.info("orderSchema :>>",orderSchema)
+        lokiLogger.info("---------------orderSchema after ==================:>>",orderSchema)
 
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
@@ -159,13 +160,17 @@ class ConfirmOrderService {
                 { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
                 dbResponse
             );
+            dbResponse.payment = orderRequest?.message?.payment;
 
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
-            
-            lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
+            lokiLogger.info(`bppConfirmResponse----------------> :>> ${JSON.stringify(bppConfirmResponse)}`)
 
-            if (bppConfirmResponse?.message?.ack)
+            if (bppConfirmResponse?.message?.ack) {
+                lokiLogger.info(`dbResponse----------------> :>> ${JSON.stringify(dbResponse)}`)
+                lokiLogger.info(`order?.payment?.type----------------> :>> ${JSON.stringify(order?.payment?.type)}`)
+                lokiLogger.info(`orderRequest?.message?.payment?.razorpayPaymentId----------------> :>> ${JSON.stringify(orderRequest?.message?.payment?.razorpayPaymentId)}`)
                 await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
+            }
 
             return bppConfirmResponse;
 

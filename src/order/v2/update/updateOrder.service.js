@@ -711,6 +711,16 @@ class UpdateOrderService {
                                         transationId: order_details?.transactionId,
                                         razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                                     })
+                                    await sendEmail({
+                                        userEmails: order_details?.billing?.email,
+                                        orderIds:order_details?.id,
+                                        HTMLtemplate: "/template/refund.ejs",
+                                        userName: order_details?.billing?.name || "",
+                                        subject: "Refund Processed | Your Refund has been Processed to Your account",
+                                        itemName: order_details?.billing?.email,
+                                        itemPrice: razorpayRefundAmount,
+                                      });
+                      
                                     lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
 
                                 }

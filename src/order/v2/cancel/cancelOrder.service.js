@@ -20,6 +20,8 @@ import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
+import {sendEmail} from "../../../shared/mailer.js"
+
 
 
 
@@ -168,12 +170,26 @@ class CancelOrderService {
           else {
             let order_details = dbResponse[0];
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
-            if (latest_fulfillment || latest_fulfillment?.type == "Cancel") {
+            if (latest_fulfillment || latest_fulfillment?.type == "Cancel") { 
+              let newOrderdetails = order_details
               if (razorpayPaymentId && refundAmount) {
                 let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
                 lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
+                
                 let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
-                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+
+                await sendEmail({
+                  userEmails: newOrderdetails?.billing?.email,
+                  orderIds:newOrderdetails?.id,
+                  HTMLtemplate: "/template/refund.ejs",
+                  userName: newOrderdetails?.billing?.name || "",
+                  subject: "Refund Processed | Your Refund has been Processed to Your account",
+                  itemName: newOrderdetails?.billing?.email,
+                  itemPrice: razorpayRefundAmount,
+                });
+
+                res.json(orders);
+                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
                 let order_details = dbResponse[0];
                 const refundDetails = await Refund.create({
                   orderId: order_details?.id,
