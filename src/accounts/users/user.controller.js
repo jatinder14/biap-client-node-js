@@ -250,7 +250,6 @@ class UserController {
       };
       let response = await axios.request(config)
       // decodedToken = await admin.auth().verifyIdToken(response.data.access_token);
-      lokiLogger.error('decodedToeken --------->> ', response?.data);
       return res.status(200).json({
         success: true,
         token: response?.data?.access_token

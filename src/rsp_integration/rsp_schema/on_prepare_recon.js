@@ -1,8 +1,8 @@
 const schema = {
   type: "object",
   properties: {
-    recon_id: { type: "string", format: "email" },
-    status: { type: "boolean" },
+    recon_id: { type: "string" },
+    status: { type: "string" },
     collector_recon: { type: "object" },
   },
   errorMessage: {

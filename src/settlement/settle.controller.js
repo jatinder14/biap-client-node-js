@@ -2,6 +2,7 @@ import OrderModel from "../order/v1/db/order.js";
 import ConfirmModel from "../order/v1/db/onConfirmDump.js";
 import { SETTLE_STATUS } from "../utils/constants.js";
 import { parseDuration } from "../utils/stringHelper.js";
+import { onOrderConfirm } from "../utils/protocolApis/index.js";
 
 export async function getSettlementsHandler(req, res) {
     try {
@@ -11,7 +12,7 @@ export async function getSettlementsHandler(req, res) {
             res.status(401).send('Missing or wrong wil-api-key header');
             return;
         }
-        const { limit = 100, page = 1, bppId } = req.query;
+        const { limit = 50, page = 1, bppId } = req.query;
          // Parse limit and page to integers
          const limitValue = parseInt(limit);
          const pageValue = parseInt(page);
@@ -92,13 +93,12 @@ export async function getSettlementsHandler(req, res) {
         const on_confirmData = await ConfirmModel.find({})
 
 
-        const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, context, createdAt, updatedAt, state, quote, items, id, 
+        const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, messageId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
-            updatedQuote, payment  }) => {
-            
-            const on_confirm_data=on_confirmData.filter((data)=>data?.context?.transaction_id===transactionId && data?.context?.action==="on_confirm" )
-             const on_confirm=on_confirm_data[0]
+            updatedQuote, payment }) => {
+            const protocolConfirmResponse = await onOrderConfirm(messageId);
+            const on_confirm = protocolConfirmResponse?.[0] || {};
             
             const paymentObj = on_confirm?.message?.order?.payment ? JSON.parse(on_confirm?.message?.order?.payment): {};
             const buyerPercentage = Number(paymentObj?.params?.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
