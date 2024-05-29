@@ -87,11 +87,11 @@ export const initiateRsp = async () => {
           transaction_details: {
             collector: {
               id: protocolConfirmResponse?.context?.bap_id,
-              url: protocolConfirmResponse?.context?.bap_uri
+              url: process.env.CLIENT_WEBHOOK_ENDPOINT + '/v2'
             },
             receiver: {
               id: protocolConfirmResponse?.context?.bpp_id,
-              url: protocolConfirmResponse?.context?.bpp_uri
+              url: "https://rsf-mock-service.ondc.org" // protocolConfirmResponse?.context?.bpp_uri
             },
             payment_gateway: [
               {

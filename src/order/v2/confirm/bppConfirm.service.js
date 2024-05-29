@@ -253,18 +253,16 @@ class BppConfirmService {
                             }
                         }),
                         payment: {
-                            uri: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? "https://razorpay.com/" :
-                                undefined, //In case of pre-paid collection by the buyer app, the payment link is rendered after the buyer app sends ACK for /on_init but before calling /confirm;
-                            tl_method: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                "http/get" :
-                                undefined,
+                            // uri: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? "https://razorpay.com/" :
+                            //     undefined, //In case of pre-paid collection by the buyer app, the payment link is rendered after the buyer app sends ACK for /on_init but before calling /confirm;
+                            // tl_method: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                            //     "http/get" :
+                            //     undefined,
                             // razorpayPaymentId: order?.payment?.razorpayPaymentId,
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
-                                transaction_id: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                    order.jusPayTransactionId ?? uuidv4() :
-                                    undefined//payment transaction id
+                                transaction_id: uuidv4() // order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? order.jusPayTransactionId ?? uuidv4() : undefined //payment transaction id
                             },
                             status: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 PROTOCOL_PAYMENT.PAID :
