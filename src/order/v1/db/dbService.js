@@ -232,12 +232,12 @@ const getTotalOrderedItemsCount = async (orderId) => {
             },
         },
     ]);
-    return totalItemsCountData?.totalCount; 
+    return totalItemsCountData[0]?.totalCount; 
 }
 
 
  const getTotalItemsCountByAction = async (orderId,action) => {
-    const totalItemsCountByActionData  =  await fulfillmentHistoryMongooseModel.aggregate(
+    const totalItemsCountByActionData  =  await FulfillmentHistory.aggregate(
         [
             {
                 $match: {
