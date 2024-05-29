@@ -1,4 +1,4 @@
-import { onOrderCancel } from "../../../utils/protocolApis/index.js";
+import { onOrderCancel, protocolUpdate } from "../../../utils/protocolApis/index.js";
 import {
   ORDER_STATUS,
   PROTOCOL_CONTEXT,
@@ -22,9 +22,9 @@ import fulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
-import {sendEmail} from "../../../shared/mailer.js"
-
-import {createNewFullfilmentObject} from "../../v1/db/fullfillmentHistory.helper.js";
+import { sendEmail } from "../../../shared/mailer.js"
+import Settlements from "../db/settlement.js";
+import { createNewFullfilmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 
@@ -34,49 +34,45 @@ const razorPayService = new RazorPayService()
 
 class CancelOrderService {
   /**
-   * cancel order
+   * INFO: cancel order
    * @param {Object} orderRequest
    */
   async cancelOrder(orderRequest) {
     try {
-      console.log("cancel order-------------->", orderRequest);
-
-      lokiLogger.info('cancel order-------------->', orderRequest)
-
       const orderDetails = await getOrderById(orderRequest.message.order_id);
-      const cancelledOrders = orderDetails[0]?.state 
+      const cancelledOrders = orderDetails[0]?.state
 
-      if(cancelledOrders=== "Cancelled"){
+      if (cancelledOrders === "Cancelled") {
         throw new Error("Order has already been cancelled");
       }
-     else{
-      const contextFactory = new ContextFactory();
-      const context = contextFactory.create({
-        action: PROTOCOL_CONTEXT.CANCEL,
-        transactionId: orderDetails[0].transactionId,
-        bppId: orderRequest?.context?.bpp_id,
-        bpp_uri: orderDetails[0].bpp_uri,
-        cityCode: orderDetails[0].city,
-        city: orderDetails[0].city,
-        domain: orderDetails[0].domain,
-      });
+      else {
+        const contextFactory = new ContextFactory();
+        const context = contextFactory.create({
+          action: PROTOCOL_CONTEXT.CANCEL,
+          transactionId: orderDetails[0].transactionId,
+          bppId: orderRequest?.context?.bpp_id,
+          bpp_uri: orderDetails[0].bpp_uri,
+          cityCode: orderDetails[0].city,
+          city: orderDetails[0].city,
+          domain: orderDetails[0].domain,
+        });
 
-      let fulfillmentId = orderDetails[0].items[0].fulfillment_id;
+        let fulfillmentId = orderDetails[0].items[0].fulfillment_id;
 
-      const { message = {} } = orderRequest || {};
-      const { order_id, cancellation_reason_id } = message || {};
+        const { message = {} } = orderRequest || {};
+        const { order_id, cancellation_reason_id } = message || {};
 
-      if (!context?.bpp_id) {
-        throw new CustomError("BPP Id is mandatory");
+        if (!context?.bpp_id) {
+          throw new CustomError("BPP Id is mandatory");
+        }
+
+        return await bppCancelService.cancelOrder(
+          context,
+          order_id,
+          cancellation_reason_id,
+          fulfillmentId
+        )
       }
-
-      return await bppCancelService.cancelOrder(
-        context,
-        order_id,
-        cancellation_reason_id,
-        fulfillmentId
-      )
-    }
 
     } catch (err) {
       throw err;
@@ -131,9 +127,14 @@ class CancelOrderService {
     }
   }
 
+  /**
+   * INFO: manage cancel state and send update to SNP
+   * @param {String} messageId 
+   * @returns 
+   */
   async onCancelOrderDbOperation(messageId) {
-
     try {
+      await new Promise((resolve) => setTimeout(resolve, 30000))
       let protocolCancelResponse = await onOrderCancel(messageId);
       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
@@ -158,36 +159,33 @@ class CancelOrderService {
           let refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
           let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
           let latest_fulfillment = fulfillments.length
-            ? fulfillments.find(
-              (el) => el?.state?.descriptor?.code === "Cancelled",
-            )
-            : {};
+            ? fulfillments.find((el) => el?.state?.descriptor?.code === "Cancelled") : {};
 
-          console.log("protocolCancelResponse----------------->",JSON.stringify(protocolCancelResponse));
-          
-          const responseOrderData  = protocolCancelResponse.message.order;
+          console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
+
+          const responseOrderData = protocolCancelResponse.message.order;
           const transactionId = protocolCancelResponse.context.transaction_id;
-          const dbResponse = await getOrderByIdAndTransactionId(transactionId,responseOrderData.id)         
+          const dbResponse = await getOrderByIdAndTransactionId(transactionId, responseOrderData.id)
 
-            logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
-            logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
-          
+          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
+          logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
+
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
             let order_details = dbResponse[0];
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
-            if (latest_fulfillment || latest_fulfillment?.type == "Cancel") { 
+            if (latest_fulfillment || latest_fulfillment?.type == "Cancel") {
               let newOrderdetails = order_details
               if (razorpayPaymentId && refundAmount) {
                 let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
                 lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
-                
+
                 let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
 
                 await sendEmail({
                   userEmails: newOrderdetails?.billing?.email,
-                  orderIds:newOrderdetails?.id,
+                  orderIds: newOrderdetails?.id,
                   HTMLtemplate: "/template/refund.ejs",
                   userName: newOrderdetails?.billing?.name || "",
                   subject: "Refund Processed | Your Refund has been Processed to Your account",
@@ -213,19 +211,19 @@ class CancelOrderService {
             }
             const orderSchema = dbResponse?.[0].toJSON();
             const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
-            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id,"Cancelled")
+            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
 
             if (totalItemsOrdered == totalCancelledItems) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
-            
+
             const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
-            protocolCancelResponse?.message?.order?.fulfillments.forEach(async(incomingFulfillment) => {
-                const newfullfilmentObject = await createNewFullfilmentObject(incomingFulfillment,fullfillmentHistoryData,orderSchema,responseOrderData.id)
-                if(newfullfilmentObject){
-                  newfullfilmentObject.save()
-                }
+            protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
+              const newfullfilmentObject = await createNewFullfilmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id)
+              if (newfullfilmentObject) {
+                newfullfilmentObject.save()
+              }
             })
 
             if (
@@ -246,9 +244,62 @@ class CancelOrderService {
             ) {
               orderSchema.settle_status = SETTLE_STATUS.DEBIT;
             }
+            if (latest_fulfillment?.state?.descriptor?.code === 'Cancelled' || latest_fulfillment?.state?.descriptor?.code === 'Return_Picked' || latest_fulfillment?.state?.descriptor?.code === 'Liquidated') {
+              const orderId = protocolCancelResponse?.message?.order.id
+              let oldSettlement = await Settlements.findOne({ orderId, fulfillmentId: latest_fulfillment.id })
+              if (!oldSettlement) {
+                let sContext = protocolCancelResponse.context;
+                let settlementTimeStamp = new Date();
+                //send update request
+                let updateRequest = {
+                  "context": {
+                    "domain": sContext.domain,
+                    "action": "update",
+                    "core_version": "1.2.0",
+                    "bap_id": sContext.bap_id,
+                    "bap_uri": sContext.bap_uri,
+                    "bpp_id": sContext.bpp_id,
+                    "bpp_uri": sContext.bpp_uri,
+                    "transaction_id": sContext.transaction_id,
+                    "message_id": uuidv4(),
+                    "city": sContext.city,
+                    "country": sContext.country,
+                    "timestamp": settlementTimeStamp
+                  },
+                  "message": {
+                    "update_target": "payment",
+                    "order": {
+                      "id": orderId,
+                      "fulfillments": [
+                        {
+                          "id": latest_fulfillment.id,
+                          "type": latest_fulfillment.type
+                        }
+                      ],
+                      "payment": {
+                        "@ondc/org/settlement_details": [
+                          {
+                            "settlement_counterparty": "buyer",
+                            "settlement_phase": "refund",
+                            "settlement_type": "upi",
+                            "settlement_amount": `${refundAmount}`,
+                            "settlement_timestamp": settlementTimeStamp
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
 
-
-
+                let newSettlement = await Settlements();
+                newSettlement.orderId = orderId;
+                newSettlement.settlement = updateRequest;
+                newSettlement.fulfillmentId = latest_fulfillment.id;
+                await newSettlement.save();
+                const response = await protocolUpdate(updateRequest);
+                console.log('cancel upodate call ------ :>> ', response);
+              }
+            }
             await addOrUpdateOrderWithTransactionIdAndOrderId(
               transactionId,
               responseOrderData.id,
@@ -256,8 +307,6 @@ class CancelOrderService {
             );
           }
         }
-
-
         return protocolCancelResponse;
       }
     } catch (err) {
@@ -282,9 +331,7 @@ class CancelOrderService {
           (el) => el?.state?.descriptor?.code === "Cancelled",
         )
         : {};
-      // console.log(
-      //     `latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`,
-      // );
+
       if (latest_fulfillment?.state?.descriptor?.code === "Cancelled") {
         latest_fulfillment?.tags?.forEach((tag) => {
           if (tag?.code === "quote_trail") {
@@ -300,47 +347,44 @@ class CancelOrderService {
         });
       }
       lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
-      // this will work if the product is delivered --todo
-      {
-        let totalCharges = 0;
-        let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
+      let totalCharges = 0;
+      let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
 
-        let full_Cancel_by_seller = true;
-        let full_Cancel_by_user = true;
-        const uniqueItems = {};
-        // Counter for items with quantity count = 0
-        let countZeroQuantity = 0;
-        let items = obj?.message?.order?.items || [];
-        items.forEach(item => {
-            uniqueItems[item.id] = item; // Store unique items by id
-            if (item.quantity.count === 0) {
-                countZeroQuantity++;
-            }
-        });        
-        const uniqueItemCount = Object.keys(uniqueItems).length;
-        full_Cancel_by_seller = (uniqueItemCount == countZeroQuantity)? true : full_Cancel_by_seller
-        console.log("Number of unique items:", uniqueItemCount);
-        console.log("Number of items with quantity count = 0:", countZeroQuantity);
-        quoteBreakup.forEach((breakupItem) => {
-          if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
-              if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
-                  full_Cancel_by_user = false;
-              console.log(`Sum of quoteBreakup values: ${totalCharges}`);
-              console.log(`full cancel by user: ${full_Cancel_by_user}`)
-          }
-      });
-        if (full_Cancel_by_seller && !full_Cancel_by_user) {
-          console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
-          sumOfNegativeValues = 0; 
-          quoteBreakup.forEach((breakupItem) => {
-            totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-          });
+      let full_Cancel_by_seller = true;
+      let full_Cancel_by_user = true;
+      const uniqueItems = {};
+      let countZeroQuantity = 0;
+      let items = obj?.message?.order?.items || [];
+      items.forEach(item => {
+        uniqueItems[item.id] = item;
+        if (item.quantity.count === 0) {
+          countZeroQuantity++;
         }
-        console.log(`Sum of quoteBreakup values: ${totalCharges}`);
-        totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-        lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
-        return totalRefundAmount;
+      });
+      const uniqueItemCount = Object.keys(uniqueItems).length;
+      full_Cancel_by_seller = (uniqueItemCount == countZeroQuantity) ? true : full_Cancel_by_seller
+      console.log("Number of unique items:", uniqueItemCount);
+      console.log("Number of items with quantity count = 0:", countZeroQuantity);
+      quoteBreakup.forEach((breakupItem) => {
+        if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
+          if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+            full_Cancel_by_user = false;
+          console.log(`Sum of quoteBreakup values: ${totalCharges}`);
+          console.log(`full cancel by user: ${full_Cancel_by_user}`)
+        }
+      });
+      if (full_Cancel_by_seller && !full_Cancel_by_user) {
+        console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
+        sumOfNegativeValues = 0;
+        quoteBreakup.forEach((breakupItem) => {
+          totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+        });
       }
+      console.log(`Sum of quoteBreakup values: ${totalCharges}`);
+      totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+      lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+      return totalRefundAmount;
+
     }
     return totalRefundAmount;
   }

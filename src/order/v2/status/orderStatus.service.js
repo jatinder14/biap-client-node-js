@@ -284,7 +284,7 @@ class OrderStatusService {
                                     // console.log("ifulfillmentStatus->",fulfillmentStatus)
                                     let temp1 = onOrderStatusResponse.message?.order?.fulfillments?.find(fulfillment=> fulfillment?.id === item?.fulfillment_id)
 
-                                    if(temp1.type==='Return' || temp1.type==='Cancel' ){
+                                    if(temp1?.type==='Return' || temp1?.type==='Cancel' ){
                                         item.return_status = temp1?.state?.descriptor?.code;
                                         item.cancellation_status = temp1?.state?.descriptor?.code;
                                     }else{
