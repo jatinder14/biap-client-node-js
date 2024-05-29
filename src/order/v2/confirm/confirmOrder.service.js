@@ -15,6 +15,7 @@ import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
 import getCityCode from "../../../utils/AreaCodeMap.js";
+import { BUYER_STATES } from "../../../utils/constant/order.js";
 import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppConfirmService = new BppConfirmService();
@@ -234,6 +235,7 @@ class ConfirmOrderService {
                 orderSchema.updatedQuote = orderSchema.quote;
                 orderSchema.tags = orderSchema.tags;
                 orderSchema.domain = response?.context.domain
+                orderSchema.buyer_state=BUYER_STATES.CONFIRMED
 
                 await addOrUpdateOrderWithTransactionIdAndProvider(
                     response.context.transaction_id, dbResponse.provider.id,

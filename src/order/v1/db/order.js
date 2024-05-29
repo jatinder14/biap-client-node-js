@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { BUYER_STATES } from "../../../utils/constant/order.js";
 const AddOnsSchema = new mongoose.Schema(
     {
         id: { type: String, required: true },
@@ -364,6 +364,11 @@ const OrderSchema = new mongoose.Schema(
         counterparty_diff_amount_currency: { type: String },
         receiver_settlement_message: { type: String },
         receiver_settlement_message_code: { type: String },
+        buyer_state: {
+            type: String,
+            enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here
+            default: BUYER_STATES.UNCONFIRMED // Set the default value
+          },
         remaining_cart_value: { type: Number },
     },
     { _id: true, timestamps: true }

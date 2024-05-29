@@ -3,7 +3,6 @@ import OrderMongooseModel from './order.js';
 import OrderRequestLogMongooseModel from "./orderRequestLog.js";
 import OrderHistory from "../../v2/db/orderHistory.js";
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
-
 /**
 * INFO: upsert order based on transaction id
  * @param {String} transactionId 
@@ -32,7 +31,8 @@ const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, provi
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId,
-            "provider.id": providerId
+            "provider.id": providerId       
+        
         },
         {
             ...orderSchema
@@ -139,10 +139,9 @@ const getOrderByTransactionAndOrderId = async (transactionId, orderId) => {
 const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
-        "provider.id": providerId
-    });
+        "provider.id": providerId    });
 
-    if (!(order || order.length))
+        if (!(order || order.length))
         throw new NoRecordFoundError();
     else
         return order?.[0];
