@@ -97,7 +97,7 @@ const getOrderByTransactionId = async (transactionId) => {
 };
 
 /**
- * get the order with passed transaction id from the database
+ * get the order with passed transaction_id and order_id from the database
  * @param {String} transactionId 
  * @returns 
  */
@@ -105,7 +105,7 @@ const getOrderByTransactionAndOrderId = async (transactionId, orderId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
         id: orderId
-    }).lean().exec();
+    });
 
     if (!(order || order.length))
         throw new NoRecordFoundError();
@@ -200,4 +200,4 @@ const getOrderRequestLatestFirst = async (data) => {
     return order;
 };
 
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionAndOrderId, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider };
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getOrderByTransactionAndOrderId };
