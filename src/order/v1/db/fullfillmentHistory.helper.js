@@ -1,9 +1,9 @@
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
+import { ORDER_TYPE } from "../../../utils/constants.js";
 
 const createNewFullfilmentObject = (
   fullfillmentHistoryData,
   incomingFulfillment,
-  orderData,
   orderId
 ) => {
   let newfullfilment = undefined;
@@ -16,7 +16,7 @@ const createNewFullfilmentObject = (
       JSON.stringify(incomingFulfillment?.updatedAt) ==
         JSON.stringify(fullfillment?.updatedAt);
   });
-  if (!fullfilmentExist) {
+  if (!fullfilmentExist && [ORDER_TYPE.CANCEL,ORDER_TYPE.RETURN].includes(incomingFulfillment?.type?.toLowerCase())) {
     const itemsIdData = this.getItemsIdsDataForFulfillment(incomingFulfillment);
     newfullfilment = new FulfillmentHistory({
       id: incomingFulfillment.id,
@@ -64,4 +64,4 @@ const getItemsIdsDataForFulfillment = (incomingFulfillment)=>{
   return cancelledItemData.data;
 }
 
-export {createNewFullfilmentObject,getItemsIdsDataForFulfillment,}
+export {createNewFullfilmentObject,getItemsIdsDataForFulfillment}
