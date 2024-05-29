@@ -94,7 +94,7 @@ const getOrderByIdAndTransactionId = async (transactionId,orderId) => {
     if (!(order || order.length))
         throw new NoRecordFoundError();
     else
-        return order?.[0];
+        return order;
 };
 
 /**
@@ -263,7 +263,7 @@ const getTotalOrderedItemsCount = async (orderId) => {
             }
         ]); 
 
-        return totalItemsCountByActionData.totalQuantity;
+        return totalItemsCountByActionData[0]?.totalQuantity || 0 ;
 
 }
 export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId,addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount,getTotalItemsCountByAction,getOrderByTransactionAndOrderId };
