@@ -1,8 +1,6 @@
 import OrderModel from "../order/v1/db/order.js";
-import ConfirmModel from "../order/v1/db/onConfirmDump.js";
 import { SETTLE_STATUS } from "../utils/constants.js";
 import { parseDuration } from "../utils/stringHelper.js";
-import { onOrderConfirm } from "../utils/protocolApis/index.js";
 
 export async function getSettlementsHandler(req, res) {
     try {
@@ -89,28 +87,20 @@ export async function getSettlementsHandler(req, res) {
             orderAnalysis.week[orderWeek].grossOrderPrice += parseFloat(grossOrderPrice)
             orderAnalysis.week[orderWeek].netItemPrice += parseFloat(itemPrice)
         })
-
-        const on_confirmData = await ConfirmModel.find({})
-
-
         const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, messageId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
             updatedQuote, payment }) => {
-            const protocolConfirmResponse = await onOrderConfirm(messageId);
-            const on_confirm = protocolConfirmResponse?.[0] || {};
-            
-            const paymentObj = on_confirm?.message?.order?.payment ? JSON.parse(on_confirm?.message?.order?.payment): {};
-            const buyerPercentage = Number(paymentObj?.params?.amount) * (Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) / 100)
-            const withHoldAmount = !paymentObj['@ondc/org/withholding_amount'] ? 0 : paymentObj['@ondc/org/withholding_amount']
+            const buyerPercentage = Number(payment?.params?.amount) * (Number(payment['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+            const withHoldAmount = !payment['@ondc/org/withholding_amount'] ? 0 : payment['@ondc/org/withholding_amount']
 
-            const settlementAmount = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
-            Number(paymentObj?.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
-            : Number(paymentObj?.params?.amount) - Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
+            const settlementAmount = payment["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
+            Number(payment?.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
+            : Number(payment?.params?.amount) - Number(payment['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
-            const buyer_take = paymentObj["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
+            const buyer_take = payment["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
-            : Number(paymentObj['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
+            : Number(payment['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
             const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
             const settlementItem = {
                 id: id || _id,
