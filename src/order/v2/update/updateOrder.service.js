@@ -883,6 +883,7 @@ class UpdateOrderService {
                         //get item from db and update state for item
                         orderSchema.items = updateItems;
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
+                        orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
 
                         await addOrUpdateOrderWithdOrderId(
                             protocolUpdateResponse.message.order.id,
