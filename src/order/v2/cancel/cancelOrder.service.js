@@ -18,7 +18,7 @@ import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
-import FulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
+import fulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
@@ -169,9 +169,9 @@ class CancelOrderService {
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId,responseOrderData.id)         
 
-          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
-          logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
-
+            logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
+            logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
+          
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
@@ -220,10 +220,12 @@ class CancelOrderService {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
             
-            const fullfillmentHistoryData = FulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
-            protocolResponse?.message?.order?.fulfillments.forEach(async(incomingFulfillment) => {
+            const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            protocolCancelResponse?.message?.order?.fulfillments.forEach(async(incomingFulfillment) => {
                 const newfullfilmentObject = await createNewFullfilmentObject(incomingFulfillment,fullfillmentHistoryData,orderSchema,responseOrderData.id)
-                newfullfilmentObject.save()
+                if(newfullfilmentObject){
+                  newfullfilmentObject.save()
+                }
             })
 
             if (
