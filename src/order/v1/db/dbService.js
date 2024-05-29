@@ -123,8 +123,8 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
         "provider.id": providerId    });
-  console.log('order111', JSON.stringify(order))
-    if (!(order || order.length))
+
+        if (!(order || order.length))
         throw new NoRecordFoundError();
     else
         return order?.[0];
