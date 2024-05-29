@@ -364,6 +364,7 @@ const OrderSchema = new mongoose.Schema(
         counterparty_diff_amount_currency: { type: String },
         receiver_settlement_message: { type: String },
         receiver_settlement_message_code: { type: String },
+        remaining_cart_value: { type: Number },
     },
     { _id: true, timestamps: true }
 );

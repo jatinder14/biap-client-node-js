@@ -30,9 +30,6 @@ class SearchService {
 
             const {context: requestContext = {}, message = {}} = searchRequest;
             const {criteria = {}, payment} = message;
-
-
-            // console.log("City---------------->",city);
             const contextFactory = new ContextFactory();
             const protocolContext = contextFactory.create({
                 transactionId: requestContext?.transaction_id,
@@ -63,12 +60,6 @@ class SearchService {
     }
 
     validateSchedule(searchObj) {
-        console.log("location_id------>", searchObj.id);
-
-
-          //  console.log(searchObj.location_details);
-          //  console.log(searchObj.location_details.time);
-
             let nowDate = new Date();
             let todayTimeStamp = nowDate.getTime();
             let day = nowDate.getDay();
@@ -82,10 +73,7 @@ class SearchService {
 
                 //check for days
                 if (searchObj.location_details.time.days) {
-
                     let opendays = searchObj.location_details.time.days.split(",").map( Number );
-
-                    console.log("day---->",day)
                     if (opendays.indexOf(day) !== -1) {
                         //allowed response
                         console.log("result is valid for the period", opendays)
@@ -176,12 +164,9 @@ class SearchService {
     }
 
     validateQty(searchObj) {
-      console.log("location_id------>",searchObj);
-
         if(!searchObj.quantity){
             searchObj.quantity =  { available: { count: 0 }, maximum: { count: 0 } }
         }
-
         return { data: searchObj}
 
     }
@@ -192,9 +177,6 @@ class SearchService {
      */
     transform(searchResults = []) {
         let data = [];
-
-        console.log("searchResults---",searchResults)
-
         searchResults && searchResults.length && searchResults.forEach(result => {
             let searchObj = {...result};
             // delete searchObj?.["context"];
