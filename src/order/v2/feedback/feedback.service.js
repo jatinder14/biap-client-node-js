@@ -12,13 +12,10 @@ class OrderFeedbackSevice {
           orderID: orderID,
           userId: user,
         });
-        console.log("existingFeedback1", existingFeedback);
-
-        // If feedback already exists, return the message
         if (existingFeedback) {
           return {
-            success: true,
-            data: "Feedback Already Submitted",
+            success: false,
+            message: "You have already submitted the feedback for this order!",
           };
         }
         const createFeedback = await Feedback.create({
@@ -31,16 +28,15 @@ class OrderFeedbackSevice {
           recommendWebsite: body.recommendWebsite,
           checkoutSatisfaction: body.checkoutSatisfaction,
         });
-
-        console.log("createFeedback>>>>>>", createFeedback);
         return {
           success: true,
           data: createFeedback,
+          message: "Your feedback has been submitted successfully!",
         };
       } else {
         return {
-          success: true,
-          data: "Order Not Found",
+          success: false,
+          message: "You are trying to submit feedback for invalid order!",
         };
       }
     } catch (error) {
@@ -51,23 +47,23 @@ class OrderFeedbackSevice {
 
   async getorderFeedback(orderID, body) {
     try {
-        const existingFeedback = await Feedback.findOne({ orderID });        
-        if (!existingFeedback) {
-            throw new Error("Feedback is not created for this order");
-        } else {
-            return {
-                success: true,
-                data: existingFeedback
-            };
-        }
-    } catch (error) {
-        console.error("Error in orderFeedback:", error.message);
+      const existingFeedback = await Feedback.findOne({ orderID });
+      if (!existingFeedback) {
+        throw new Error("Feedback is not created for this order");
+      } else {
         return {
-            success: false,
-            message: error.message
+          success: true,
+          data: existingFeedback
         };
+      }
+    } catch (error) {
+      console.error("Error in orderFeedback:", error?.message);
+      return {
+        success: false,
+        message: error?.message
+      };
     }
-}
+  }
 
 
   async contactUs(payload) {
@@ -84,7 +80,7 @@ class OrderFeedbackSevice {
       });
       return {
         success: true,
-        data: "Your request is recorded, we will look into it",
+        message: "Your request is recorded, we will look into it",
       };
     } catch (error) {
       console.error("Error in contactUs:", error);

@@ -22,14 +22,14 @@ class CartService {
 
       if (cart) {
         let existingItem = await CartItem.findOneAndUpdate(
-          {"item.id": data.id, "cart": cart._id},
-          { $inc: { "item.quantity.count": 1 } }, // Increment the quantity by 1
+          { "item.id": data.id, "cart": cart._id },
+          { $inc: { "item.quantity.count": 1 } },
           { new: true });
-    
+
         if (existingItem) {
-            return { status: "success", data: existingItem };
-        } 
-    
+          return { status: "success", data: existingItem };
+        }
+
         let cartItem = new CartItem();
         cartItem.cart = cart?._id;
         cartItem.item = data;
@@ -48,7 +48,7 @@ class CartService {
         cartItem.cart = saved_cart._id;
         cartItem.item = data;
         return await cartItem.save();
-        
+
       }
     } catch (err) {
       throw err;
@@ -77,10 +77,10 @@ class CartService {
   async clearCart(data) {
     try {
       let cart, cart2, cart3;
- 
+
       if (data.cart_key) {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
-      } 
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
         const userDetails = await User.findOne({ userId: data.userId });
@@ -88,13 +88,12 @@ class CartService {
           cart3 = await Cart.findOne({ cart_key: userDetails.cart_key });
         }
       }
-      console.log("cart ---------------", cart);
       let cartIds = []
       if (cart?._id) cartIds.push(cart?._id)
       if (cart2?._id) cartIds.push(cart2?._id)
       if (cart3?._id) cartIds.push(cart3?._id)
       await CartItem.deleteMany({ cart: { $in: cartIds } });
-      return await Cart.deleteOne({ _id: { $in: cartIds } }); 
+      return await Cart.deleteOne({ _id: { $in: cartIds } });
     } catch (err) {
       throw err;
     }
@@ -118,20 +117,17 @@ class CartService {
   async getCartItem(data) {
     try {
       let cart, cart2;
- 
+
       if (data.cart_key) {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
-      } 
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
-      console.log("data.cart_key, cart2 -------------", data.cart_key, cart2);
-      console.log("data.userId, cart -------------", data.userId, cart);
       let cartIds = []
       if (cart?._id) cartIds.push(cart?._id)
       if (cart2?._id) cartIds.push(cart2?._id)
       let cartData = await CartItem.find({ cart: { $in: cartIds } });
-      console.log("cartData -------------", cartData?.length);
 
       return cartData;
     } catch (err) {
