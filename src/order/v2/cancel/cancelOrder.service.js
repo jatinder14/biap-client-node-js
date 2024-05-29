@@ -236,7 +236,7 @@ class CancelOrderService {
  */
   calculateRefundAmountForFullOrderCancellationBySeller(obj) {
     let totalRefundAmount = 0;
-    // console.log(`obj ======  ${JSON.stringify(obj)}`);
+    lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
     if (obj) {
       let sumOfNegativeValues = 0;
       let fulfillments = obj?.message?.order?.fulfillments || [];
@@ -262,16 +262,18 @@ class CancelOrderService {
           }
         });
       }
-      console.log(`Sum of negative values:, ${sumOfNegativeValues}`);
+      lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
       // this will work if the product is delivered --todo
       {
         let totalCharges = 0;
         let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
 
-        let full_Cancel = true;
+        let full_Cancel_by_seller = true;
+        let full_Cancel_by_user = true;
         const uniqueItems = {};
         // Counter for items with quantity count = 0
         let countZeroQuantity = 0;
+        let items = obj?.message?.order?.items || [];
         items.forEach(item => {
             uniqueItems[item.id] = item; // Store unique items by id
             if (item.quantity.count === 0) {
@@ -279,12 +281,19 @@ class CancelOrderService {
             }
         });        
         const uniqueItemCount = Object.keys(uniqueItems).length;
-        full_Cancel = (uniqueItemCount == countZeroQuantity)? true : full_Cancel
+        full_Cancel_by_seller = (uniqueItemCount == countZeroQuantity)? true : full_Cancel_by_seller
         console.log("Number of unique items:", uniqueItemCount);
         console.log("Number of items with quantity count = 0:", countZeroQuantity);
-
-        if (full_Cancel) {
-          console.log(`full_Cancel ---->> :  ${full_Cancel}`);
+        quoteBreakup.forEach((breakupItem) => {
+          if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
+              if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                  full_Cancel_by_user = false;
+              console.log(`Sum of quoteBreakup values: ${totalCharges}`);
+              console.log(`full cancel by user: ${full_Cancel_by_user}`)
+          }
+      });
+        if (full_Cancel_by_seller && !full_Cancel_by_user) {
+          console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
           sumOfNegativeValues = 0; 
           quoteBreakup.forEach((breakupItem) => {
             totalCharges += parseFloat(breakupItem?.price?.value) || 0;
@@ -292,7 +301,7 @@ class CancelOrderService {
         }
         console.log(`Sum of quoteBreakup values: ${totalCharges}`);
         totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-        console.log(`total price sum:  ${totalRefundAmount}`);
+        lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
         return totalRefundAmount;
       }
     }
