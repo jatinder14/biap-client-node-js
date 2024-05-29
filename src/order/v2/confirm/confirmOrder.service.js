@@ -15,6 +15,7 @@ import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
 import getCityCode from "../../../utils/AreaCodeMap.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
@@ -190,12 +191,14 @@ class ConfirmOrderService {
                         orderId: orderSchema.id
                     })
                     if (!existingFulfillment) {
+                        const itemIdsData = getItemsIdsDataForFulfillment(fl);
                         await FulfillmentHistory.create({
                             orderId: orderSchema.id,
                             type: fulfillment.type,
                             id: fulfillment.id,
                             state: fulfillment.state.descriptor.code,
-                            updatedAt: orderSchema.toString()
+                            updatedAt: orderSchema.toString(),
+                            itemIds:itemIdsData
                         })
                     }
                 }
