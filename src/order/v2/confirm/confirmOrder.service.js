@@ -160,11 +160,14 @@ class ConfirmOrderService {
             );
 
             console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
-            
-            lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
+            lokiLogger.info(`bppConfirmResponse----------------> :>> ${JSON.stringify(bppConfirmResponse)}`)
 
-            if (bppConfirmResponse?.message?.ack)
+            if (bppConfirmResponse?.message?.ack) {
+                lokiLogger.info(`dbResponse----------------> :>> ${JSON.stringify(dbResponse)}`)
+                lokiLogger.info(`order?.payment?.type----------------> :>> ${JSON.stringify(order?.payment?.type)}`)
+                lokiLogger.info(`orderRequest?.message?.payment?.razorpayPaymentId----------------> :>> ${JSON.stringify(orderRequest?.message?.payment?.razorpayPaymentId)}`)
                 await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
+            }
 
             return bppConfirmResponse;
 
