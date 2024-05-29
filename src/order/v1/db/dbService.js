@@ -32,8 +32,8 @@ const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, provi
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId,
-            "provider.id": providerId,
-            buyer_state:BUYER_STATES.CONFIRMED
+            "provider.id": providerId       
+        
         },
         {
             ...orderSchema
@@ -106,9 +106,10 @@ const getOrderByTransactionId = async (transactionId) => {
 const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
-        "provider.id": providerId
+        "provider.id": providerId,
+        buyer_state:BUYER_STATES.UNCONFIRMED
     });
-
+  console.log('order111', JSON.stringify(order))
     if (!(order || order.length))
         throw new NoRecordFoundError();
     else
