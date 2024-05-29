@@ -269,7 +269,7 @@ class OrderStatusController {
                                 userName: nameWithoutNumber || "",
                                 subject: "Order Feedback | Tell us about your experience",
                             });
-                        }, 180000); // 15 seconds delay before sending the feedback email
+                        }, 5000); // 15 seconds delay before sending the feedback email
     
                         console.log("orders3",orders)
     
@@ -301,7 +301,7 @@ class OrderStatusController {
                                 userName: userName || "",
                                 subject: "Order Feedback | Tell us about your experience",
                             });
-                        }, 180000); // 15 seconds delay before sending the feedback email
+                        }, 5000); // 15 seconds delay before sending the feedback email
     
     
                         res.json(orders);
