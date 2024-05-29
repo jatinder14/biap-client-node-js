@@ -164,7 +164,8 @@ class CancelOrderService {
           console.log("protocolCancelResponse----------------->",JSON.stringify(protocolCancelResponse));
           
           const responseOrderData  = protocolCancelResponse.message.order;
-          const dbResponse = await getOrderByIdAndTransactionId(transactionId,orderId)         
+          const transactionId = protocolCancelResponse.context.transaction_id;
+          const dbResponse = await getOrderByIdAndTransactionId(transactionId,responseOrderData.id)         
 
           logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
           logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
@@ -230,7 +231,7 @@ class CancelOrderService {
 
             await addOrUpdateOrderWithTransactionIdAndOrderId(
               transactionId,
-              orderId,
+              responseOrderData.id,
               { ...orderSchema }
             );
           }
