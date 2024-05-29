@@ -155,16 +155,16 @@ class CancelOrderService {
         lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
-          let refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
-          let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
-          let latest_fulfillment = fulfillments.length
-            ? fulfillments.find(
-              (el) => el?.state?.descriptor?.code === "Cancelled",
-            )
-            : {};
+          // let refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
+          // let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
+          // let latest_fulfillment = fulfillments.length
+          //   ? fulfillments.find(
+          //     (el) => el?.state?.descriptor?.code === "Cancelled",
+          //   )
+          //   : {};
 
-          console.log("protocolCancelResponse----------------->",JSON.stringify(protocolCancelResponse));
-          
+          // console.log("protocolCancelResponse----------------->",JSON.stringify(protocolCancelResponse));
+          let latest_fulfillment
           const responseOrderData  = protocolCancelResponse.message.order;
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId,responseOrderData.id)         

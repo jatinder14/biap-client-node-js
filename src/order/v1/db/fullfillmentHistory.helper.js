@@ -10,12 +10,10 @@ const createNewFullfilmentObject = (
   let newfullfilment = undefined;
 
   const fullfilmentExist = fullfillmentHistoryData.filter((fullfillment) => {
-    incomingFulfillment.id == fullfillment.id &&
-      incomingFulfillment?.state?.descriptor?.code?.toLowerCase() ==
+    return incomingFulfillment.id == fullfillment.id &&
+      incomingFulfillment?.state?.descriptor?.code ==
       fullfillment.state &&
-      incomingFulfillment.type == fullfillment.type &&
-      JSON.stringify(incomingFulfillment?.updatedAt) ==
-      JSON.stringify(fullfillment?.updatedAt);
+      incomingFulfillment.type == fullfillment.type
   });
   if (fullfilmentExist.length===0 && [ORDER_TYPE.CANCEL,ORDER_TYPE.RETURN].includes(incomingFulfillment?.type?.toLowerCase())) {
     const itemsIdData = getItemsIdsDataForFulfillment(incomingFulfillment,orderData);
