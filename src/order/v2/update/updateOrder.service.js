@@ -617,7 +617,7 @@ class UpdateOrderService {
      */
     async onUpdateDbOperation(messageId) {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 30000))
+            await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
             let protocolUpdateResponse = await onUpdateStatus(messageId);
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)

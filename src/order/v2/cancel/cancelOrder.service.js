@@ -134,7 +134,7 @@ class CancelOrderService {
    */
   async onCancelOrderDbOperation(messageId) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 30000))
+      await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
       let protocolCancelResponse = await onOrderCancel(messageId);
       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
@@ -209,7 +209,7 @@ class CancelOrderService {
 
               }
             }
-            const orderSchema = dbResponse?.[0].toJSON();
+            const orderSchema = dbResponse?.[0]?.toJSON();
             const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
             const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
