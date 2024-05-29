@@ -368,7 +368,8 @@ const OrderSchema = new mongoose.Schema(
             type: String,
             enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here
             default: BUYER_STATES.UNCONFIRMED // Set the default value
-          }
+          },
+        remaining_cart_value: { type: Number },
     },
     { _id: true, timestamps: true }
 );
