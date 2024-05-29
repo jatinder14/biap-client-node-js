@@ -8,7 +8,7 @@ export const schedulerEachDay = () => {
     "*/2 * * * *",
     async () => {
       logger.info(`*=== Inside schedulerEachDay ====*`);
-      await initiateRsp();
+      // await initiateRsp();
     },
     null,
     true,

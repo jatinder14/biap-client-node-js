@@ -122,15 +122,10 @@ class BppConfirmService {
         try {
             storedOrder = storedOrder?.toJSON();
             const n = new Date();
-            const count = await OrderMongooseModel.count({});
             let on_select = await protocolGetDumps({ type: "on_select", transaction_id: context.transaction_id })
-            console.log('order-???? :>> ', order);
-            console.log("on_select------------->", on_select)
-
             let on_select_fulfillments = on_select.request?.message?.order?.fulfillments ?? []
             let orderId = `${n.getFullYear()}-${this.pad(n.getMonth() + 1)}-${this.pad(n.getDate())}-${Math.floor(100000 + Math.random() * 900000)}`;
             let qoute = { ...(order?.quote || storedOrder?.quote) }
-
             let value = "" + qoute?.price?.value
             qoute.price.value = value
 
@@ -169,20 +164,6 @@ class BppConfirmService {
             let settlement_details = order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                 storedOrder?.settlementDetails?.["@ondc/org/settlement_details"] :
                 order.payment['@ondc/org/settlement_details']
-            const finder_fee = process.env.BAP_FINDER_FEE_AMOUNT ? 0 : Number(process.env.BAP_FINDER_FEE_AMOUNT)
-            const buyerPercentage = Number(order?.payment?.paid_amount) * (finder_fee / 100)
-            const withHoldAmount = !order.payment['@ondc/org/withholding_amount'] ? 0 : Number(order.payment['@ondc/org/withholding_amount'])
-
-            const settlementAmount = process.env.BAP_FINDER_FEE_TYPE?.toLowerCase() == 'percent' ?
-                Number(order?.payment?.paid_amount) - buyerPercentage - withHoldAmount
-                : Number(order?.payment?.paid_amount) - finder_fee - withHoldAmount
-
-            // settlement_details = settlement_details.map(el => {
-            //     el.settlement_status = PROTOCOL_PAYMENT["NOT-PAID"]
-            //     el.beneficiary_address = storedOrder?.billing?.address?.city
-            //     el.settlement_amount = settlementAmount
-            //     return el
-            // })
 
             const confirmRequest = {
                 context: context,

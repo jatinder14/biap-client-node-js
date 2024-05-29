@@ -61,7 +61,7 @@ const getItemsIdsDataForFulfillment = (incomingFulfillment) => {
     },
     { tempId: null, data: {} }
   );
-  return cancelledItemData.data;
+  return cancelledItemData?.data || {};
 }
 
 export { createNewFullfilmentObject, getItemsIdsDataForFulfillment }
