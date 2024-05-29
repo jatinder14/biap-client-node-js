@@ -6,10 +6,11 @@ import {
 } from "../../../utils/constants.js";
 import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
-  addOrUpdateOrderWithTransactionId,
-  addOrUpdateOrderWithTransactionIdAndProvider,
   addOrUpdateOrderWithTransactionIdAndOrderId,
-  getOrderById
+  getOrderById,
+  getTotalOrderedItemsCount,
+  getTotalItemsCountByAction,
+  getOrderByIdAndTransactionId
 } from "../../v1/db/dbService.js";
 
 import BppCancelService from "./bppCancel.service.js";
@@ -17,11 +18,13 @@ import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
+import FulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import {sendEmail} from "../../../shared/mailer.js"
 
+import {createNewFullfilmentObject} from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 
@@ -129,6 +132,7 @@ class CancelOrderService {
   }
 
   async onCancelOrderDbOperation(messageId) {
+
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
@@ -159,12 +163,15 @@ class CancelOrderService {
             )
             : {};
 
-          const dbResponse = await OrderMongooseModel.find({
-            transactionId: protocolCancelResponse.context.transaction_id,
-            id: protocolCancelResponse.message.order.id,
-          });
+          console.log("protocolCancelResponse----------------->",JSON.stringify(protocolCancelResponse));
+          
+          const responseOrderData  = protocolCancelResponse.message.order;
+          const transactionId = protocolCancelResponse.context.transaction_id;
+          const dbResponse = await getOrderByIdAndTransactionId(transactionId,responseOrderData.id)         
+
           logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
           logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
+
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
@@ -195,8 +202,6 @@ class CancelOrderService {
                   orderId: order_details?.id,
                   refundId: response?.id,
                   refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
-                  // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
-                  // itemQty: dbResponse.items[0].quantity.count,
                   isRefunded: true,
                   transationId: order_details?.transactionId,
                   razorpayPaymentId: order_details?.payment?.razorpayPaymentId
@@ -207,7 +212,20 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0].toJSON();
-            orderSchema.state = protocolCancelResponse?.message?.order?.state;
+            const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
+            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id,"Cancelled")
+
+
+            if (totalItemsOrdered == totalCancelledItems) {
+              orderSchema.state = protocolCancelResponse?.message?.order?.state
+            }
+            
+            const fullfillmentHistoryData = FulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            protocolResponse?.message?.order?.fulfillments.forEach(async(incomingFulfillment) => {
+                const newfullfilmentObject = await createNewFullfilmentObject(incomingFulfillment,fullfillmentHistoryData,orderSchema,responseOrderData.id)
+                newfullfilmentObject.save()
+            })
+
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
               ORDER_STATUS.COMPLETED
@@ -230,8 +248,8 @@ class CancelOrderService {
 
 
             await addOrUpdateOrderWithTransactionIdAndOrderId(
-              protocolCancelResponse.context.transaction_id,
-              protocolCancelResponse.message.order.id,
+              transactionId,
+              responseOrderData.id,
               { ...orderSchema }
             );
           }
@@ -241,6 +259,7 @@ class CancelOrderService {
         return protocolCancelResponse;
       }
     } catch (err) {
+      console.log('err------ :>> ', err);
       throw err;
     }
   }

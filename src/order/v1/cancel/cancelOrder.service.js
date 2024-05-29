@@ -134,6 +134,7 @@ class CancelOrderService {
                         }
                         if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.CANCELLED) {
                             orderSchema.settle_status = SETTLE_STATUS.DEBIT
+                            
                         }
                         if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.RETURNED) {
                             orderSchema.settle_status = SETTLE_STATUS.DEBIT

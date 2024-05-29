@@ -85,6 +85,23 @@ const addOrUpdateOrderWithdOrderId = async (orderId, orderSchema = {}) => {
  * @param {String} transactionId 
  * @returns 
  */
+const getOrderByIdAndTransactionId = async (transactionId,orderId) => {
+    const order = await OrderMongooseModel.find({
+        transactionId: transactionId,
+        id: orderId,
+    });
+
+    if (!(order || order.length))
+        throw new NoRecordFoundError();
+    else
+        return order?.[0];
+};
+
+/**
+ * get the order with passed transaction id from the database
+ * @param {String} transactionId 
+ * @returns 
+ */
 const getOrderByTransactionId = async (transactionId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId
@@ -199,4 +216,54 @@ const getOrderRequestLatestFirst = async (data) => {
     return order;
 };
 
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getOrderByTransactionAndOrderId };
+const getTotalOrderedItemsCount = async (orderId) => {
+    const totalItemsCountData = await  OrderMongooseModel.aggregate([
+        {
+            $match: { id: orderId },
+        },
+        {
+            $unwind: "$items",
+        },
+        {
+            $group: {
+                _id: null,
+                totalCount: { $sum: "$items.quantity.count" },
+            },
+        },
+    ]);
+    return totalItemsCountData?.totalCount; 
+}
+
+
+ const getTotalItemsCountByAction = async (orderId,action) => {
+    const totalItemsCountByActionData  =  await fulfillmentHistoryMongooseModel.aggregate(
+        [
+            {
+                $match: {
+                    orderId: orderId,
+                    state: action
+                }
+            },
+            {
+                $project: {
+                    itemIds: { $objectToArray: "$itemIds" }
+                }
+            },
+            { $unwind: "$itemIds" },
+            {
+                $group: {
+                    _id: null,
+                    totalQuantity: {
+                        $sum: { $toInt: "$itemIds.v.quantity" }
+                    }
+                }
+            },
+            {
+                $project: { _id: 0, totalQuantity: 1 }
+            }
+        ]); 
+
+        return totalItemsCountByActionData.totalQuantity;
+
+}
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId,addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount,getTotalItemsCountByAction,getOrderByTransactionAndOrderId };
