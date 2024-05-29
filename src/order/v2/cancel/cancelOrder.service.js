@@ -9,7 +9,8 @@ import {
   addOrUpdateOrderWithTransactionId,
   addOrUpdateOrderWithTransactionIdAndProvider,
   addOrUpdateOrderWithTransactionIdAndOrderId,
-  getOrderById
+  getOrderById,totalItemsOrderedCount,
+  totalCancelledItemsCount
 } from "../../v1/db/dbService.js";
 
 import BppCancelService from "./bppCancel.service.js";
@@ -21,6 +22,8 @@ import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
+import { totalItemsOrderedCount, orderDataByIdAndTransactionId, } from '../repository/order.repo.js'
+
 
 
 
@@ -208,9 +211,10 @@ class CancelOrderService {
   }
 
   async onCancelOrderDbOperation(messageId) {
+
     try {
       let protocolCancelResponse = await onOrderCancel(messageId);
-
+     
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
         const context = contextFactory.create({
@@ -233,12 +237,9 @@ class CancelOrderService {
             "protocolCancelResponse----------------->",
             protocolCancelResponse
           );
-
+         
           // message: { order: { id: '7488750', state: 'Cancelled', tags: [Object] } }
-          const dbResponse = await OrderMongooseModel.find({
-            transactionId: protocolCancelResponse.context.transaction_id,
-            id: protocolCancelResponse.message.order.id,
-          });
+
 
           console.log("dbResponse----------------->", dbResponse);
 
@@ -248,18 +249,63 @@ class CancelOrderService {
             throw new NoRecordFoundError();
           else {
             const orderSchema = dbResponse?.[0].toJSON();
+
+            const dbResponse = await orderDataByIdAndTransactionId({
+              transactionId: protocolCancelResponse.context.transaction_id,
+              id: protocolCancelResponse.message.order.id
+            })
+
+            const totalItemsOrdered = await totalItemsOrderedCount(protocolCancelResponse.message.order.id)
+            const totalCancelledItems = await totalCancelledItemsCount(protocolCancelResponse.message.order.id)
+
+
+            if (totalItemsOrdered == totalCancelledItems) {
+              orderSchema.state = 'Cancelled'
+            } else if ((totalItemsOrdered != totalCancelledItems) && protocolCancelResponse?.message?.order?.state.toLowerCase() !== 'cancelled') {
+              orderSchema.state = protocolCancelResponse?.message?.order?.state
+            }
+
             orderSchema.state = protocolCancelResponse?.message?.order?.state;
-            protocolResponse?.message?.order?.fulfillments.map((fulfillment)=>{
-              if(fulfillment?.state?.descriptor?.code?.toLowerCase()=='cancelled' && fulfillment?.type?.toLowerCase()=='cancel'){
-                const fullfillmentHistory = new FulfillmentHistory({
+
+            const fullfillmentHistoryData = FulfillmentHistory.find({ orderId: orderSchema.id })
+            protocolResponse?.message?.order?.fulfillments.forEach((incomingFulfillment) => {
+
+              const filterFullfilment = fullfillmentHistoryData.filter((fullfillment) => {
+                incomingFulfillment.id == fullfillment.id && incomingFulfillment?.state?.descriptor?.code?.toLowerCase() == fullfillment.state
+              })
+              if (!filterFullfilment && incomingFulfillment?.state?.descriptor?.code?.toLowerCase() == 'cancelled' && incomingFulfillment?.type?.toLowerCase() == 'cancel') {
+
+                const quoteTrailIndex = incomingFulfillment.tags.findIndex(
+                  (tag) => tag.code === 'quote_trail'
+                );
+
+                let cancelledItemData = incomingFulfillment.tags?.[quoteTrailIndex]?.list.reduce((acc, curr) => {
+                  switch (curr.code.toLowerCase()) {
+                    case "id":
+                      acc.data[curr.value] = { "quantity": 0, "value": 0 };
+                      acc.tempId = curr.value;
+                      break;
+                    case "quantity":
+                      acc.data[acc.tempId].quantity = curr.value;
+                      break;
+                    case "price":
+                      acc.data[acc.tempId].value = curr.value;
+                      break;
+                  }
+                  return acc;
+                }, { tempId: null, data: {} })
+
+                const newfullfilment = new FulfillmentHistory({
                   id: dbResponse.id,
                   type: fulfillment.type,
                   state: fulfillment.state.descriptor.code,
                   orderId: fulfillment.id,
-              })
-              fullfillmentHistory.save()
+                  itemIds: cancelledItemData.data
+                })
+                newfullfilment.save()
               }
             })
+
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
               ORDER_STATUS.COMPLETED
@@ -293,6 +339,7 @@ class CancelOrderService {
         return protocolCancelResponse;
       }
     } catch (err) {
+      console.log('err------ :>> ', err);
       throw err;
     }
   }

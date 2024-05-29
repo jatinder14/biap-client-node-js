@@ -183,4 +183,53 @@ const getOrderRequestLatestFirst = async (data) => {
     return order;
 };
 
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider };
+const totalItemsOrderedCount = async (orderId) => {
+
+    await OrderMongooseModel.aggregate([
+        {
+            $match: { id: orderId },
+        },
+        {
+            $unwind: "$items",
+        },
+        {
+            $group: {
+                _id: null,
+                totalCount: { $sum: "$items.quantity.count" },
+            },
+        },
+    ])
+}
+
+
+ const totalCancelledItemsCount = async (orderId) => {
+
+    return fulfillmentHistoryMongooseModel.aggregate(
+        [
+            {
+                $match: {
+                    orderId: orderId,
+                    state: "Cancelled"
+                }
+            },
+            {
+                $project: {
+                    itemIds: { $objectToArray: "$itemIds" }
+                }
+            },
+            { $unwind: "$itemIds" },
+            {
+                $group: {
+                    _id: null,
+                    totalQuantity: {
+                        $sum: { $toInt: "$itemIds.v.quantity" }
+                    }
+                }
+            },
+            {
+                $project: { _id: 0, totalQuantity: 1 }
+            }
+        ])
+
+}
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, totalItemsOrderedCount,totalCancelledItemsCount };
