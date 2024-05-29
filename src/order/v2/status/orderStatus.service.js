@@ -33,8 +33,6 @@ class OrderStatusService {
             const { context: requestContext, message } = order || {};
 
             const orderDetails = await getOrderById(order.message.order_id);
-
-            console.log('domain--------XX------>',orderDetails)
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.STATUS,
@@ -65,11 +63,6 @@ class OrderStatusService {
         const orderStatusResponse = await Promise.all(
             orders.map(async order => {
                 try {
-
-                    console.log("order------------------>",order);
-
-
-
                     const orderResponse = await this.orderStatus(order);
                     return orderResponse;
                 }
@@ -104,13 +97,7 @@ class OrderStatusService {
     async onOrderStatus(messageId) {
         try {
             let protocolOrderStatusResponse = await onOrderStatus(messageId);
-
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse);
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse.fulfillments);
-            console.log("protocolOrderStatusResponse------------>",JSON.stringify(protocolOrderStatusResponse));
-
-            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length){
-                
+            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length) {
                 return protocolOrderStatusResponse?.[0];
             }
             
@@ -238,8 +225,6 @@ class OrderStatusService {
                             // }
 
                                 for(let fulfillment of onOrderStatusResponse.message?.order?.fulfillments){
-                                    console.log("fulfillment--->",fulfillment)
-                                    // if(fulfillment.type==='Delivery'){
                                         let existingFulfillment  =await FulfillmentHistory.findOne({
                                             id:fulfillment.id,
                                             state:fulfillment.state.descriptor.code,
@@ -256,8 +241,6 @@ class OrderStatusService {
                                                 itemIds:itemIdsData
                                             })
                                         }
-                                        console.log("existingFulfillment--->",existingFulfillment);
-                                    // }
                                 }
                                 let orderHistory = await OrderHistory.findOne({
                                     orderId:onOrderStatusResponse.message.order.id,
@@ -270,8 +253,6 @@ class OrderStatusService {
                                         updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
                                     })
                                 }
-
-                                // console.log("updateItems",updateItems)
                                 let updateItems = []
                                 for(let item of protocolItems){
                                     let updatedItem = {}
@@ -279,9 +260,6 @@ class OrderStatusService {
 
                                     updatedItem = orderSchema.items.filter(element=> element.id === item.id);
                                     let temp=updatedItem[0];
-                                    console.log("item----length-before->",item)
-                                    console.log("item----length-before->",updatedItem)
-                                    // console.log("ifulfillmentStatus->",fulfillmentStatus)
                                     let temp1 = onOrderStatusResponse.message?.order?.fulfillments?.find(fulfillment=> fulfillment?.id === item?.fulfillment_id)
 
                                     if(temp1?.type==='Return' || temp1?.type==='Cancel' ){
@@ -303,12 +281,6 @@ class OrderStatusService {
                                     //item.quantity = item.quantity.count
                                     updateItems.push(item)
                                 }
-
-
-                                console.log("updateItems",updateItems)
-                                //get item from db and update state for item
-                                // orderSchema.items = updateItems;
-
                                orderSchema.items = updateItems;
 
 
