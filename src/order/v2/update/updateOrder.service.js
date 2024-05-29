@@ -479,13 +479,13 @@ class UpdateOrderService {
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
                     const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
-                    const itemIds = latestFullfilement?.tags?.[0]?.list?.filter(item => item?.code === "item_id").map(item => item?.value) || [];
+                    
                     const fullfillmentHistory = new FulfillmentHistory({
                         id: dbResponse.id,
                         type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds:itemIds
+                        itemIds:getItemsIdsDataForFulfillment(latestFullfilement)
                     })
 
 
