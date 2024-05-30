@@ -2,8 +2,7 @@ import OrderStatusService from './orderStatus.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 import {sendEmail} from "../../../shared/mailer.js"
 import Notification from "../../v2/db/notification.js";
-import { CronJob } from "cron";
-import OrderMongooseModel from '../../v1/db/order.js';
+import {emailCronJob} from "../../../utils/emailCron.js"
 
 const orderStatusService = new OrderStatusService();
 
@@ -263,27 +262,7 @@ class OrderStatusController {
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-                         const task = new CronJob('*/15 * * * * *', async () => {
-                             await sendEmail({
-                                 userEmails: emailWithoutNumber,
-                                 orderIds: orderId,
-                                 HTMLtemplate: "/template/orderFeedback.ejs",
-                                 userName: nameWithoutNumber || "",
-                                 subject: "Order Feedback | Tell us about your experience",
-                             });
-                             const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
-                                 { 'id': orderId }, 
-                                 { $set: { 'feedback_send': true } },
-                                 { new: true }
-                             );
-
-                             if (updatedOrder.feedback_send === true) {
-                                 task.stop();
-                                 console.log("Cron job stopped");
-                             }
-                         });
-                    
-                        task.start();
+                        await emailCronJob(emailWithoutNumber,orderId,"/template/orderFeedback.ejs",nameWithoutNumber,"Order Feedback | Tell us about your experience")
     
     
                         res.json(orders);
@@ -306,27 +285,10 @@ class OrderStatusController {
                             subject: "Order Confirmation | Your order has been successfully delivered",
                             userName:userName || ""
                         });
-                         const task = new CronJob('*/15 * * * * *', async () => {
-                             await sendEmail({
-                                 userEmails: userEmail,
-                                 orderIds: orderId,
-                                 HTMLtemplate: "/template/orderFeedback.ejs",
-                                 userName: userName || "",
-                                 subject: "Order Feedback | Tell us about your experience",
-                             });
-                             const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
-                                 { 'id': orderId },
-                                 { $set: { 'feedback_send': true } },
-                                 { new: true }
-                             );
+                         
 
-                             if (updatedOrder.feedback_send === true) {
-                                 task.stop();
-                                 console.log("Cron job stopped");
-                             }
-                         });
+                         await emailCronJob(userEmail,orderId,"/template/orderFeedback.ejs",userName,"Order Feedback | Tell us about your experience")
 
-                         task.start();
 
     
     
