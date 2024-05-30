@@ -148,6 +148,44 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
 };
 
 /**
+ * INFO: get unique items id's only
+ * @param {Array} items 
+ * @returns 
+ */
+const getUniqueItems = (items) => {
+    const uniqueItems = [];
+    items.forEach((item) => {
+        if (item?.id && !uniqueItems.includes(item.id)) {
+            uniqueItems.push(item.id);
+        }
+    });
+    return uniqueItems;
+}
+
+/**
+ * INFO: get fulfillment tracking details
+ * @param {Array} uniqueItems 
+ * @param {Array} fulfillmentHistory 
+ * @returns 
+ */
+const getFulfillmentTacking = (uniqueItems, fulfillmentHistory) => {
+    const fulfillmentTracking = [];
+    uniqueItems?.forEach((item) => {
+        let track = { item_id: item, tracking: [] };
+        fulfillmentHistory?.forEach((history) => {
+            if (
+                (history && history?.itemIds && history?.itemIds?.[item]) ||
+                Object.keys(history?.itemIds).length == 0
+            ) {
+                track.tracking.push(history);
+            }
+        });
+        fulfillmentTracking.push(track);
+    });
+    return fulfillmentTracking;
+}
+
+/**
  * INFO: get order details by id
  * @param {String} orderId 
  * @returns 
@@ -166,6 +204,13 @@ const getOrderById = async (orderId) => {
             let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId })
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
+            const uniqueItems = getUniqueItems(items);
+            const fulfillmentTracking = getFulfillmentTacking(uniqueItems,fulfillmentHistory);
+
+            fulfillmentTracking?.forEach((item) => {
+                console.log(item);
+            });
+            order[0].fulfillmentTracking = fulfillmentTracking;
             return order;
         }
     }
