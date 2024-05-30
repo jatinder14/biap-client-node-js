@@ -590,7 +590,7 @@ class UpdateOrderService {
                         type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds:getItemsIdsDataForFulfillment(latestFullfilement)
+                        itemIds:getItemsIdsDataForFulfillment(latestFullfilement, dbResponse)
                     })
 
                     dbResponse.save()
@@ -789,7 +789,7 @@ class UpdateOrderService {
                                 state: fl.state.descriptor.code
                             })
                             if (!existingFulfillment || existingFulfillment!=='null') {
-                                const itemIdsData = getItemsIdsDataForFulfillment(fl);
+                                const itemIdsData = getItemsIdsDataForFulfillment(fl, orderSchema);
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,

@@ -17,8 +17,8 @@ const createNewFullfilmentObject = (
       incomingFulfillment.type == fullfillment.type
   });
   lokiLogger.info(`fullfilmentExist---------, ${JSON.stringify(fullfilmentExist)}`)
-  if (fullfilmentExist.length===0 && [ORDER_TYPE.CANCEL,ORDER_TYPE.RETURN].includes(incomingFulfillment?.type?.toLowerCase())) {
-    const itemsIdData = getItemsIdsDataForFulfillment(incomingFulfillment,orderData);
+  if (fullfilmentExist.length === 0 && [ORDER_TYPE.CANCEL, ORDER_TYPE.RETURN].includes(incomingFulfillment?.type?.toLowerCase())) {
+    const itemsIdData = getItemsIdsDataForFulfillment(incomingFulfillment, orderData);
     lokiLogger.info(`itemsIdData---------, ${JSON.stringify(itemsIdData)}`)
     newfullfilment = new FulfillmentHistory({
       id: incomingFulfillment.id,
@@ -32,7 +32,7 @@ const createNewFullfilmentObject = (
   return newfullfilment;
 };
 
-const getItemsIdsDataForFulfillment = (incomingFulfillment,orderData)=>{
+const getItemsIdsDataForFulfillment = (incomingFulfillment, orderData) => {
   const quoteTrailIndex = incomingFulfillment.tags?.findIndex(
     (tag) => tag.code === "quote_trail"
   );

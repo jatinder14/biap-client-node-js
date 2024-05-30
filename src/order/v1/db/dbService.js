@@ -31,8 +31,8 @@ const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, provi
     return await OrderMongooseModel.findOneAndUpdate(
         {
             transactionId: transactionId,
-            "provider.id": providerId       
-        
+            "provider.id": providerId
+
         },
         {
             ...orderSchema
@@ -85,7 +85,7 @@ const addOrUpdateOrderWithdOrderId = async (orderId, orderSchema = {}) => {
  * @param {String} transactionId 
  * @returns 
  */
-const getOrderByIdAndTransactionId = async (transactionId,orderId) => {
+const getOrderByIdAndTransactionId = async (transactionId, orderId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
         id: orderId,
@@ -139,9 +139,10 @@ const getOrderByTransactionAndOrderId = async (transactionId, orderId) => {
 const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId,
-        "provider.id": providerId    });
+        "provider.id": providerId
+    });
 
-        if (!(order || order.length))
+    if (!(order || order.length))
         throw new NoRecordFoundError();
     else
         return order?.[0];
@@ -170,19 +171,20 @@ const getUniqueItems = (items) => {
  */
 const getFulfillmentTacking = (uniqueItems, fulfillmentHistory) => {
     const fulfillmentTracking = [];
-    uniqueItems?.forEach((item) => {
+    for (let item of uniqueItems) {
         let track = { item_id: item, tracking: [] };
-        fulfillmentHistory?.forEach((history) => {
-            if (
-                (history && history?.itemIds && history?.itemIds?.[item]) ||
-                Object.keys(history?.itemIds).length == 0
-            ) {
-                track.tracking.push(history);
+        const tracking = []
+        for (let history of fulfillmentHistory) {
+            if ((["Cancel", "Return"].includes(history.type) || history.state == "Cancelled") && history?.itemIds?.hasOwnProperty(item)) {
+                tracking.push(history);
+            } else if (!(["Cancel", "Return"].includes(history.type) || history.state == "Cancelled")) {
+                tracking.push(history);
             }
-        });
+        }
+        track.tracking = tracking
         fulfillmentTracking.push(track);
-    });
-    return fulfillmentTracking;
+    }
+    return fulfillmentTracking
 }
 
 /**
@@ -204,12 +206,8 @@ const getOrderById = async (orderId) => {
             let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId })
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
-            const uniqueItems = getUniqueItems(items);
-            const fulfillmentTracking = getFulfillmentTacking(uniqueItems,fulfillmentHistory);
-
-            fulfillmentTracking?.forEach((item) => {
-                console.log(item);
-            });
+            const uniqueItems = getUniqueItems(order[0].items);
+            const fulfillmentTracking = getFulfillmentTacking(uniqueItems, fulfillmentHistory);
             order[0].fulfillmentTracking = fulfillmentTracking;
             return order;
         }
@@ -262,7 +260,7 @@ const getOrderRequestLatestFirst = async (data) => {
 };
 
 const getTotalOrderedItemsCount = async (orderId) => {
-    const totalItemsCountData = await  OrderMongooseModel.aggregate([
+    const totalItemsCountData = await OrderMongooseModel.aggregate([
         {
             $match: { id: orderId },
         },
@@ -276,12 +274,12 @@ const getTotalOrderedItemsCount = async (orderId) => {
             },
         },
     ]);
-    return totalItemsCountData[0]?.totalCount; 
+    return totalItemsCountData[0]?.totalCount;
 }
 
 
- const getTotalItemsCountByAction = async (orderId,action) => {
-    const totalItemsCountByActionData  =  await FulfillmentHistory.aggregate(
+const getTotalItemsCountByAction = async (orderId, action) => {
+    const totalItemsCountByActionData = await FulfillmentHistory.aggregate(
         [
             {
                 $match: {
@@ -306,9 +304,9 @@ const getTotalOrderedItemsCount = async (orderId) => {
             {
                 $project: { _id: 0, totalQuantity: 1 }
             }
-        ]); 
+        ]);
 
-        return totalItemsCountByActionData[0]?.totalQuantity || 0 ;
+    return totalItemsCountByActionData[0]?.totalQuantity || 0;
 
 }
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId,addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount,getTotalItemsCountByAction,getOrderByTransactionAndOrderId };
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId };
