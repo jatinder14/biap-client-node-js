@@ -293,7 +293,7 @@ class OrderStatusController {
                         Notification.create({
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
-                            name:userName
+                            name:userName || ""
                              }).then(notification => {
                          console.log('Notification created:', notification);
                         }).catch(error => {
@@ -304,6 +304,7 @@ class OrderStatusController {
                             orderIds:orderId,
                             HTMLtemplate: "/template/orderDelivered.ejs", 
                             subject: "Order Confirmation | Your order has been successfully delivered",
+                            userName:userName || ""
                         });
                          const task = new CronJob('*/15 * * * * *', async () => {
                              await sendEmail({
