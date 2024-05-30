@@ -63,6 +63,7 @@ const getItemsIdsDataForFulfillment = (incomingFulfillment,orderData)=>{
     },
     { tempId: null, data: {} }
   );
+  lokiLogger.info(`cancelledItemData?.data--------------------, ${JSON.stringify(cancelledItemData?.data)}`)
   return cancelledItemData?.data || {};
 }
 

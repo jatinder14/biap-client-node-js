@@ -789,7 +789,8 @@ class UpdateOrderService {
                                 state: fl.state.descriptor.code
                             })
                             if (!existingFulfillment || existingFulfillment!=='null') {
-                                const itemIdsData = getItemsIdsDataForFulfillment(fl);
+                                const itemIdsData = getItemsIdsDataForFulfillment(fl,dbResponse);
+                                lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(itemIdsData)}`)
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
