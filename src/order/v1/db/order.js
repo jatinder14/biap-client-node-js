@@ -356,6 +356,7 @@ const OrderSchema = new mongoose.Schema(
         is_order_confirmed: { type: Boolean, default: false },
         is_settlement_sent: { type: Boolean, default: false },
         is_settlement_done: { type: Boolean, default: false },
+        is_settlement_receiver_verified: { type: Boolean },
         settlement_id: { type: String },
         settlement_reference_no: { type: String },
         order_recon_status: { type: String },
