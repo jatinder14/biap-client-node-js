@@ -2,7 +2,9 @@ import OrderStatusService from './orderStatus.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 import {sendEmail} from "../../../shared/mailer.js"
 import Notification from "../../v2/db/notification.js";
- 
+import { CronJob } from "cron";
+import OrderMongooseModel from '../../v1/db/order.js';
+
 const orderStatusService = new OrderStatusService();
 
 class OrderStatusController {
@@ -257,21 +259,32 @@ class OrderStatusController {
                         await sendEmail({
                             userEmails:emailWithoutNumber,
                             orderIds:orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
+                            HTMLtemplate: "/template/orderDelivered.ejs",
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-                        setTimeout(async () => {
-                            await sendEmail({
-                                userEmails:emailWithoutNumber,
-                            orderIds:orderId,
-                                HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
-                                userName: nameWithoutNumber || "",
-                                subject: "Order Feedback | Tell us about your experience",
-                            });
-                        }, 5000); // 15 seconds delay before sending the feedback email
+                         const task = new CronJob('*/15 * * * * *', async () => {
+                             await sendEmail({
+                                 userEmails: emailWithoutNumber,
+                                 orderIds: orderId,
+                                 HTMLtemplate: "/template/orderFeedback.ejs",
+                                 userName: nameWithoutNumber || "",
+                                 subject: "Order Feedback | Tell us about your experience",
+                             });
+                             const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
+                                 { 'id': orderId }, 
+                                 { $set: { 'feedback_send': true } },
+                                 { new: true }
+                             );
+
+                             if (updatedOrder.feedback_send === true) {
+                                 task.stop();
+                                 console.log("Cron job stopped");
+                             }
+                         });
+                    
+                        task.start();
     
-                        console.log("orders3",orders)
     
                         res.json(orders);
     
@@ -289,19 +302,31 @@ class OrderStatusController {
                         await sendEmail({
                             userEmails:userEmail,
                             orderIds:orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
-                            userName: userName || "",
+                            HTMLtemplate: "/template/orderDelivered.ejs", 
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-                        setTimeout(async () => {
-                            await sendEmail({
-                                userEmails:userEmail,
-                            orderIds:orderId,
-                                HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
-                                userName: userName || "",
-                                subject: "Order Feedback | Tell us about your experience",
-                            });
-                        }, 5000); // 15 seconds delay before sending the feedback email
+                         const task = new CronJob('*/15 * * * * *', async () => {
+                             await sendEmail({
+                                 userEmails: userEmail,
+                                 orderIds: orderId,
+                                 HTMLtemplate: "/template/orderFeedback.ejs",
+                                 userName: userName || "",
+                                 subject: "Order Feedback | Tell us about your experience",
+                             });
+                             const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
+                                 { 'id': orderId },
+                                 { $set: { 'feedback_send': true } },
+                                 { new: true }
+                             );
+
+                             if (updatedOrder.feedback_send === true) {
+                                 task.stop();
+                                 console.log("Cron job stopped");
+                             }
+                         });
+
+                         task.start();
+
     
     
                         res.json(orders);

@@ -6,6 +6,7 @@
     const user = process.env.EMAIL_ADDRESS;
     const pass = process.env.EMAIL_PASSWORD;
     const site_url=process.env.SITE_URL
+    const feedback_url=site_url+"/feedback"
     const profile_site_url=site_url+ "/application/profile"
 
     const transporter = nodemailer.createTransport({
@@ -44,7 +45,7 @@
                 const orderId = orderIds[i]; // Get the corresponding orderId
     
                 // Render the EJS template for each user
-                const html = ejs.render(template, { orderId, userName, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url });
+                const html = ejs.render(template, { orderId, userName, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url,feedback_url });
     
                 // Email options
                 const mailOptions = {
