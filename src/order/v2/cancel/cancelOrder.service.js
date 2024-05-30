@@ -167,8 +167,7 @@ class CancelOrderService {
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId, responseOrderData.id)
 
-          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
-          
+          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)        
           logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
 
           if (!(dbResponse || dbResponse.length))
@@ -218,8 +217,6 @@ class CancelOrderService {
 
             lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItems}`)
 
-
-
             if (totalItemsOrdered == totalCancelledItems) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
@@ -231,9 +228,7 @@ class CancelOrderService {
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
               }
-            })
-
-            
+            })       
 
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
