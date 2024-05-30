@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid";
 import { onOrderCancel, protocolUpdate } from "../../../utils/protocolApis/index.js";
 import {
   ORDER_STATUS,
@@ -294,7 +295,7 @@ class CancelOrderService {
                     }
                   }
                 }
-
+                console.log('cancel upodate updateRequest ------ :>> ', JSON.stringify(updateRequest));
                 let newSettlement = await Settlements();
                 newSettlement.orderId = orderId;
                 newSettlement.settlement = updateRequest;

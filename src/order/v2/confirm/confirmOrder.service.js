@@ -162,6 +162,7 @@ class ConfirmOrderService {
                 );
 
                 let orderSchema = { ...response?.message?.order };
+                orderSchema.payment.razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
                 orderSchema.messageId = response?.context?.message_id;
                 orderSchema.city = response?.context?.city;
                 orderSchema.billing = {
