@@ -1,5 +1,6 @@
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
 import { ORDER_TYPE } from "../../../utils/constants.js";
+import lokiLogger from "../../../utils/logger.js";
 
 const createNewFullfilmentObject = (
   incomingFulfillment,
@@ -15,8 +16,10 @@ const createNewFullfilmentObject = (
       fullfillment.state &&
       incomingFulfillment.type == fullfillment.type
   });
+  lokiLogger.info(`fullfilmentExist---------, ${JSON.stringify(fullfilmentExist)}`)
   if (fullfilmentExist.length===0 && [ORDER_TYPE.CANCEL,ORDER_TYPE.RETURN].includes(incomingFulfillment?.type?.toLowerCase())) {
     const itemsIdData = getItemsIdsDataForFulfillment(incomingFulfillment,orderData);
+    lokiLogger.info(`itemsIdData---------, ${JSON.stringify(itemsIdData)}`)
     newfullfilment = new FulfillmentHistory({
       id: incomingFulfillment.id,
       type: incomingFulfillment.type,
@@ -25,6 +28,7 @@ const createNewFullfilmentObject = (
       itemIds: itemsIdData,
     });
   }
+  lokiLogger.info(`newfullfilment--------------------, ${JSON.stringify(newfullfilment)}`)
   return newfullfilment;
 };
 
