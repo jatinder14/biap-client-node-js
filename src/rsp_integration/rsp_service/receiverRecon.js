@@ -9,7 +9,7 @@ import { ajv_validate } from "../../middlewares/validator.js";
 export const receiverRecon = async (payload) => {
   try {
     const { context, message } = payload
-    logger.info(`Called - receiverRecon: ====* ${JSON.stringify(req.body)}`);
+    logger.info(`Called - receiverRecon: ====* ${JSON.stringify(payload)}`);
     const buyerOrderId = message?.orderbook?.orders?.map(el => el.id)
     const ordersArray = await OrderMongooseModel.find({ id: { "$in": buyerOrderId } }).lean().exec()
 

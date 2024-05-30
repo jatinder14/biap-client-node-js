@@ -5,7 +5,7 @@ const isRedisEnabled = process.env.REDIS_SERVICE_ENABLED === "true";
 
 export const schedulerEachDay = () => {
   new CronJob(
-    "*/2 * * * *",
+    "*/10 * * * *",
     async () => {
       logger.info(`*=== Inside schedulerEachDay ====*`);
       await initiateRsp();
