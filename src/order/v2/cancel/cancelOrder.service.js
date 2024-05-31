@@ -136,7 +136,7 @@ class CancelOrderService {
     try {
       await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
       let protocolCancelResponse = await onOrderCancel(messageId);
-      lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
+       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
@@ -226,8 +226,8 @@ class CancelOrderService {
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
 
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount+incomingItemQuoteTrailData[ORDER_TYPE.CANCEL].totalCancelledItems}`)
-            if (totalItemsOrderedCount == (totalCancelledItemsCount + incomingItemQuoteTrailData[ORDER_TYPE.CANCEL].totalCancelledItems)) {
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems}`)
+            if (totalItemsOrderedCount == (totalCancelledItemsCount + incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems)) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
 
