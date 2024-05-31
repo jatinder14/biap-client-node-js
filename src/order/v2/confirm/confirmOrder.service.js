@@ -193,14 +193,15 @@ class ConfirmOrderService {
                         orderId: orderSchema.id
                     })
                     if (!existingFulfillment) {
-                        const itemIdsData = getItemsIdsDataForFulfillment(fulfillment, orderSchema);
+                        let incomingItemQuoteTrailData = {};
+                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment,orderSchema,incomingItemQuoteTrailData);
                         await FulfillmentHistory.create({
                             orderId: orderSchema.id,
                             type: fulfillment.type,
                             id: fulfillment.id,
                             state: fulfillment.state.descriptor.code,
-                            updatedAt: new Date(),
-                            itemIds:itemIdsData
+                            updatedAt: orderSchema.toString(),
+                            itemIds:currentfulfillmentHistoryData
                         })
                     }
                 }

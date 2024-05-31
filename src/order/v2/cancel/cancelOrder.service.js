@@ -4,6 +4,7 @@ import {
   ORDER_STATUS,
   PROTOCOL_CONTEXT,
   SETTLE_STATUS,
+  ORDER_TYPE
 } from "../../../utils/constants.js";
 import RazorPayService from "../../../razorPay/razorPay.service.js";
 import {
@@ -25,9 +26,7 @@ import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
-import { createNewFullfilmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
-
-
+import { createNewFullfillmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 const bppCancelService = new BppCancelService();
@@ -137,7 +136,7 @@ class CancelOrderService {
     try {
       await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
       let protocolCancelResponse = await onOrderCancel(messageId);
-      lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
+       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
@@ -208,25 +207,26 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
-            const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
-            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
+            const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
+            const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
-            lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrdered}`)
-
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItems}`)
-
-            if (totalItemsOrdered == totalCancelledItems) {
-              orderSchema.state = protocolCancelResponse?.message?.order?.state
-            }
-
+            
+            let incomingItemQuoteTrailData = {};
             const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
             protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
-              const newfullfilmentObject = createNewFullfilmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id)
+              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id,incomingItemQuoteTrailData)
               lokiLogger.info(`newfullfilmentObject-----------, ${JSON.stringify(newfullfilmentObject)}`)
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
               }
             })       
+
+            lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
+
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems}`)
+            if (totalItemsOrderedCount == (totalCancelledItemsCount + incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems)) {
+              orderSchema.state = protocolCancelResponse?.message?.order?.state
+            }
 
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==
