@@ -781,14 +781,16 @@ class UpdateOrderService {
                                 state: fl.state.descriptor.code
                             })
                             if (!existingFulfillment || existingFulfillment!=='null') {
-                                const itemIdsData = getItemsIdsDataForFulfillment(fl, orderSchema);
+                                let incomingItemQuoteTrailData = {};
+                                const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl,dbResponse,incomingItemQuoteTrailData);
+                                lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(itemIdsData)}`)
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
                                     id: fl.id,
                                     state: fl.state.descriptor.code,
-                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at?.toString(),
-                                    itemIds:itemIdsData
+                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at || new Date(),
+                                    itemIds:currentfulfillmentHistoryData
                                 })
                             }
                             // }
