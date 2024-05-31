@@ -13,6 +13,16 @@ export async function emailCronJob(
 
   const task = new CronJob("*/15 * * * * *", async () => {
     try {
+      const order = await OrderMongooseModel.findOne({id: orderId})
+      console.log('order', order)
+      console.log('order.feedback_send', order.feedback_send)
+      if (!order) {
+        throw new Error(`Order with id ${orderId} not found`);
+      }
+     if(order.feedback_send){
+       task.stop()
+     }
+     else{
       await sendEmail({
         userEmails,
         orderIds: orderId,
@@ -20,17 +30,13 @@ export async function emailCronJob(
         userName,
         subject,
       });
-
       const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
         { id: orderId },
         { $set: { feedback_send: true } },
         { new: true }
       );
 
-      if (updatedOrder && updatedOrder.feedback_send === true) {
-        task.stop();
-        console.log("Cron job stopped");
-      }
+     }
     } catch (error) {
       console.error("Error in cron job:", error);
     }
