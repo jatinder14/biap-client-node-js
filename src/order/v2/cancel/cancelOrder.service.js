@@ -20,14 +20,12 @@ import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
-import fulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
-import FulfillmentHistory from "../db/fulfillmentHistory.js";
-import { createNewFullfillmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
+import { createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 const bppCancelService = new BppCancelService();
@@ -58,12 +56,11 @@ class CancelOrderService {
           domain: orderDetails[0].domain,
         });
 
-        let newOrder = Order.findOneAndUpdate(
+        let newOrder = OrderMongooseModel.findOneAndUpdate(
           { id: orderRequest.message.order_id },
           { $set: { payment_origin_source: orderRequest?.message?.payment_origin_source, payment_return_destination: orderRequest?.message?.payment_return_destination } },
           { upsert: true, new: true }
         );
-        lokiLogger.info(`----------------------------newOrder-----------------${JSON.stringify(newOrder)}`);
         const { message = {} } = orderRequest || {};
         const { order_id, cancellation_reason_id } = message || {};
 
@@ -178,7 +175,7 @@ class CancelOrderService {
             throw new NoRecordFoundError();
           else {
             let order_details = dbResponse[0];
-            let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({id: latest_fulfillment?.id });
+            let checkFulfillmentAlreadyExist = await getFulfillmentById(latest_fulfillment?.id);
             lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
             if (!checkFulfillmentAlreadyExist) {
@@ -220,9 +217,9 @@ class CancelOrderService {
 
             
             let incomingItemQuoteTrailData = {};
-            const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            const fullfillmentHistoryData = await getFulfillmentByOrderId(orderSchema.id)
             protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
-              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id,incomingItemQuoteTrailData)
+              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, protocolCancelResponse?.message?.order?.items, responseOrderData.id,incomingItemQuoteTrailData)
               lokiLogger.info(`newfullfilmentObject-----------, ${JSON.stringify(newfullfilmentObject)}`)
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
