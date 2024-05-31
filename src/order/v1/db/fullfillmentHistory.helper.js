@@ -90,6 +90,7 @@ const addFulfillmentType = (type, incomingItemQuoteTrailData) => {
 };
 
 const extractCancelledItemData = (incomingFulfillment, quoteTrailIndex, orderData, incomingItemQuoteTrailData, fulfillmentType) => {
+  const incomingFulfillmentId = incomingFulfillment.id;
   return incomingFulfillment?.tags?.[quoteTrailIndex]?.list.reduce((acc, curr) => {
     switch (curr.code.toLowerCase()) {
       case "id":
@@ -99,7 +100,7 @@ const extractCancelledItemData = (incomingFulfillment, quoteTrailIndex, orderDat
         processQuantity(acc, curr, incomingItemQuoteTrailData, fulfillmentType);
         break;
       case "value":
-        processValue(acc, curr, orderData, incomingItemQuoteTrailData, fulfillmentType);
+        processValue(acc, curr, orderData, incomingItemQuoteTrailData, fulfillmentType,incomingFulfillmentId);
         break;
     }
     return acc;
@@ -121,14 +122,16 @@ const processQuantity = (acc, curr, incomingItemQuoteTrailData, fulfillmentType)
   }
 };
 
-const processValue = (acc, curr, orderData, incomingItemQuoteTrailData, fulfillmentType) => {
+const processValue = (acc, curr, orderData, incomingItemQuoteTrailData, fulfillmentType,incomingFulfillmentId) => {
   const { tempId } = acc;
   acc.data[tempId].value = Math.abs(curr.value);
   let itemIndex;
 
   if (tempId && acc.data[tempId].quantity === 0) {
-    itemIndex = orderData?.items?.findIndex(item => item.id === tempId);
-    acc.data[tempId].quantity = orderData?.items[itemIndex]?.quantity?.count;
+    itemIndex = orderData?.items?.findIndex((item) => {
+      return item.id === tempId && item.fulfillment_id === incomingFulfillmentId;
+    });
+    acc.data[tempId].quantity = orderData?.items[itemIndex]?.quantity?.count || 0 ;
   }
 
   if (incomingItemQuoteTrailData[fulfillmentType].data[tempId]) {
