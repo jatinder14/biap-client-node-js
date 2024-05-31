@@ -641,18 +641,7 @@ class UpdateOrderService {
                     let refundAmount = 0;
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
-                    let currentfulfillment = fulfillments.length
-                        && fulfillments.find(
-                            (el) =>
-                                el?.state?.descriptor?.code === "Cancelled" ||
-                                el?.state?.descriptor?.code === "Liquidated" ||
-                                el?.state?.descriptor?.code === "Return_Picked",
-                        )
-
-                    let latest_fulfillment = currentfulfillment ? currentfulfillment
-                        : fulfillments[
-                        fulfillments.length - 1
-                        ];
+                    let latest_fulfillment = fulfillments[fulfillments.length - 1];
                     if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked") 
                         refundAmount = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);    
                     else if (latest_fulfillment?.state?.descriptor?.code == "Cancelled")
@@ -670,63 +659,66 @@ class UpdateOrderService {
                         throw new NoRecordFoundError();
                     else {
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
+                        let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({id: latest_fulfillment?.id });
+                        lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
                         lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
                         lokiLogger.info(`totalAmount_onUpdate-----, ${refundAmount}`)
+                        if (!checkFulfillmentAlreadyExist) {
+                            if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked" || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
+                                let return_item_count = 0, left_order_item_count = 0;
 
-                        if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked" || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
-                            let return_item_count = 0,left_order_item_count = 0;
+                                if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked") {
+                                    let data = latest_fulfillment.tags?.find(
+                                        (el) => el?.code == "return_request",
+                                    );
+                                    let fulfillment_id = data?.list?.find((el) => el?.code == "id")?.value;
+                                    let item_id = data?.list?.find((el) => el?.code == "item_id")?.value;
+                                    return_item_count = data?.list?.find(
+                                        (el) => el?.code == "item_quantity",
+                                    )?.value;
+                                    let items = protocolUpdateResponse?.message?.order?.items;
+                                    left_order_item_count =
+                                        items?.find(
+                                            (el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id,
+                                        )?.quantity?.count +
+                                        items?.find(
+                                            (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
+                                        )?.quantity?.count;
+                                }
+                                if (return_item_count <= left_order_item_count || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
+                                    if (razorpayPaymentId && refundAmount) {
+                                        let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
+                                        lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
+                                        let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                                        lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
+                                        let order_details = dbResponse;
+                                        const refundDetails = await Refund.create({
+                                            orderId: order_details?.id,
+                                            refundId: response?.id,
+                                            refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                                            // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
+                                            // itemQty: dbResponse.items[0].quantity.count,
+                                            isRefunded: true,
+                                            transationId: order_details?.transactionId,
+                                            razorpayPaymentId: order_details?.payment?.razorpayPaymentId
+                                        })
+                                        await sendEmail({
+                                            userEmails: order_details?.billing?.email,
+                                            orderIds: order_details?.id,
+                                            HTMLtemplate: "/template/refund.ejs",
+                                            userName: order_details?.billing?.name || "",
+                                            subject: "Refund Processed | Your Refund has been Processed to Your account",
+                                            itemName: order_details?.billing?.email,
+                                            itemPrice: razorpayRefundAmount / 100,
+                                        });
 
-                            if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked") {
-                                let data = latest_fulfillment.tags?.find(
-                                    (el) => el?.code == "return_request",
-                                );
-                                let fulfillment_id = data?.list?.find((el) => el?.code == "id")?.value;
-                                let item_id = data?.list?.find((el) => el?.code == "item_id")?.value;
-                                return_item_count = data?.list?.find(
-                                    (el) => el?.code == "item_quantity",
-                                )?.value;
-                                let items = protocolUpdateResponse?.message?.order?.items;
-                                 left_order_item_count =
-                                    items?.find(
-                                        (el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id,
-                                    )?.quantity?.count +
-                                    items?.find(
-                                        (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
-                                    )?.quantity?.count;
-                            }
-                            if ( return_item_count <= left_order_item_count || latest_fulfillment?.state?.descriptor?.code == "Cancelled" ) {
-                                if (razorpayPaymentId && refundAmount) {
-                                    let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
-                                    lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
-                                    let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
-                                    lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
-                                    let order_details = dbResponse;
-                                    const refundDetails = await Refund.create({
-                                        orderId: order_details?.id,
-                                        refundId: response?.id,
-                                        refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
-                                        // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
-                                        // itemQty: dbResponse.items[0].quantity.count,
-                                        isRefunded: true,
-                                        transationId: order_details?.transactionId,
-                                        razorpayPaymentId: order_details?.payment?.razorpayPaymentId
-                                    })
-                                    await sendEmail({
-                                        userEmails: order_details?.billing?.email,
-                                        orderIds:order_details?.id,
-                                        HTMLtemplate: "/template/refund.ejs",
-                                        userName: order_details?.billing?.name || "",
-                                        subject: "Refund Processed | Your Refund has been Processed to Your account",
-                                        itemName: order_details?.billing?.email,
-                                        itemPrice: razorpayRefundAmount,
-                                      });
-                      
-                                    lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
+                                        lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
 
+                                    }
                                 }
                             }
-                        }
+}
 
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;

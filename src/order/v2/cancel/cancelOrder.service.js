@@ -26,6 +26,7 @@ import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
 import { createNewFullfilmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
+import FulfillmentHistory from "../db/fulfillmentHistory.js";
 
 
 
@@ -58,8 +59,12 @@ class CancelOrderService {
           domain: orderDetails[0].domain,
         });
 
-        let fulfillmentId = orderDetails[0].items[0].fulfillment_id;
-
+        let newOrder = Order.findOneAndUpdate(
+          { id: orderRequest.message.order_id },
+          { $set: { payment_origin_source: orderRequest?.message?.payment_origin_source, payment_return_destination: orderRequest?.message?.payment_return_destination } },
+          { upsert: true, new: true }
+        );
+        lokiLogger.info(`----------------------------newOrder-----------------${JSON.stringify(newOrder)}`);
         const { message = {} } = orderRequest || {};
         const { order_id, cancellation_reason_id } = message || {};
 
@@ -71,7 +76,6 @@ class CancelOrderService {
           context,
           order_id,
           cancellation_reason_id,
-          fulfillmentId
         )
       }
 
@@ -175,36 +179,40 @@ class CancelOrderService {
             throw new NoRecordFoundError();
           else {
             let order_details = dbResponse[0];
+            let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({id: latest_fulfillment?.id });
+            lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
-            if (latest_fulfillment || latest_fulfillment?.type == "Cancel") {
-              let newOrderdetails = order_details
-              if (razorpayPaymentId && refundAmount) {
-                let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
-                lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
+            if (!checkFulfillmentAlreadyExist) {
+              if (latest_fulfillment || latest_fulfillment?.type == "Cancel") {
+                let newOrderdetails = order_details
+                if (razorpayPaymentId && refundAmount) {
+                  let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
+                  lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
 
-                let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                  let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
 
-                lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
-                let order_details = dbResponse[0];
-                const refundDetails = await Refund.create({
-                  orderId: order_details?.id,
-                  refundId: response?.id,
-                  refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
-                  isRefunded: true,
-                  transationId: order_details?.transactionId,
-                  razorpayPaymentId: order_details?.payment?.razorpayPaymentId
-                })
-                await sendEmail({
-                  userEmails: newOrderdetails?.billing?.email,
-                  orderIds: newOrderdetails?.id,
-                  HTMLtemplate: "/template/refund.ejs",
-                  userName: newOrderdetails?.billing?.name || "",
-                  subject: "Refund Processed | Your Refund has been Processed to Your account",
-                  itemName: newOrderdetails?.billing?.email,
-                  itemPrice: razorpayRefundAmount,
-                });
+                  lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
+                  let order_details = dbResponse[0];
+                  const refundDetails = await Refund.create({
+                    orderId: order_details?.id,
+                    refundId: response?.id,
+                    refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                    isRefunded: true,
+                    transationId: order_details?.transactionId,
+                    razorpayPaymentId: order_details?.payment?.razorpayPaymentId
+                  })
+                  await sendEmail({
+                    userEmails: newOrderdetails?.billing?.email,
+                    orderIds: newOrderdetails?.id,
+                    HTMLtemplate: "/template/refund.ejs",
+                    userName: newOrderdetails?.billing?.name || "",
+                    subject: "Refund Processed | Your Refund has been Processed to Your account",
+                    itemName: newOrderdetails?.billing?.email,
+                    itemPrice: razorpayRefundAmount,
+                  });
 
-                lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
+                  lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
+                }
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
