@@ -154,12 +154,21 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
  * @returns 
  */
 const getUniqueItems = (items) => {
-    const uniqueItems = [];
-    items.forEach((item) => {
-        if (item?.id && !uniqueItems.includes(item.id)) {
-            uniqueItems.push(item.id);
+    const uniqueItems = items.reduce((acc, item) => {
+        let existingItem = acc.find(entry => entry.id === item.id);
+        
+        if (existingItem) {
+            existingItem.quantity.count += item.quantity.count;
+        } else {
+            acc.push({
+                id: item.id,
+                quantity: { count: item.quantity.count },
+                product: item.product
+            });
         }
-    });
+        
+        return acc;
+    }, []);
     return uniqueItems;
 }
 
@@ -172,10 +181,10 @@ const getUniqueItems = (items) => {
 const getFulfillmentTacking = (uniqueItems, fulfillmentHistory) => {
     const fulfillmentTracking = [];
     for (let item of uniqueItems) {
-        let track = { item_id: item, tracking: [] };
+        let track = { item_id: item.id, item_details: item, tracking: [] };
         const tracking = []
         for (let history of fulfillmentHistory) {
-            if ((["Cancel", "Return"].includes(history.type) || history.state == "Cancelled") && history?.itemIds?.hasOwnProperty(item)) {
+            if ((["Cancel", "Return"].includes(history.type) || history.state == "Cancelled") && history?.itemIds?.hasOwnProperty(item.id)) {
                 tracking.push(history);
             } else if (!(["Cancel", "Return"].includes(history.type) || history.state == "Cancelled")) {
                 tracking.push(history);

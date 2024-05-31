@@ -19,6 +19,7 @@ import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import Refund from "../db/refund.js";
 import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
+import { sendEmail } from "../../../shared/mailer.js";
 
 const bppUpdateService = new BppUpdateService();
 const razorPayService = new RazorPayService()
@@ -783,7 +784,7 @@ class UpdateOrderService {
                             if (!existingFulfillment || existingFulfillment!=='null') {
                                 let incomingItemQuoteTrailData = {};
                                 const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl,dbResponse,incomingItemQuoteTrailData);
-                                lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(itemIdsData)}`)
+                                lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(currentfulfillmentHistoryData)}`)
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
                                     type: fl.type,
