@@ -39,9 +39,9 @@ class OrderStatusService {
                 transactionId: orderDetails[0]?.transactionId,
                 bppId: requestContext?.bpp_id,
                 bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0].city,
-                city: orderDetails[0].city,
-                domain:orderDetails[0].domain
+                cityCode: orderDetails[0]?.city,
+                city: orderDetails[0]?.city,
+                domain:orderDetails[0]?.domain
             });
 
             return await bppOrderStatusService.getOrderStatus(
@@ -251,7 +251,7 @@ class OrderStatusService {
                                     await OrderHistory.create({
                                         orderId:onOrderStatusResponse.message.order.id,
                                         state:onOrderStatusResponse.message.order.state,
-                                        updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
+                                        updatedAt:onOrderStatusResponse.message.order.updated_at
                                     })
                                 }
                                 let updateItems = []

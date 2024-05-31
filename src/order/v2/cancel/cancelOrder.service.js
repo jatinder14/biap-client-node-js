@@ -183,17 +183,6 @@ class CancelOrderService {
 
                 let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
 
-                await sendEmail({
-                  userEmails: newOrderdetails?.billing?.email,
-                  orderIds: newOrderdetails?.id,
-                  HTMLtemplate: "/template/refund.ejs",
-                  userName: newOrderdetails?.billing?.name || "",
-                  subject: "Refund Processed | Your Refund has been Processed to Your account",
-                  itemName: newOrderdetails?.billing?.email,
-                  itemPrice: razorpayRefundAmount,
-                });
-
-                res.json(orders);
                 lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
                 let order_details = dbResponse[0];
                 const refundDetails = await Refund.create({
@@ -204,9 +193,17 @@ class CancelOrderService {
                   transationId: order_details?.transactionId,
                   razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                 })
+                await sendEmail({
+                  userEmails: newOrderdetails?.billing?.email,
+                  orderIds: newOrderdetails?.id,
+                  HTMLtemplate: "/template/refund.ejs",
+                  userName: newOrderdetails?.billing?.name || "",
+                  subject: "Refund Processed | Your Refund has been Processed to Your account",
+                  itemName: newOrderdetails?.billing?.email,
+                  itemPrice: razorpayRefundAmount,
+                });
+
                 lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
-
-
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();

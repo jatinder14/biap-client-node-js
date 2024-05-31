@@ -590,7 +590,7 @@ class UpdateOrderService {
                         type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds:getItemsIdsDataForFulfillment(latestFullfilement)
+                        itemIds:getItemsIdsDataForFulfillment(latestFullfilement, dbResponse)
                     })
 
                     dbResponse.save()

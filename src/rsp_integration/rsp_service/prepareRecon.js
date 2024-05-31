@@ -54,7 +54,7 @@ export const initiateRsp = async () => {
         return el;
       }
     });
-
+    orderDetails = orderDetails.slice(0, 5) // Need to remove it in future as its for logs only
     const prepare_payload = await Promise.all(
       orderDetails.map(async (el) => {
         let protocolConfirmResponse = await onOrderConfirm(el.messageId);
