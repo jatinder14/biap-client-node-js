@@ -238,7 +238,7 @@ class OrderStatusService {
                                                 type:fulfillment.type,
                                                 id:fulfillment.id,
                                                 state:fulfillment.state.descriptor.code,
-                                                updatedAt:onOrderStatusResponse.message.order.updated_at.toString(),
+                                                updatedAt:onOrderStatusResponse.message.order?.updated_at || new Date(),
                                                 itemIds:currentfulfillmentHistoryData
                                             })
                                         }

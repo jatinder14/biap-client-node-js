@@ -797,7 +797,7 @@ class UpdateOrderService {
                                     type: fl.type,
                                     id: fl.id,
                                     state: fl.state.descriptor.code,
-                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at?.toString(),
+                                    updatedAt: protocolUpdateResponse?.message?.order?.updated_at || new Date(),
                                     itemIds:currentfulfillmentHistoryData
                                 })
                             }

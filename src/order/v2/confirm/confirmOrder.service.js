@@ -200,7 +200,7 @@ class ConfirmOrderService {
                             type: fulfillment.type,
                             id: fulfillment.id,
                             state: fulfillment.state.descriptor.code,
-                            updatedAt: orderSchema.toString(),
+                            updatedAt: new Date(),
                             itemIds:currentfulfillmentHistoryData
                         })
                     }
