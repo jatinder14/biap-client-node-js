@@ -328,6 +328,8 @@ const PaymentSchema = mongoose.Schema(
 const OrderSchema = new mongoose.Schema(
     {
         provider: { type: ProviderSchema },
+        payment_origin_source: { type: String },
+        payment_return_destination: { type: String },
         customer: { type: CustomerSchema },
         items: { type: [ItemsSchema] },
         addOns: { type: [AddOnsSchema] },
