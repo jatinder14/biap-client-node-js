@@ -202,8 +202,8 @@ const getOrderById = async (orderId) => {
             throw new NoRecordFoundError();
         else {
             // order = order.toJSON();
-            let orderHistory = await OrderHistory.find({ orderId: orderId })
-            let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId })
+            let orderHistory = await OrderHistory.find({ orderId: orderId }).lean().exec()
+            let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId }).lean().exec()
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
             const uniqueItems = getUniqueItems(order[0].items);
