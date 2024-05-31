@@ -128,7 +128,7 @@ const processValue = (acc, curr, orderData, incomingItemQuoteTrailData, fulfillm
   let itemIndex = {};
 
   if (tempId && acc.data[tempId].quantity === 0) {
-    itemIndex = orderData?.find((item) => {
+    itemIndex = orderData?.items?.find((item) => {
       return item.id === tempId && item.fulfillment_id === incomingFulfillmentId;
     });
     acc.data[tempId].quantity = itemIndex?.quantity?.count || 0 ;

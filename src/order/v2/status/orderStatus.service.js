@@ -224,24 +224,24 @@ class OrderStatusService {
                             //         updateItems.push(item)
                             // }
 
-                                for(let fulfillment of onOrderStatusResponse.message?.order?.fulfillments){
-                                        let existingFulfillment  =await FulfillmentHistory.findOne({
-                                            id:fulfillment.id,
-                                            state:fulfillment.state.descriptor.code,
-                                            orderId:onOrderStatusResponse.message.order.id
+                                for (let fulfillment of onOrderStatusResponse.message?.order?.fulfillments) {
+                                    let existingFulfillment = await FulfillmentHistory.findOne({
+                                        id: fulfillment.id,
+                                        state: fulfillment.state.descriptor.code,
+                                        orderId: onOrderStatusResponse?.message?.order?.id
+                                    }).lean().exec()
+                                    if (!existingFulfillment?.id) {
+                                        let incomingItemQuoteTrailData = {};
+                                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment, orderSchema, incomingItemQuoteTrailData);
+                                        await FulfillmentHistory.create({
+                                            orderId: onOrderStatusResponse.message.order.id,
+                                            type: fulfillment.type,
+                                            id: fulfillment.id,
+                                            state: fulfillment.state.descriptor.code,
+                                            updatedAt: onOrderStatusResponse.message.order?.updated_at || new Date(),
+                                            itemIds: currentfulfillmentHistoryData
                                         })
-                                        if(!existingFulfillment){
-                                            let incomingItemQuoteTrailData = {};
-                                            const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment,orderSchema,incomingItemQuoteTrailData);
-                                            await FulfillmentHistory.create({
-                                                orderId:onOrderStatusResponse.message.order.id,
-                                                type:fulfillment.type,
-                                                id:fulfillment.id,
-                                                state:fulfillment.state.descriptor.code,
-                                                updatedAt:onOrderStatusResponse.message.order?.updated_at || new Date(),
-                                                itemIds:currentfulfillmentHistoryData
-                                            })
-                                        }
+                                    }
                                 }
                                 let orderHistory = await OrderHistory.findOne({
                                     orderId:onOrderStatusResponse.message.order.id,

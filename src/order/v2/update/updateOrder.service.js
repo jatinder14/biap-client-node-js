@@ -485,14 +485,8 @@ class UpdateOrderService {
         if (obj) {
             let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments;
-            let latest_fulfillment = fulfillments.length
-                ? fulfillments.find(
-                    (el) => el?.state?.descriptor?.code === "Cancelled",
-                )
-                : {};
-            console.log(
-                `latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`,
-            );
+            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
+            console.log(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Cancelled") {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
@@ -779,9 +773,10 @@ class UpdateOrderService {
                             // if(fulfillment.type==='Delivery'){
                             let existingFulfillment = await FulfillmentHistory.findOne({
                                 id: fl.id,
-                                state: fl.state.descriptor.code
+                                state: fl.state.descriptor.code,
+                                orderId: protocolUpdateResponse?.message?.order.id
                             })
-                            if (!existingFulfillment || existingFulfillment!=='null') {
+                            if (!existingFulfillment?.id) {
                                 let incomingItemQuoteTrailData = {};
                                 const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl,dbResponse,incomingItemQuoteTrailData);
                                 lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(currentfulfillmentHistoryData)}`)

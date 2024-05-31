@@ -219,7 +219,7 @@ class CancelOrderService {
             let incomingItemQuoteTrailData = {};
             const fullfillmentHistoryData = await getFulfillmentByOrderId(orderSchema.id)
             protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
-              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, protocolCancelResponse?.message?.order?.items, responseOrderData.id,incomingItemQuoteTrailData)
+              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, protocolCancelResponse?.message?.order, responseOrderData.id,incomingItemQuoteTrailData)
               lokiLogger.info(`newfullfilmentObject-----------, ${JSON.stringify(newfullfilmentObject)}`)
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
