@@ -39,9 +39,9 @@ class OrderStatusService {
                 transactionId: orderDetails[0]?.transactionId,
                 bppId: requestContext?.bpp_id,
                 bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0].city,
-                city: orderDetails[0].city,
-                domain:orderDetails[0].domain
+                cityCode: orderDetails[0]?.city,
+                city: orderDetails[0]?.city,
+                domain:orderDetails[0]?.domain
             });
 
             return await bppOrderStatusService.getOrderStatus(
@@ -231,7 +231,7 @@ class OrderStatusService {
                                             orderId:onOrderStatusResponse.message.order.id
                                         })
                                         if(!existingFulfillment){
-                                            const itemIdsData = getItemsIdsDataForFulfillment(fulfillment);
+                                            const itemIdsData = getItemsIdsDataForFulfillment(fulfillment, orderSchema);
                                             await FulfillmentHistory.create({
                                                 orderId:onOrderStatusResponse.message.order.id,
                                                 type:fulfillment.type,

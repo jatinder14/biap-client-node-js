@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const preparedCollectorReconSchema = new Schema({
   recon_id: { type: String },
-  status: { type: Boolean },
+  status: { type: String },
   is_settlement_sent: { type: Boolean, default: false },
   collector_recon: { type: mongoose.Schema.Types.Mixed },
 });

@@ -1,10 +1,12 @@
-import { logger } from "../../shared/logger"
+import logger from "../../utils/logger.js";
 
 const onRecieverRecon = async (payload) => {
   try {
     const { reconData, priceDifference } = payload
     reconData.context.action = "on_receiver_recon"
-    reconData.context.timestamp = new Date().toISOString()
+    let currentDate = new Date();
+    currentDate.setSeconds(currentDate.getSeconds() - 5);
+    reconData.context.timestamp = currentDate
     const orders = reconData.message.orderbook.orders.map(reconItem => {
       let message = {
         name: "Equal amount",
