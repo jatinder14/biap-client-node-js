@@ -211,8 +211,8 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
-            const totalItemsOrdered = await getTotalOrderedItemsCount(responseOrderData.id)
-            const totalCancelledItems = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
+            const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
+            const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrdered}`)
 
@@ -223,13 +223,18 @@ class CancelOrderService {
             }
 
             const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            const incomingCancelledItems = {};
             protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
-              const newfullfilmentObject = createNewFullfilmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id)
+              const {newfullfilmentObject,totalCancelledItems,totalCancelledItemsValue} = createNewFullfilmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id,incomingCancelledItems)
               lokiLogger.info(`newfullfilmentObject-----------, ${JSON.stringify(newfullfilmentObject)}`)
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
               }
             })       
+
+            if (totalItemsOrderedCount == (totalCancelledItemsCount + totalCancelledItems)) {
+              orderSchema.state = protocolCancelResponse?.message?.order?.state
+            }
 
             if (
               protocolCancelResponse?.message?.order?.state?.toLowerCase() ==

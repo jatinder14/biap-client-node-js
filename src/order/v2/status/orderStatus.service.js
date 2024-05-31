@@ -231,14 +231,14 @@ class OrderStatusService {
                                             orderId:onOrderStatusResponse.message.order.id
                                         })
                                         if(!existingFulfillment){
-                                            const itemIdsData = getItemsIdsDataForFulfillment(fulfillment);
+                                            const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment,orderSchema);
                                             await FulfillmentHistory.create({
                                                 orderId:onOrderStatusResponse.message.order.id,
                                                 type:fulfillment.type,
                                                 id:fulfillment.id,
                                                 state:fulfillment.state.descriptor.code,
                                                 updatedAt:onOrderStatusResponse.message.order.updated_at.toString(),
-                                                itemIds:itemIdsData
+                                                itemIds:currentfulfillmentHistoryData.itemIdsData
                                             })
                                         }
                                 }
