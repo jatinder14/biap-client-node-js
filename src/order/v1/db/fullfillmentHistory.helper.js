@@ -157,7 +157,7 @@ const getFulfillmentById = async (fulfilmentId) => {
  * @returns 
  */
 const getFulfillmentByOrderId = async (orderId) => {
-  return await FulfillmentHistory.findOne({orderId: orderId }).lean().exec();
+  return await FulfillmentHistory.find({orderId: orderId }).lean().exec();
 };
 
 export { createNewFullfillmentObject, getItemsIdsDataForFulfillment, getFulfillmentById, getFulfillmentByOrderId };

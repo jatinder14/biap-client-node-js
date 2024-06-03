@@ -228,8 +228,8 @@ class CancelOrderService {
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
 
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems}`)
-            if (totalItemsOrderedCount == (totalCancelledItemsCount + incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems)) {
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0}`)
+            if (totalItemsOrderedCount == (totalCancelledItemsCount + (incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0))) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
 
