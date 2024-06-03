@@ -421,20 +421,29 @@ class DashboardController {
           fetchData.forEach((dataEntry) => {
             const year = dataEntry["_id"].order_year;
             const month = dataEntry["_id"].order_month;
+            const unsortedData = {}
             if (year == currentYear) {
-              if (data?.[month]) {
-                data[month].accepted_count += dataEntry.accepted_count;
-                data[month].inprogress_count += dataEntry.inprogress_count;
-                data[month].completed_count += dataEntry.completed_count;
-                data[month].cancelled_count += dataEntry.cancelled_count;
+              if (unsortedData?.[month]) {
+                unsortedData[month].accepted_count += dataEntry.accepted_count;
+                unsortedData[month].inprogress_count += dataEntry.inprogress_count;
+                unsortedData[month].completed_count += dataEntry.completed_count;
+                unsortedData[month].cancelled_count += dataEntry.cancelled_count;
               } else {
-                data[month] = {};
-                data[month]["accepted_count"] = dataEntry.accepted_count;
-                data[month]["inprogress_count"] = dataEntry.inprogress_count;
-                data[month]["completed_count"] = dataEntry.completed_count;
-                data[month]["cancelled_count"] = dataEntry.cancelled_count;
+                unsortedData[month] = {};
+                unsortedData[month]["accepted_count"] = dataEntry.accepted_count;
+                unsortedData[month]["inprogress_count"] = dataEntry.inprogress_count;
+                unsortedData[month]["completed_count"] = dataEntry.completed_count;
+                unsortedData[month]["cancelled_count"] = dataEntry.cancelled_count;
               }
             }
+
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+            months.forEach((month) =>{
+              if(unsortedData?.[month])
+                {
+                  data[month] = unsortedData[month]
+                }
+            })
           });
           break;
         }
