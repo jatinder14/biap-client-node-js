@@ -1,9 +1,9 @@
+import moment from "moment";
 import ConfirmOrderService from "./confirmOrder.service.js";
 import BadRequestParameterError from "../../../lib/errors/bad-request-parameter.error.js";
 // import  Notification from "../../v1/db/notification.js"
 import { sendEmail } from "../../../shared/mailer.js";
 import Notification from "../../v2/db/notification.js";
-import moment from "moment";
 
 const confirmOrderService = new ConfirmOrderService();
 class ConfirmOrderController {
@@ -76,7 +76,7 @@ class ConfirmOrderController {
   }
 
   /**
-   * on confirm multiple order
+   * INFO: on confirm multiple order
    * @param {*} req    HTTP request object
    * @param {*} res    HTTP response object
    * @param {*} next   Callback argument to the middleware function
@@ -104,13 +104,8 @@ class ConfirmOrderController {
             const itemName = orders[0].message.order.quote.breakup[0].title;
             const itemQuantity = orders[0].message.order.items[0].quantity.count;
             const itemPrice = orders[0].message.order.quote.price.value;
-            const estimatedDelivery =
-              orders[0].message.order.fulfillments[0]["@ondc/org/TAT"];
-
-            // Parse the duration using moment.js
+            const estimatedDelivery = orders[0].message.order.fulfillments[0]["@ondc/org/TAT"];
             const duration = moment.duration(estimatedDelivery);
-
-            // Get the days and minutes from the duration
             let days = duration.days();
 
             // If duration is less than 1 day, set days to 1
@@ -121,18 +116,11 @@ class ConfirmOrderController {
             }
 
             if (emailWithoutNumber && nameWithoutNumber) {
-
-              Notification.create({
+              await Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: nameWithoutNumber,
               })
-                .then((notification) => {
-                  console.log("Notification created:", notification);
-                })
-                .catch((error) => {
-                  console.error("Error creating notification:", error);
-                });
 
               await sendEmail({
                 userEmails: emailWithoutNumber,
@@ -148,17 +136,11 @@ class ConfirmOrderController {
               res.json(orders);
 
             } else if (userEmails && userName) {
-              Notification.create({
+              await Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: userName,
               })
-                .then((notification) => {
-                  console.log("Notification created:", notification);
-                })
-                .catch((error) => {
-                  console.error("Error creating notification:", error);
-                });
 
               await sendEmail({
                 userEmails,
@@ -175,9 +157,7 @@ class ConfirmOrderController {
 
             }
             else {
-
               res.json(orders);
-
             }
           }
 

@@ -8,12 +8,35 @@ class OrderFeedbackController {
       const OrderId = req.params.orderId;
       const body = req.body;
       orderFeedbackSevice.orderFeedback(OrderId, body).then((response) => {
+        if (response?.success) {
+          res.send(response);
+        } else {
+          res.header("Access-Control-Allow-Origin", "*");
+          res.status(400).json(response);
+        }
+      });
+    } catch (e) {
+      res.header("Access-Control-Allow-Origin", "*");
+      res.status(500).json({
+        success: false,
+        message: "Internal Server Error!",
+        error: e?.message
+      });
+    }
+  }
+
+  async getfeedback(req, res, next) {
+    try {
+      const OrderId = req.params.orderId;
+      orderFeedbackSevice.getorderFeedback(OrderId).then((response) => {
         res.send(response);
       });
     } catch (e) {
+      res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal Server Error!"
+        message: "Internal Server Error!",
+        error: e?.message
       });
     }
   }

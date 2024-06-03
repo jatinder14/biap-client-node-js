@@ -159,6 +159,7 @@ rootRouter.get('/v2/getResource/:fileKey', uploadController.download);
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
 rootRouter.post('/v2/feedback/:orderId',  orderFeedbackController.feedback);
+rootRouter.get('/v2/feedback/:orderId',  orderFeedbackController.getfeedback);
 rootRouter.post('/v2/contact', orderFeedbackController.contactUs);
 
 //#endregion

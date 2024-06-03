@@ -54,7 +54,7 @@ export const initiateRsp = async () => {
         return el;
       }
     });
-
+    orderDetails = orderDetails.slice(0, 5) // Need to remove it in future as its for logs only
     const prepare_payload = await Promise.all(
       orderDetails.map(async (el) => {
         let protocolConfirmResponse = await onOrderConfirm(el.messageId);
@@ -87,11 +87,11 @@ export const initiateRsp = async () => {
           transaction_details: {
             collector: {
               id: protocolConfirmResponse?.context?.bap_id,
-              url: protocolConfirmResponse?.context?.bap_uri
+              url: process.env.CLIENT_WEBHOOK_ENDPOINT + '/v2'
             },
             receiver: {
               id: protocolConfirmResponse?.context?.bpp_id,
-              url: protocolConfirmResponse?.context?.bpp_uri
+              url: "https://rsf-mock-service.ondc.org" // protocolConfirmResponse?.context?.bpp_uri
             },
             payment_gateway: [
               {

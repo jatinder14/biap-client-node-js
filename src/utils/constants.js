@@ -105,6 +105,11 @@ export const ORDER_STATUS = {
     "IN-PROGRESS": "in-progress"
 }
 
+export const ORDER_TYPE = {
+    RETURN: "return",
+    CANCEL: "cancel"
+}
+
 export const PAYMENT_COLLECTED_BY = {
     BAP: "BAP",
     BPP: "BPP"

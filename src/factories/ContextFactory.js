@@ -51,30 +51,21 @@ class ContextFactory {
     }
 
 
-    getCityByPinCode(pincode,city){
-
-        try{
-            console.log("city----",city,pincode)
-            //map city and pincode
-            // const cityCode = params.c//ity.split(':')[1];
-            if(pincode){
+    getCityByPinCode(pincode, city) {
+        try {
+            if (pincode) {
                 let cityData = MappedCity(parseInt(pincode));
-                console.log("city-- cityData--", cityData)
-                if(cityData.length>0){
+                if (cityData.length > 0) {
                     return `std:${cityData[0]?.STDCode}`
-                }else{
+                } else {
                     return 'std:080'
                 }
-
-            }else{
+            } else {
                 return city
             }
-        }catch (e) {
+        } catch (e) {
             console.log(e)
         }
-
-
-
     }
 
     getTransactionId(transactionId){

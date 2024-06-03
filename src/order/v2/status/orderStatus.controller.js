@@ -72,258 +72,220 @@ class OrderStatusController {
     * @param {*} next   Callback argument to the middleware function
     * @return {callback}
     */
-     onOrderStatusV2(req, res, next) {
+    onOrderStatusV2(req, res, next) {
         const { query } = req;
         const { messageIds } = query;
-        
-        if(messageIds && messageIds.length && messageIds.trim().length) { 
+
+        if (messageIds && messageIds.length && messageIds.trim().length) {
             const messageIdsArray = messageIds.split(",");
-            const userEmail=req.user.decodedToken.email
-            const userName=req.user.decodedToken.name
-            
-            orderStatusService.onOrderStatusV2(messageIdsArray,userEmail,userName).then(async orders => {
-                const orderId=orders[0].message.order.id
-                const emailWithoutNumber=orders[0].message.order.fulfillments[0].end.contact.email
-                const nameWithoutNumber=orders[0].message.order.fulfillments[0].end.location.address.name
+            const userEmail = req.user.decodedToken.email
+            const userName = req.user.decodedToken.name
+
+            orderStatusService.onOrderStatusV2(messageIdsArray, userEmail, userName).then(async orders => {
+                const orderId = orders[0].message.order.id
+                const emailWithoutNumber = orders[0].message.order.fulfillments[0].end?.contact?.email
+                const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
                 if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
-                    
-                     if(emailWithoutNumber && nameWithoutNumber){
-                        Notification.create({
+
+                    if (emailWithoutNumber && nameWithoutNumber) {
+                        await Notification.create({
                             event_type: 'out-for-delivery',
                             details: `Order is out for delivery for orderId: ${orderId}`,
-                            name:nameWithoutNumber
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: nameWithoutNumber
+                        })
+
                         await sendEmail({
-                            userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                            userEmails: emailWithoutNumber,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/outForDelivery.ejs',
                             userName: nameWithoutNumber || '',
                             subject: 'Order Update | Your Order is out for delivery'
                         });
                         res.json(orders);
-    
+
                     }
-                    else if(userEmail && userName){
-                        Notification.create({
+                    else if (userEmail && userName) {
+                        await Notification.create({
                             event_type: 'out-for-delivery',
                             details: `Order is out for delivery for orderId: ${orderId}`,
-                            name:userName
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: userName
+                        })
                         await sendEmail({
-                            userEmails:userEmail,
-                            orderIds:orderId,
+                            userEmails: userEmail,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/outForDelivery.ejs',
                             userName: userName || '',
                             subject: 'Order Update | Your Order is out for delivery'
                         });
                         res.json(orders);
-    
+
                     }
-                    else{
+                    else {
                         res.json(orders);
 
                     }
-                    
+
                 } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
 
-                     if(emailWithoutNumber && nameWithoutNumber){
-                        Notification.create({
+                    if (emailWithoutNumber && nameWithoutNumber) {
+                        await Notification.create({
                             event_type: 'order-picked-up',
                             details: `Order has been picked up with id: ${orderId}`,
-                            name:nameWithoutNumber
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: nameWithoutNumber
+                        })
+
                         await sendEmail({
-                            userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                            userEmails: emailWithoutNumber,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/orderPickedup.ejs',
                             userName: nameWithoutNumber || '',
                             subject: 'Order Update | Your Order has been picked up'
                         });
-                        console.log("orders2",orders)
-    
+                        console.log("orders2", orders)
+
                         res.json(orders);
                     }
-                    else  if(userEmail && userName){
-                        Notification.create({
+                    else if (userEmail && userName) {
+                        await Notification.create({
                             event_type: 'order-picked-up',
                             details: `Order has been picked up with id: ${orderId}`,
-                            name:userName
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: userName
+                        })
+
                         await sendEmail({
-                            userEmails:userEmail,
-                            orderIds:orderId,
+                            userEmails: userEmail,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/orderPickedup.ejs',
                             userName: userName || '',
                             subject: 'Order Update | Your Order has been picked up'
                         });
-                        console.log("orders2",orders)
-    
+                        console.log("orders2", orders)
+
                         res.json(orders);
                     }
 
-                    else{
+                    else {
                         res.json(orders);
 
                     }
-                  
+
                 } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
 
-                   
-                     if(emailWithoutNumber && nameWithoutNumber){
-                        Notification.create({
+
+                    if (emailWithoutNumber && nameWithoutNumber) {
+                        await Notification.create({
                             event_type: 'agent-assigned',
                             details: `Agent has been assigned for order id: ${orderId}`,
-                            name:nameWithoutNumber
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: nameWithoutNumber
+                        })
+
                         await sendEmail({
-                            userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                            userEmails: emailWithoutNumber,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/agentAssigned.ejs',
                             userName: nameWithoutNumber || '',
                             subject: 'Order Update | Agent has been assigned for Your Order'
                         });
-                        console.log("orders3",orders)
-    
+                        console.log("orders3", orders)
+
                         res.json(orders);
                     }
-                    else if(userEmail && userName){
-                        Notification.create({
+                    else if (userEmail && userName) {
+                        await Notification.create({
                             event_type: 'agent-assigned',
                             details: `Agent has been assigned for order id: ${orderId}`,
-                            name:userName
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
-               
+                            name: userName
+                        })
+
                         await sendEmail({
-                            userEmails:userEmail,
-                            orderIds:orderId,
+                            userEmails: userEmail,
+                            orderIds: orderId,
                             HTMLtemplate: '/template/agentAssigned.ejs',
                             userName: userName || '',
                             subject: 'Order Update | Agent has been assigned for Your Order'
                         });
-                        console.log("orders3",orders)
-    
+                        console.log("orders3", orders)
+
                         res.json(orders);
                     }
-                    else{
+                    else {
                         res.json(orders);
 
                     }
-                    
 
-                }
-                else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
-                   
-                     if(emailWithoutNumber && nameWithoutNumber){
 
-                        Notification.create({
+                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
+
+                    if (emailWithoutNumber && nameWithoutNumber) {
+
+                        await Notification.create({
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
-                            name:nameWithoutNumber
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
+                            name: nameWithoutNumber
+                        })
                         await sendEmail({
-                            userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                            userEmails: emailWithoutNumber,
+                            orderIds: orderId,
                             HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
                         setTimeout(async () => {
                             await sendEmail({
-                                userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                                userEmails: emailWithoutNumber,
+                                orderIds: orderId,
                                 HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                                 userName: nameWithoutNumber || "",
                                 subject: "Order Feedback | Tell us about your experience",
                             });
-                        }, 180000); // 15 seconds delay before sending the feedback email
-    
-                        console.log("orders3",orders)
-    
+                        }, 5000); // 15 seconds delay before sending the feedback email
+
+                        console.log("orders3", orders)
+
                         res.json(orders);
-    
-                    }
-                    else if(userEmail && userName){
-                        Notification.create({
+
+                    } else if (userEmail && userName) {
+                        await Notification.create({
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
-                            name:userName
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
-                       });
+                            name: userName
+                        })
                         await sendEmail({
-                            userEmails:userEmail,
-                            orderIds:orderId,
+                            userEmails: userEmail,
+                            orderIds: orderId,
                             HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
                             userName: userName || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
                         setTimeout(async () => {
                             await sendEmail({
-                                userEmails:userEmail,
-                            orderIds:orderId,
+                                userEmails: userEmail,
+                                orderIds: orderId,
                                 HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
                                 userName: userName || "",
                                 subject: "Order Feedback | Tell us about your experience",
                             });
-                        }, 180000); // 15 seconds delay before sending the feedback email
-    
-    
-                        res.json(orders);
-    
-                    }
-                    else{
+                        }, 5000); // 15 seconds delay before sending the feedback email
+
 
                         res.json(orders);
 
+                    } else {
+                        res.json(orders);
                     }
-                    
+
                 }
-             else{
+                else {
 
-                res.json(orders);
+                    res.json(orders);
 
-             }
-                
+                }
+
             }).catch((err) => {
                 next(err);
             });
-            
+
         }
         else
             throw new BadRequestParameterError();

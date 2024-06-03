@@ -21,15 +21,9 @@ class SseController {
         try {
             const { query = {} } = req;
             const { messageId } = query;
-            console.log("onEvent -----------x-->", messageId)
             if (messageId && messageId.length) {
-
                 const configureSse = new ConfigureSse(req, res, messageId);
                 const initSSE = configureSse.initialize();
-
-
-                // console.log("initSSE-----------x-->",initSSE)
-
                 addSSEConnection(messageId, initSSE);
 
             }

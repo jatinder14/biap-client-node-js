@@ -16,6 +16,7 @@ import Fulfillments from "../db/fulfillments.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import OrderHistory from "../db/orderHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppOrderStatusService = new BppOrderStatusService();
 const bppUpdateService = new BppUpdateService();
@@ -32,17 +33,15 @@ class OrderStatusService {
             const { context: requestContext, message } = order || {};
 
             const orderDetails = await getOrderById(order.message.order_id);
-
-            console.log('domain--------XX------>',orderDetails)
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.STATUS,
                 transactionId: orderDetails[0]?.transactionId,
                 bppId: requestContext?.bpp_id,
                 bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0].city,
-                city: orderDetails[0].city,
-                domain:orderDetails[0].domain
+                cityCode: orderDetails[0]?.city,
+                city: orderDetails[0]?.city,
+                domain:orderDetails[0]?.domain
             });
 
             return await bppOrderStatusService.getOrderStatus(
@@ -64,11 +63,6 @@ class OrderStatusService {
         const orderStatusResponse = await Promise.all(
             orders.map(async order => {
                 try {
-
-                    console.log("order------------------>",order);
-
-
-
                     const orderResponse = await this.orderStatus(order);
                     return orderResponse;
                 }
@@ -103,13 +97,7 @@ class OrderStatusService {
     async onOrderStatus(messageId) {
         try {
             let protocolOrderStatusResponse = await onOrderStatus(messageId);
-
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse);
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse.fulfillments);
-            console.log("protocolOrderStatusResponse------------>",JSON.stringify(protocolOrderStatusResponse));
-
-            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length){
-                
+            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length) {
                 return protocolOrderStatusResponse?.[0];
             }
             
@@ -236,25 +224,24 @@ class OrderStatusService {
                             //         updateItems.push(item)
                             // }
 
-                                for(let fulfillment of onOrderStatusResponse.message?.order?.fulfillments){
-                                    console.log("fulfillment--->",fulfillment)
-                                    // if(fulfillment.type==='Delivery'){
-                                        let existingFulfillment  =await FulfillmentHistory.findOne({
-                                            id:fulfillment.id,
-                                            state:fulfillment.state.descriptor.code,
-                                            orderId:onOrderStatusResponse.message.order.id
+                                for (let fulfillment of onOrderStatusResponse.message?.order?.fulfillments) {
+                                    let existingFulfillment = await FulfillmentHistory.findOne({
+                                        id: fulfillment.id,
+                                        state: fulfillment.state.descriptor.code,
+                                        orderId: onOrderStatusResponse?.message?.order?.id
+                                    }).lean().exec()
+                                    if (!existingFulfillment?.id) {
+                                        let incomingItemQuoteTrailData = {};
+                                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment, orderSchema, incomingItemQuoteTrailData);
+                                        await FulfillmentHistory.create({
+                                            orderId: onOrderStatusResponse.message.order.id,
+                                            type: fulfillment.type,
+                                            id: fulfillment.id,
+                                            state: fulfillment.state.descriptor.code,
+                                            updatedAt: onOrderStatusResponse.message.order?.updated_at || new Date(),
+                                            itemIds: currentfulfillmentHistoryData
                                         })
-                                        if(!existingFulfillment){
-                                            await FulfillmentHistory.create({
-                                                orderId:onOrderStatusResponse.message.order.id,
-                                                type:fulfillment.type,
-                                                id:fulfillment.id,
-                                                state:fulfillment.state.descriptor.code,
-                                                updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
-                                            })
-                                        }
-                                        console.log("existingFulfillment--->",existingFulfillment);
-                                    // }
+                                    }
                                 }
                                 let orderHistory = await OrderHistory.findOne({
                                     orderId:onOrderStatusResponse.message.order.id,
@@ -264,11 +251,9 @@ class OrderStatusService {
                                     await OrderHistory.create({
                                         orderId:onOrderStatusResponse.message.order.id,
                                         state:onOrderStatusResponse.message.order.state,
-                                        updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
+                                        updatedAt:onOrderStatusResponse.message.order.updated_at
                                     })
                                 }
-
-                                // console.log("updateItems",updateItems)
                                 let updateItems = []
                                 for(let item of protocolItems){
                                     let updatedItem = {}
@@ -276,12 +261,9 @@ class OrderStatusService {
 
                                     updatedItem = orderSchema.items.filter(element=> element.id === item.id);
                                     let temp=updatedItem[0];
-                                    console.log("item----length-before->",item)
-                                    console.log("item----length-before->",updatedItem)
-                                    // console.log("ifulfillmentStatus->",fulfillmentStatus)
                                     let temp1 = onOrderStatusResponse.message?.order?.fulfillments?.find(fulfillment=> fulfillment?.id === item?.fulfillment_id)
 
-                                    if(temp1.type==='Return' || temp1.type==='Cancel' ){
+                                    if(temp1?.type==='Return' || temp1?.type==='Cancel' ){
                                         item.return_status = temp1?.state?.descriptor?.code;
                                         item.cancellation_status = temp1?.state?.descriptor?.code;
                                     }else{
@@ -300,12 +282,6 @@ class OrderStatusService {
                                     //item.quantity = item.quantity.count
                                     updateItems.push(item)
                                 }
-
-
-                                console.log("updateItems",updateItems)
-                                //get item from db and update state for item
-                                // orderSchema.items = updateItems;
-
                                orderSchema.items = updateItems;
 
 

@@ -3,7 +3,6 @@ import OrderMongooseModel from './order.js';
 import OrderRequestLogMongooseModel from "./orderRequestLog.js";
 import OrderHistory from "../../v2/db/orderHistory.js";
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
-
 /**
 * INFO: upsert order based on transaction id
  * @param {String} transactionId 
@@ -33,6 +32,7 @@ const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, provi
         {
             transactionId: transactionId,
             "provider.id": providerId
+
         },
         {
             ...orderSchema
@@ -85,9 +85,43 @@ const addOrUpdateOrderWithdOrderId = async (orderId, orderSchema = {}) => {
  * @param {String} transactionId 
  * @returns 
  */
+const getOrderByIdAndTransactionId = async (transactionId, orderId) => {
+    const order = await OrderMongooseModel.find({
+        transactionId: transactionId,
+        id: orderId,
+    });
+
+    if (!(order || order.length))
+        throw new NoRecordFoundError();
+    else
+        return order;
+};
+
+/**
+ * get the order with passed transaction id from the database
+ * @param {String} transactionId 
+ * @returns 
+ */
 const getOrderByTransactionId = async (transactionId) => {
     const order = await OrderMongooseModel.find({
         transactionId: transactionId
+    });
+
+    if (!(order || order.length))
+        throw new NoRecordFoundError();
+    else
+        return order?.[0];
+};
+
+/**
+ * get the order with passed transaction_id and order_id from the database
+ * @param {String} transactionId 
+ * @returns 
+ */
+const getOrderByTransactionAndOrderId = async (transactionId, orderId) => {
+    const order = await OrderMongooseModel.find({
+        transactionId: transactionId,
+        id: orderId
     });
 
     if (!(order || order.length))
@@ -115,6 +149,54 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
 };
 
 /**
+ * INFO: get unique items id's only
+ * @param {Array} items 
+ * @returns 
+ */
+const getUniqueItems = (items) => {
+    const uniqueItems = items.reduce((acc, item) => {
+        let existingItem = acc.find(entry => entry.id === item.id);
+        
+        if (existingItem) {
+            existingItem.quantity.count += item.quantity.count;
+        } else {
+            acc.push({
+                id: item.id,
+                quantity: { count: item.quantity.count },
+                product: item.product
+            });
+        }
+        
+        return acc;
+    }, []);
+    return uniqueItems;
+}
+
+/**
+ * INFO: get fulfillment tracking details
+ * @param {Array} uniqueItems 
+ * @param {Array} fulfillmentHistory 
+ * @returns 
+ */
+const getFulfillmentTacking = (uniqueItems, fulfillmentHistory) => {
+    const fulfillmentTracking = [];
+    for (let item of uniqueItems) {
+        let track = { item_id: item.id, item_details: item, tracking: [] };
+        const tracking = []
+        for (let history of fulfillmentHistory) {
+            if ((["Cancel", "Return"].includes(history.type) || history.state == "Cancelled") && history?.itemIds?.hasOwnProperty(item.id)) {
+                tracking.push(history);
+            } else if (!(["Cancel", "Return"].includes(history.type) || history.state == "Cancelled")) {
+                tracking.push(history);
+            }
+        }
+        track.tracking = tracking
+        fulfillmentTracking.push(track);
+    }
+    return fulfillmentTracking
+}
+
+/**
  * INFO: get order details by id
  * @param {String} orderId 
  * @returns 
@@ -129,10 +211,13 @@ const getOrderById = async (orderId) => {
             throw new NoRecordFoundError();
         else {
             // order = order.toJSON();
-            let orderHistory = await OrderHistory.find({ orderId: orderId })
-            let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId })
+            let orderHistory = await OrderHistory.find({ orderId: orderId }).lean().exec()
+            let fulfillmentHistory = await FulfillmentHistory.find({ orderId: orderId }).lean().exec()
             order[0].orderHistory = orderHistory
             order[0].fulfillmentHistory = fulfillmentHistory
+            const uniqueItems = getUniqueItems(order[0].items);
+            const fulfillmentTracking = getFulfillmentTacking(uniqueItems, fulfillmentHistory);
+            order[0].fulfillmentTracking = fulfillmentTracking;
             return order;
         }
     }
@@ -183,4 +268,54 @@ const getOrderRequestLatestFirst = async (data) => {
     return order;
 };
 
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider };
+const getTotalOrderedItemsCount = async (orderId) => {
+    const totalItemsCountData = await OrderMongooseModel.aggregate([
+        {
+            $match: { id: orderId },
+        },
+        {
+            $unwind: "$items",
+        },
+        {
+            $group: {
+                _id: null,
+                totalCount: { $sum: "$items.quantity.count" },
+            },
+        },
+    ]);
+    return totalItemsCountData[0]?.totalCount;
+}
+
+
+const getTotalItemsCountByAction = async (orderId, action) => {
+    const totalItemsCountByActionData = await FulfillmentHistory.aggregate(
+        [
+            {
+                $match: {
+                    orderId: orderId,
+                    state: action
+                }
+            },
+            {
+                $project: {
+                    itemIds: { $objectToArray: "$itemIds" }
+                }
+            },
+            { $unwind: "$itemIds" },
+            {
+                $group: {
+                    _id: null,
+                    totalQuantity: {
+                        $sum: { $toInt: "$itemIds.v.quantity" }
+                    }
+                }
+            },
+            {
+                $project: { _id: 0, totalQuantity: 1 }
+            }
+        ]);
+
+    return totalItemsCountByActionData[0]?.totalQuantity || 0;
+
+}
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId };

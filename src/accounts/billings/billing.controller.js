@@ -66,9 +66,7 @@ class BillingController {
 
     deleteBillingAddress(req,res, next) {
         const { body: request, params, user } = req;
-        console.log(req.params,"::::",req.body);
         const { id } = params;
-        console.log("idddd",id);
 
         billingService.deleteBillingAddress(id,request,user?.decodedToken?.uid).then(response => {
             res.json(response);

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { BUYER_STATES } from "../../../utils/constant/order.js";
 const AddOnsSchema = new mongoose.Schema(
     {
         id: { type: String, required: true },
@@ -328,6 +328,8 @@ const PaymentSchema = mongoose.Schema(
 const OrderSchema = new mongoose.Schema(
     {
         provider: { type: ProviderSchema },
+        payment_origin_source: { type: String },
+        payment_return_destination: { type: String },
         customer: { type: CustomerSchema },
         items: { type: [ItemsSchema] },
         addOns: { type: [AddOnsSchema] },
@@ -356,6 +358,7 @@ const OrderSchema = new mongoose.Schema(
         is_order_confirmed: { type: Boolean, default: false },
         is_settlement_sent: { type: Boolean, default: false },
         is_settlement_done: { type: Boolean, default: false },
+        is_settlement_receiver_verified: { type: Boolean },
         settlement_id: { type: String },
         settlement_reference_no: { type: String },
         order_recon_status: { type: String },
@@ -364,6 +367,12 @@ const OrderSchema = new mongoose.Schema(
         counterparty_diff_amount_currency: { type: String },
         receiver_settlement_message: { type: String },
         receiver_settlement_message_code: { type: String },
+        buyer_state: {
+            type: String,
+            enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here
+            default: BUYER_STATES.UNCONFIRMED // Set the default value
+          },
+        remaining_cart_value: { type: Number },
     },
     { _id: true, timestamps: true }
 );

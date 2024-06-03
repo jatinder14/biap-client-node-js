@@ -1,3 +1,4 @@
+import { uuid } from "uuidv4";
 import { onOrderConfirm } from "../../../utils/protocolApis/index.js";
 import { JUSPAY_PAYMENT_STATUS, PAYMENT_TYPES, PROTOCOL_CONTEXT, PROTOCOL_PAYMENT, SUBSCRIBER_TYPE } from "../../../utils/constants.js";
 import {
@@ -6,8 +7,6 @@ import {
     getOrderByTransactionIdAndProvider,
     getOrderById
 } from "../../v1/db/dbService.js";
-import Order from "../../v1/db/order.js";
-import OnConfirmData from "../../v1/db/onConfirmDump.js"
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppConfirmService from "./bppConfirm.service.js";
 import JuspayService from "../../../payment/juspay.service.js";
@@ -16,6 +15,8 @@ import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
 import lokiLogger from '../../../utils/logger.js';
 import getCityCode from "../../../utils/AreaCodeMap.js";
+import { BUYER_STATES } from "../../../utils/constant/order.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
 
 const bppConfirmService = new BppConfirmService();
 const cartService = new CartService();
@@ -70,18 +71,15 @@ class ConfirmOrderService {
      * @param {Object} dbResponse 
      * @param {Object} confirmResponse 
      */
-    async updateOrder(dbResponse, confirmResponse, paymentType,razorpayPaymentId) {    
-    let orderSchema = dbResponse?.toJSON() || {};
-
+    async updateOrder(dbResponse, confirmResponse, paymentType, razorpayPaymentId, paymentObj = undefined) {
+        let orderSchema = dbResponse?.toJSON() || {};
         orderSchema.messageId = confirmResponse?.context?.message_id;
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
-        
-        if (razorpayPaymentId && orderSchema && orderSchema?.payment && !["null", "undefined"].includes(razorpayPaymentId)) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
 
-        console.log('orderSchema :>> ', orderSchema);
-
-        lokiLogger.info("orderSchema :>>",orderSchema)
+        if (paymentObj) orderSchema.payment = paymentObj
+        //if (razorpayPaymentId && orderSchema && orderSchema?.payment) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
+        lokiLogger.info(`---------------orderSchema after ==================:>> ${paymentObj} ------- ${JSON.stringify(orderSchema)}`)
 
         await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
@@ -90,31 +88,20 @@ class ConfirmOrderService {
     }
 
     /**
-     * confirm and update order in db
+     * INFO: confirm and update order in db
      * @param {Object} orderRequest 
      * @param {Number} total
      * @param {Boolean} confirmPayment
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
-        console.log('orderRequest.message.payment-------- :>> ', orderRequest?.message?.payment);
-        lokiLogger.info('confirmAndUpdateOrder>payment-------- :>>',orderRequest?.message?.payment)
         const {
             context: requestContext,
             message: order = {}
         } = orderRequest || {};
         requestContext.city = getCityCode(requestContext?.city)
-
         let paymentStatus = {}
-
         const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
-
-        console.log("dbResponse??---------------->", dbResponse)
-
-        lokiLogger.info('dbResponse----------------> :>>' ,dbResponse)
-        console.log('dbResponse?.paymentStatus :>> ', dbResponse?.paymentStatus);
-
         if (!dbResponse?.paymentStatus) {
-
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.CONFIRM,
@@ -126,46 +113,17 @@ class ConfirmOrderService {
                 domain: requestContext.domain,
                 pincode: requestContext?.pincode,
             });
-
-            // if(order.payment.paymentGatewayEnabled){//remove this check once juspay is enabled
-            //     if (await this.arePaymentsPending(
-            //         order?.payment,
-            //         orderRequest?.context?.parent_order_id,
-            //         total,
-            //         confirmPayment,
-            //     )) {
-            //         return {
-            //             context,
-            //             error: {
-            //                 message: "BAP hasn't received payment yet",
-            //                 status: "BAP_015",
-            //                 name: "PAYMENT_PENDING"
-            //             }
-            //         };
-            //     }
-            //
-            //     paymentStatus = await juspayService.getOrderStatus(orderRequest?.context?.transaction_id);
-            //
-            // }else{
-            paymentStatus = { txn_id: requestContext?.transaction_id }
-            // }
-           console.log('dbResponse=============>  :>> ', order);
-
-           lokiLogger.info('dbResponse=============> :>>' ,order)
-           
+            paymentStatus = { txn_id: uuid() }
+            const paymentObj = orderRequest?.message?.payment
             const bppConfirmResponse = await bppConfirmService.confirmV2(
                 context,
-                { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId:orderRequest?.message?.payment?.razorpayPaymentId },
+                { ...order, jusPayTransactionId: paymentStatus.txn_id, razorpayPaymentId: paymentObj?.razorpayPaymentId },
                 dbResponse
             );
-
-            console.log("bppConfirmResponse-------------------->", bppConfirmResponse);
-            
-            lokiLogger.info('bppConfirmResponse----------------> :>>' ,bppConfirmResponse)
-
-            if (bppConfirmResponse?.message?.ack)
-                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, orderRequest?.message?.payment?.razorpayPaymentId);
-
+            dbResponse.payment = paymentObj;
+            if (bppConfirmResponse?.message?.ack) {
+                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, paymentObj?.razorpayPaymentId, paymentObj);
+            }
             return bppConfirmResponse;
 
         } else {
@@ -198,40 +156,13 @@ class ConfirmOrderService {
      */
     async processOnConfirmResponse(response = {}) {
         try {
-
-            const newDataInstance = new OnConfirmData({
-                message: {
-                    order: {
-                        updated_at: response.message.order.updated_at,
-                        created_at: response.message.order.created_at,
-                        id: response.message.order.id,
-                        state: response.message.order.state,
-                        provider: response.message.order.provider,
-                        items: response.message.order.items,
-                        billing: response.message.order.billing,
-                        fulfillments: response.message.order.fulfillments,
-                        quote: response.message.order.quote,
-                        payment: JSON.stringify(response.message.order.payment),
-                        documents: response.message.order.documents,
-                        cancellation_terms: response.message.order.cancellation_terms,
-                        tags: response.message.order.tags
-                    },
-                    created_at: response.message.created_at,
-                    updated_at: response.message.updated_at
-                },
-                context: response.context
-            });
-
-            // Save the new instance to the database
-            await newDataInstance.save();
-            console.log("newDataInstance>>>>>>>>>>>", newDataInstance)
-            console.log("processOnConfirmResponse------------------------------>", response?.message?.order.provider)
             if (response?.message?.order) {
                 const dbResponse = await getOrderByTransactionIdAndProvider(
                     response?.context?.transaction_id, response?.message?.order.provider.id
                 );
 
                 let orderSchema = { ...response?.message?.order };
+                orderSchema.payment.razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
                 orderSchema.messageId = response?.context?.message_id;
                 orderSchema.city = response?.context?.city;
                 orderSchema.billing = {
@@ -255,32 +186,25 @@ class ConfirmOrderService {
                     delete orderSchema.fulfillment;
                 }
 
-
                 for (let fulfillment of orderSchema.fulfillments) {
-                    console.log("fulfillment--->", fulfillment)
-                    // if(fulfillment.type==='Delivery'){
                     let existingFulfillment = await FulfillmentHistory.findOne({
                         id: fulfillment.id,
                         state: fulfillment.state.descriptor.code,
                         orderId: orderSchema.id
                     })
                     if (!existingFulfillment) {
+                        let incomingItemQuoteTrailData = {};
+                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment,orderSchema,incomingItemQuoteTrailData);
                         await FulfillmentHistory.create({
                             orderId: orderSchema.id,
                             type: fulfillment.type,
                             id: fulfillment.id,
                             state: fulfillment.state.descriptor.code,
-                            updatedAt: orderSchema.toString()
+                            updatedAt: new Date(),
+                            itemIds:currentfulfillmentHistoryData
                         })
                     }
-                    console.log("existingFulfillment--->", existingFulfillment);
-                    // }
                 }
-
-                console.log("processOnConfirmResponse----------------dbResponse.items-------------->", dbResponse)
-
-                console.log("processOnConfirmResponse----------------dbResponse.orderSchema-------------->", orderSchema)
-
                 if (orderSchema.items && dbResponse.items) {
                     orderSchema.items = dbResponse.items
                 }
@@ -307,29 +231,13 @@ class ConfirmOrderService {
                 for (let item of dbResponse.items) {
                     let temp = orderSchema?.fulfillments?.find(fulfillment => fulfillment?.id === item?.fulfillment_id)
                     item.fulfillment_status = temp?.state?.descriptor?.code ?? ""
-                    //     let updatedItem = {}
-                    //
-                    //     // updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags); //TODO: verify if this will work with cancel/returned items
-                    //     updatedItem = orderSchema.items.filter(element=> element.id === item.id && !element.tags);
-                    //     let temp=updatedItem[0];
-                    //     console.log("item----length-before->",item)
-                    //     console.log("item----length-before temp->",temp)
-                    //     // if(item.tags){
-                    //     //     item.return_status = item?.tags?.status;
-                    //     //     item.cancellation_status = item?.tags?.status;
-                    //     //     delete item.tags
-                    //     // }
-                    //    // item.fulfillment_status = temp.fulfillment_status;
-                    //     item.product = temp.product;
-                    //     //item.quantity = item.quantity.count
-                    //
-                    //     console.log("item --after-->",item)
                     updateItems.push(item)
                 }
                 orderSchema.items = updateItems;
                 orderSchema.updatedQuote = orderSchema.quote;
                 orderSchema.tags = orderSchema.tags;
                 orderSchema.domain = response?.context.domain
+                orderSchema.buyer_state=BUYER_STATES.CONFIRMED
 
                 await addOrUpdateOrderWithTransactionIdAndProvider(
                     response.context.transaction_id, dbResponse.provider.id,
@@ -339,14 +247,10 @@ class ConfirmOrderService {
                 let billingContactPerson = orderSchema.billing.phone
                 let provider = orderSchema.provider.descriptor.name
                 await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
-
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
                 //clear cart
-                console.log("dbResponse.userId --------------------------------------- ", dbResponse.userId);
                 cartService.clearCart({ userId: dbResponse.userId });
             }
-
-
             return response;
         }
         catch (err) {
@@ -420,11 +324,10 @@ class ConfirmOrderService {
     }
 
     /**
-     * confirm multiple orders
+     * INFO: confirm multiple orders
      * @param {Array} orders 
      */
-    async confirmMultipleOrder(orders) {    
-        console.log('orders--------- :>> ', orders);
+    async confirmMultipleOrder(orders) {
         let total = 0;
         orders.forEach(order => {
             total += order?.message?.payment?.paid_amount;
@@ -434,12 +337,6 @@ class ConfirmOrderService {
             orders.map(async orderRequest => {
                 try {
                     return await this.confirmAndUpdateOrder(orderRequest, total, true);
-                    // if(paymentData){
-                    //     return await this.confirmAndUpdateOrder(orderRequest, total, true,paymentData);
-                    // }else{
-                    //     return await this.confirmAndUpdateOrder(orderRequest, total, false,paymentData);
-                    // }
-
                 }
                 catch (err) {
                     console.log("error confirmMultipleOrder ----", err)
@@ -457,7 +354,7 @@ class ConfirmOrderService {
                             message: "We are encountering issue while confirming this order with seller!"
                         }
                     }
-                    
+
                 }
             })
         );
@@ -519,6 +416,7 @@ class ConfirmOrderService {
             const onConfirmOrderResponse = await Promise.all(
                 messageIds.map(async messageId => {
                     try {
+                        //@@@
                         const protocolConfirmResponse = await this.onConfirmOrder(messageId);
                         return await this.processOnConfirmResponse(protocolConfirmResponse);
                     }
