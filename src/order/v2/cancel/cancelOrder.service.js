@@ -243,9 +243,9 @@ class CancelOrderService {
             })
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
-
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0}`)
-            if (totalItemsOrderedCount == (totalCancelledItemsCount + (incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0))) {
+            const incommingCount = incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems ? Number(incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems): 0
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount+incommingCount}`)
+            if (totalItemsOrderedCount == (Number(totalCancelledItemsCount) + incommingCount)) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
 
@@ -267,7 +267,7 @@ class CancelOrderService {
             ) {
               orderSchema.settle_status = SETTLE_STATUS.DEBIT;
             }
-            if (latest_fulfillment?.state?.descriptor?.code === 'Cancelled' || latest_fulfillment?.state?.descriptor?.code === 'Return_Picked' || latest_fulfillment?.state?.descriptor?.code === 'Liquidated') {
+            if (latest_fulfillment?.state?.descriptor?.code === 'RTO-Initiated' || latest_fulfillment?.state?.descriptor?.code === 'Cancelled' || latest_fulfillment?.state?.descriptor?.code === 'Return_Picked' || latest_fulfillment?.state?.descriptor?.code === 'Liquidated') {
               const orderId = protocolCancelResponse?.message?.order.id
               let oldSettlement = await Settlements.findOne({ orderId, fulfillmentId: latest_fulfillment.id })
               if (!oldSettlement) {
