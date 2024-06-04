@@ -4,12 +4,12 @@ import { parseDuration } from "../utils/stringHelper.js";
 
 export async function getSettlementsHandler(req, res) {
     try {
-        // const apiKey = req.headers['wil-api-key'];
+        const apiKey = req.headers['wil-api-key'];
 
-        // if (apiKey!==process.env.WIL_API_KEY) {
-        //     res.status(401).send('Missing or wrong wil-api-key header');
-        //     return;
-        // }
+        if (apiKey!==process.env.WIL_API_KEY) {
+            res.status(401).send('Missing or wrong wil-api-key header');
+            return;
+        }
         const { limit = 50, page = 1, bppId } = req.query;
          // Parse limit and page to integers
          const limitValue = parseInt(limit);
