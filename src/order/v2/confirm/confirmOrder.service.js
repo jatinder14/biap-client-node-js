@@ -95,12 +95,12 @@ class ConfirmOrderService {
      */
     async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
         const {
-            context: requestContext,
+            context: requestContext = {},
             message: order = {}
         } = orderRequest || {};
         requestContext.city = getCityCode(requestContext?.city)
         let paymentStatus = {}
-        const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest.message.providers.id);
+        const dbResponse = await getOrderByTransactionIdAndProvider(orderRequest?.context?.transaction_id, orderRequest?.message?.providers?.id);
         if (!dbResponse?.paymentStatus) {
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({

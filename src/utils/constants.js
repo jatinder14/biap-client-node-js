@@ -107,7 +107,8 @@ export const ORDER_STATUS = {
 
 export const ORDER_TYPE = {
     RETURN: "return",
-    CANCEL: "cancel"
+    CANCEL: "cancel",
+    RTO: "rto",
 }
 
 export const PAYMENT_COLLECTED_BY = {

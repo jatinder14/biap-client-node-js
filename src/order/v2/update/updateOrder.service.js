@@ -18,7 +18,7 @@ import Fulfillments from "../db/fulfillments.js";
 import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import Refund from "../db/refund.js";
-import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
+import { getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
 import { sendEmail } from "../../../shared/mailer.js";
 
 const bppUpdateService = new BppUpdateService();
@@ -425,7 +425,8 @@ class UpdateOrderService {
      * @returns 
      */
     calculateRefundAmountForReturnByUser(obj) {
-        let totalRefundAmount = 0
+        let totalRefundAmount = 0;
+        let full_Cancel = false;
         lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
         if (obj) {
             let sumOfNegativeValues = 0;
@@ -451,7 +452,7 @@ class UpdateOrderService {
             let totalCharges = 0;
             let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
 
-            let full_Cancel = true;
+            full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
                 if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
                     if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
@@ -469,9 +470,9 @@ class UpdateOrderService {
             lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
             totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
             lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
-            return totalRefundAmount;
+            return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
         }
-        return totalRefundAmount;
+        return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
     }
 
     /**
@@ -481,11 +482,12 @@ class UpdateOrderService {
      */
     calculateRefundAmountForPartialOrderCancellationBySeller(obj) {
         let totalRefundAmount = 0;
+        let full_Cancel = false;
         lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
         if (obj) {
             let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments;
-            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1]: {};
+            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
             console.log(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
             if (latest_fulfillment?.state?.descriptor?.code === "Cancelled") {
                 latest_fulfillment?.tags?.forEach((tag) => {
@@ -508,7 +510,7 @@ class UpdateOrderService {
 
             let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
 
-            let full_Cancel = true;
+            full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
                 if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
                     if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
@@ -526,10 +528,10 @@ class UpdateOrderService {
             console.log(`Sum of quoteBreakup values: ${totalCharges}`);
             totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
             lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
-            return totalRefundAmount;
+            return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
         }
-        return totalRefundAmount;
-    }    
+        return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
+    }
 
     /**
     * INFO: on cancel/return order
@@ -579,7 +581,7 @@ class UpdateOrderService {
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
                     const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
-                    
+
                     const fullfillmentHistory = new FulfillmentHistory({
                         id: dbResponse.id,
                         type: latestFullfilement.type,
@@ -634,15 +636,16 @@ class UpdateOrderService {
                 lokiLogger.info(`protocolUpdateResponse?.[0].error ----------------${protocolUpdateResponse?.[0].error}`)
                 if (!(protocolUpdateResponse?.[0].error)) {
                     let refundAmount = 0;
+                    let calculateRefundAmountObject = {};
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                     let latest_fulfillment = fulfillments[fulfillments.length - 1];
-                    if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked") 
-                        refundAmount = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);    
+                    if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked")
+                        calculateRefundAmountObject = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);
                     else if (latest_fulfillment?.state?.descriptor?.code == "Cancelled")
-                        refundAmount = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse);
+                        calculateRefundAmountObject = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse);
 
-
+                    refundAmount = calculateRefundAmountObject?.totalRefundAmount;
                     lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                     lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
 
@@ -654,7 +657,7 @@ class UpdateOrderService {
                         throw new NoRecordFoundError();
                     else {
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
-                        let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({id: latest_fulfillment?.id });
+                        let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({ id: latest_fulfillment?.id });
                         lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
                         lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
@@ -713,7 +716,7 @@ class UpdateOrderService {
                                     }
                                 }
                             }
-}
+                        }
 
                         if (protocolUpdateResponse?.message?.update_target === 'billing') {
                             return protocolUpdateResponse;
@@ -778,7 +781,7 @@ class UpdateOrderService {
                             })
                             if (!existingFulfillment?.id) {
                                 let incomingItemQuoteTrailData = {};
-                                const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl,dbResponse,incomingItemQuoteTrailData);
+                                const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl, dbResponse, incomingItemQuoteTrailData);
                                 lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(currentfulfillmentHistoryData)}`)
                                 await FulfillmentHistory.create({
                                     orderId: protocolUpdateResponse?.message?.order.id,
@@ -786,7 +789,7 @@ class UpdateOrderService {
                                     id: fl.id,
                                     state: fl.state.descriptor.code,
                                     updatedAt: protocolUpdateResponse?.message?.order?.updated_at || new Date(),
-                                    itemIds:currentfulfillmentHistoryData
+                                    itemIds: currentfulfillmentHistoryData
                                 })
                             }
                             // }
@@ -887,6 +890,8 @@ class UpdateOrderService {
                         orderSchema.items = updateItems;
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
                         orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
+                        if(calculateRefundAmountObject?.full_Cancel)
+                            protocolUpdateResponse.message.order.state = "Cancelled";
 
                         await addOrUpdateOrderWithdOrderId(
                             protocolUpdateResponse.message.order.id,
