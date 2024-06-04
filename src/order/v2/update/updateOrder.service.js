@@ -635,27 +635,24 @@ class UpdateOrderService {
             else {
                 lokiLogger.info(`protocolUpdateResponse?.[0].error ----------------${protocolUpdateResponse?.[0].error}`)
                 if (!(protocolUpdateResponse?.[0].error)) {
-                    let refundAmount = 0;
-                    let calculateRefundAmountObject = {};
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
-                    let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
-                    let latest_fulfillment = fulfillments[fulfillments.length - 1];
-                    if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked")
-                        calculateRefundAmountObject = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);
-                    else if (latest_fulfillment?.state?.descriptor?.code == "Cancelled")
-                        calculateRefundAmountObject = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse);
-
-                    refundAmount = calculateRefundAmountObject?.totalRefundAmount;
-                    lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
-                    lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
-
                     const dbResponse = await getOrderByTransactionAndOrderId(protocolUpdateResponse.context.transaction_id, protocolUpdateResponse.message.order.id);
                     lokiLogger.info(`----------------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
-
-
-                    if (!(dbResponse || dbResponse.length))
+                    if (!(dbResponse || dbResponse.length) && (dbResponse?.state == "Cancelled"))
                         throw new NoRecordFoundError();
                     else {
+                        let refundAmount = 0;
+                        let calculateRefundAmountObject = {};
+                        let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
+                        let latest_fulfillment = fulfillments[fulfillments.length - 1];
+                        if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked")
+                            calculateRefundAmountObject = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);
+                        else if (latest_fulfillment?.state?.descriptor?.code == "Cancelled")
+                            calculateRefundAmountObject = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse);
+
+                        refundAmount = calculateRefundAmountObject?.totalRefundAmount;
+                        lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
+                        lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
                         let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({ id: latest_fulfillment?.id });
                         lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
@@ -743,8 +740,6 @@ class UpdateOrderService {
                          */
 
                         let protocolItems = protocolUpdateResponse?.message?.order.items || []
-
-                        let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments
 
                         for (let fl of fulfillments) {
                             //find if fl present
@@ -891,7 +886,7 @@ class UpdateOrderService {
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
                         orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
                         lokiLogger.info(`------------------------calculateRefundAmountObject--------------${JSON.stringify(calculateRefundAmountObject)}`)
-                        if(calculateRefundAmountObject?.full_Cancel)
+                        if (calculateRefundAmountObject?.full_Cancel)
                             orderSchema.state = "Cancelled";
                         lokiLogger.info(`------------------------orderSchema--------------${JSON.stringify(orderSchema)}`)
                         await addOrUpdateOrderWithdOrderId(
