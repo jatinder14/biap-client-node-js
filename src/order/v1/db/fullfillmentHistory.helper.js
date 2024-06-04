@@ -125,21 +125,39 @@ const processQuantity = (acc, curr, incomingItemQuoteTrailData, fulfillmentType)
 const processValue = (acc, curr, orderData, incomingItemQuoteTrailData, fulfillmentType,incomingFulfillmentId) => {
   const { tempId } = acc;
   acc.data[tempId].value = Math.abs(curr.value);
-  let itemIndex;
+  let itemIndex = {};
 
   if (tempId && acc.data[tempId].quantity === 0) {
-    itemIndex = orderData?.items?.findIndex((item) => {
+    itemIndex = orderData?.items?.find((item) => {
       return item.id === tempId && item.fulfillment_id === incomingFulfillmentId;
     });
-    acc.data[tempId].quantity = orderData?.items[itemIndex]?.quantity?.count || 0 ;
+    acc.data[tempId].quantity = itemIndex?.quantity?.count || 0 ;
   }
 
   if (incomingItemQuoteTrailData[fulfillmentType].data[tempId]) {
-    incomingItemQuoteTrailData[fulfillmentType].data[tempId].quantity = orderData?.items[itemIndex]?.quantity?.count;
+    incomingItemQuoteTrailData[fulfillmentType].data[tempId].quantity = itemIndex?.quantity?.count;
     incomingItemQuoteTrailData[fulfillmentType].data[tempId].value = Math.abs(curr.value);
     incomingItemQuoteTrailData[fulfillmentType].totalCancelledItems += incomingItemQuoteTrailData[fulfillmentType].data[tempId].quantity;
     incomingItemQuoteTrailData[fulfillmentType].totalCancelledItemsValue += Math.abs(curr.value);
   }
 };
 
-export { createNewFullfillmentObject, getItemsIdsDataForFulfillment };
+/**
+ * INFO: Get Fulfilement by id
+ * @param {String} orderId 
+ * @returns 
+ */
+const getFulfillmentById = async (fulfilmentId) => {
+  return await FulfillmentHistory.findOne({id: fulfilmentId }).lean().exec();
+};
+
+/**
+ * INFO: Get Fulfilement by order id
+ * @param {String} orderId 
+ * @returns 
+ */
+const getFulfillmentByOrderId = async (orderId) => {
+  return await FulfillmentHistory.find({orderId: orderId }).lean().exec();
+};
+
+export { createNewFullfillmentObject, getItemsIdsDataForFulfillment, getFulfillmentById, getFulfillmentByOrderId };

@@ -20,14 +20,12 @@ import ContextFactory from "../../../factories/ContextFactory.js";
 import CustomError from "../../../lib/errors/custom.error.js";
 import NoRecordFoundError from "../../../lib/errors/no-record-found.error.js";
 import OrderMongooseModel from "../../v1/db/order.js";
-import fulfillmentHistoryMongooseModel from "../db/fulfillmentHistory.js"
 import lokiLogger from "../../../utils/logger.js";
 import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
-import FulfillmentHistory from "../db/fulfillmentHistory.js";
-import { createNewFullfillmentObject } from "../../v1/db/fullfillmentHistory.helper.js";
+import { createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 const bppCancelService = new BppCancelService();
@@ -58,12 +56,11 @@ class CancelOrderService {
           domain: orderDetails[0].domain,
         });
 
-        let newOrder = Order.findOneAndUpdate(
+        let newOrder = OrderMongooseModel.findOneAndUpdate(
           { id: orderRequest.message.order_id },
           { $set: { payment_origin_source: orderRequest?.message?.payment_origin_source, payment_return_destination: orderRequest?.message?.payment_return_destination } },
           { upsert: true, new: true }
         );
-        lokiLogger.info(`----------------------------newOrder-----------------${JSON.stringify(newOrder)}`);
         const { message = {} } = orderRequest || {};
         const { order_id, cancellation_reason_id } = message || {};
 
@@ -140,7 +137,7 @@ class CancelOrderService {
     try {
       await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
       let protocolCancelResponse = await onOrderCancel(messageId);
-       lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
+      lokiLogger.info(`protocolCancelResponse inside ----------------${JSON.stringify(protocolCancelResponse)}`)
 
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
@@ -160,10 +157,26 @@ class CancelOrderService {
         lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
-          let refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
           let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
           let latest_fulfillment = fulfillments.length
-            ? fulfillments.find((el) => el?.state?.descriptor?.code === "Cancelled") : {};
+            ? fulfillments.find(
+              (el) => el?.state?.descriptor?.code === "RTO-Initiated",
+            )
+            : {};
+
+          if (!latest_fulfillment) {
+            latest_fulfillment = fulfillments.length
+              ? fulfillments.find(
+                (el) => el?.state?.descriptor?.code === "Cancelled",
+              )
+              : {};
+          }
+          let refundAmount = 0;
+          //RTO scenario is for pramaan flow-4 RTO-Initiated case  
+          if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
+            refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
+          else
+            refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
 
           console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
 
@@ -171,14 +184,14 @@ class CancelOrderService {
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId, responseOrderData.id)
 
-          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)        
+          logger.info(`dbResponseOnCancelOrderDbOperation-----------------> ${JSON.stringify(dbResponse)}`)
           logger.info(`protocolCancelResponseOrderDbOperation-----------------> ${JSON.stringify(protocolCancelResponse)}`)
 
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
             let order_details = dbResponse[0];
-            let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({id: latest_fulfillment?.id });
+            let checkFulfillmentAlreadyExist = await getFulfillmentById(latest_fulfillment?.id);
             lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
             if (!checkFulfillmentAlreadyExist) {
@@ -218,21 +231,21 @@ class CancelOrderService {
             const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
             const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
-            
+
             let incomingItemQuoteTrailData = {};
-            const fullfillmentHistoryData = await fulfillmentHistoryMongooseModel.find({ orderId: orderSchema.id })
+            const fullfillmentHistoryData = await getFulfillmentByOrderId(orderSchema.id)
             protocolCancelResponse?.message?.order?.fulfillments.forEach(async (incomingFulfillment) => {
-              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, orderSchema, responseOrderData.id,incomingItemQuoteTrailData)
+              const newfullfilmentObject = createNewFullfillmentObject(incomingFulfillment, fullfillmentHistoryData, protocolCancelResponse?.message?.order, responseOrderData.id, incomingItemQuoteTrailData)
               lokiLogger.info(`newfullfilmentObject-----------, ${JSON.stringify(newfullfilmentObject)}`)
               if (newfullfilmentObject) {
                 newfullfilmentObject.save()
               }
-            })       
+            })
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
 
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems}`)
-            if (totalItemsOrderedCount == (totalCancelledItemsCount + incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems)) {
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount}+${incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0}`)
+            if (totalItemsOrderedCount == (totalCancelledItemsCount + (incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems || 0))) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
 
@@ -392,6 +405,50 @@ class CancelOrderService {
       }
       console.log(`Sum of quoteBreakup values: ${totalCharges}`);
       totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
+      lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+      return totalRefundAmount;
+
+    }
+    return totalRefundAmount;
+  }
+
+  /**
+* INFO: Function to calculate refund amount, When RTO-Initiated by the seller
+* @param {object} obj 
+* @returns 
+*/
+  calculateRefundAmountForRtoCASE(obj) {
+    let totalRefundAmount = 0;
+    lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
+    if (obj) {
+      let sumOfNegativeValues = 0;
+      let fulfillments = obj?.message?.order?.fulfillments || [];
+      let latest_fulfillment = fulfillments.length
+        ? fulfillments.find(
+          (el) => el?.state?.descriptor?.code === "RTO-Initiated",
+        )
+        : {};
+
+      if (latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated") {
+        latest_fulfillment?.tags?.forEach((tag) => {
+          if (tag?.code === "quote_trail") {
+            tag?.list?.forEach((item) => {
+              if (item?.code === "value") {
+                let value = parseFloat(item?.value);
+                if (!isNaN(value) && value < 0) {
+                  sumOfNegativeValues += value;
+                }
+                //Remember we can pay the total order amount that user has paid to us that's why handling delivery amount here -RTO initiated
+                else if (value >= 0) {
+                  sumOfNegativeValues -= value;
+                }
+              }
+            });
+          }
+        });
+      }
+      lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
+      totalRefundAmount = Math.abs(sumOfNegativeValues);
       lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
       return totalRefundAmount;
 
