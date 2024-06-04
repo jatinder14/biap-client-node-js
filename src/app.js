@@ -10,6 +10,7 @@ import dbConnect from './database/mongooseConnector.js';
 import mongoSanitize from 'express-mongo-sanitize'
 import subscriberRoute from './utils/subscribe.js'
 import { schedulerEachDay } from './rsp_integration/rsp_service/crons.js'
+import {emailschedulerEachDay} from "./utils/emailCron.js"
 import settleRouter from "./settlement/settle.routes.js"
 import lokiLogger from './utils/logger.js';
 // import analyticsRouter from "./utils/analytics/router.js"
@@ -71,6 +72,7 @@ dbConnect()
     .then((db) => {
         console.log("Database connection successful");
         schedulerEachDay()
+        emailschedulerEachDay()
         app.listen(port, () => {
             lokiLogger.info(`Connected successfully on port ${port}`)
             console.log(`Listening on port ${port}`);

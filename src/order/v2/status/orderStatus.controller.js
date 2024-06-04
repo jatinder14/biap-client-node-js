@@ -2,7 +2,7 @@ import OrderStatusService from './orderStatus.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 import {sendEmail} from "../../../shared/mailer.js"
 import Notification from "../../v2/db/notification.js";
- 
+
 const orderStatusService = new OrderStatusService();
 
 class OrderStatusController {
@@ -225,54 +225,42 @@ class OrderStatusController {
                             name: nameWithoutNumber
                         })
                         await sendEmail({
-                            userEmails: emailWithoutNumber,
-                            orderIds: orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
+                            userEmails:emailWithoutNumber,
+                            orderIds:orderId,
+                            HTMLtemplate: "/template/orderDelivered.ejs",
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-                        setTimeout(async () => {
-                            await sendEmail({
-                                userEmails: emailWithoutNumber,
-                                orderIds: orderId,
-                                HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
-                                userName: nameWithoutNumber || "",
-                                subject: "Order Feedback | Tell us about your experience",
-                            });
-                        }, 5000); // 15 seconds delay before sending the feedback email
-
-                        console.log("orders3", orders)
-
+    
+    
                         res.json(orders);
 
                     } else if (userEmail && userName) {
                         await Notification.create({
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
-                            name: userName
-                        })
+                            name:userName || ""
+                       });
                         await sendEmail({
-                            userEmails: userEmail,
-                            orderIds: orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs", // Adjust the template path accordingly
-                            userName: userName || "",
+                            userEmails:userEmail,
+                            orderIds:orderId,
+                            HTMLtemplate: "/template/orderDelivered.ejs", 
                             subject: "Order Confirmation | Your order has been successfully delivered",
+                            userName:userName || ""
                         });
-                        setTimeout(async () => {
-                            await sendEmail({
-                                userEmails: userEmail,
-                                orderIds: orderId,
-                                HTMLtemplate: "/template/orderFeedback.ejs", // Adjust the template path accordingly
-                                userName: userName || "",
-                                subject: "Order Feedback | Tell us about your experience",
-                            });
-                        }, 5000); // 15 seconds delay before sending the feedback email
+                         
 
+
+
+    
+    
+                        res.json(orders);
+    
+                    }
+                    else{
 
                         res.json(orders);
 
-                    } else {
-                        res.json(orders);
                     }
 
                 }
