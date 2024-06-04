@@ -156,30 +156,6 @@ class CancelOrderService {
       } else {
         lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
-          protocolCancelResponse = protocolCancelResponse?.[0];
-          let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
-          let latest_fulfillment = fulfillments.length
-            ? fulfillments.find(
-              (el) => el?.state?.descriptor?.code === "RTO-Initiated",
-            )
-            : {};
-
-          if (!latest_fulfillment) {
-            latest_fulfillment = fulfillments.length
-              ? fulfillments.find(
-                (el) => el?.state?.descriptor?.code === "Cancelled",
-              )
-              : {};
-          }
-          let refundAmount = 0;
-          //RTO scenario is for pramaan flow-4 RTO-Initiated case  
-          if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
-            refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
-          else
-            refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
-
-          console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
-
           const responseOrderData = protocolCancelResponse.message.order;
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId, responseOrderData.id)
@@ -190,6 +166,29 @@ class CancelOrderService {
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
+            protocolCancelResponse = protocolCancelResponse?.[0];
+            let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
+            let latest_fulfillment = fulfillments.length
+              ? fulfillments.find(
+                (el) => el?.state?.descriptor?.code === "RTO-Initiated",
+              )
+              : {};
+
+            if (!latest_fulfillment) {
+              latest_fulfillment = fulfillments.length
+                ? fulfillments.find(
+                  (el) => el?.state?.descriptor?.code === "Cancelled",
+                )
+                : {};
+            }
+            let refundAmount = 0;
+            //RTO scenario is for pramaan flow-4 RTO-Initiated case  
+            if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
+              refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
+            else
+              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
+
+            console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
             let order_details = dbResponse[0];
             let checkFulfillmentAlreadyExist = await getFulfillmentById(latest_fulfillment?.id);
             lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
@@ -243,8 +242,8 @@ class CancelOrderService {
             })
 
             lokiLogger.info(`totalItemsOrdered----------, ${totalItemsOrderedCount}`)
-            const incommingCount = incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems ? Number(incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems): 0
-            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount+incommingCount}`)
+            const incommingCount = incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems ? Number(incomingItemQuoteTrailData?.[ORDER_TYPE.CANCEL]?.totalCancelledItems) : 0
+            lokiLogger.info(`totalCancelledItems-----------, ${totalCancelledItemsCount + incommingCount}`)
             if (totalItemsOrderedCount == (Number(totalCancelledItemsCount) + incommingCount)) {
               orderSchema.state = protocolCancelResponse?.message?.order?.state
             }
