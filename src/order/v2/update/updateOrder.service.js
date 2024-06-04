@@ -635,6 +635,7 @@ class UpdateOrderService {
             else {
                 lokiLogger.info(`protocolUpdateResponse?.[0].error ----------------${protocolUpdateResponse?.[0].error}`)
                 if (!(protocolUpdateResponse?.[0].error)) {
+                    protocolUpdateResponse = protocolUpdateResponse?.[0];
                     const dbResponse = await getOrderByTransactionAndOrderId(protocolUpdateResponse.context.transaction_id, protocolUpdateResponse.message.order.id);
                     lokiLogger.info(`----------------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
                     if (!(dbResponse || dbResponse.length) && (dbResponse?.state == "Cancelled"))
@@ -642,7 +643,6 @@ class UpdateOrderService {
                     else {
                         let refundAmount = 0;
                         let calculateRefundAmountObject = {};
-                        protocolUpdateResponse = protocolUpdateResponse?.[0];
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                         let latest_fulfillment = fulfillments[fulfillments.length - 1];
                         if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked")

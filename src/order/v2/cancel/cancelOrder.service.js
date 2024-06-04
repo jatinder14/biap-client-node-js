@@ -156,6 +156,7 @@ class CancelOrderService {
       } else {
         lokiLogger.info(`protocolCancelResponse?.[0].error ----------------${protocolCancelResponse?.[0].error}`)
         if (!protocolCancelResponse?.[0].error) {
+          protocolCancelResponse = protocolCancelResponse?.[0];
           const responseOrderData = protocolCancelResponse.message.order;
           const transactionId = protocolCancelResponse.context.transaction_id;
           const dbResponse = await getOrderByIdAndTransactionId(transactionId, responseOrderData.id)
@@ -166,7 +167,6 @@ class CancelOrderService {
           if (!(dbResponse || dbResponse.length))
             throw new NoRecordFoundError();
           else {
-            protocolCancelResponse = protocolCancelResponse?.[0];
             let fulfillments = protocolCancelResponse?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length
               ? fulfillments.find(
