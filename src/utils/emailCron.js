@@ -18,7 +18,6 @@ export const emailschedulerEachDay = () => {
         if (!order || order.length == 0) {
           return 
         } else {
-          console.log("20>>>>>>>>>>>...", JSON.stringify(order));
           const orderData = order.map((data) => ({
             orderIDs: data?.id,
             userEmail: data?.customer?.contact?.email,
