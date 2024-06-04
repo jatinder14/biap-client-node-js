@@ -367,7 +367,7 @@ const OrderSchema = new mongoose.Schema(
         counterparty_diff_amount_currency: { type: String },
         receiver_settlement_message: { type: String },
         receiver_settlement_message_code: { type: String },
-        feedback_send:{type:Boolean},
+        feedback_sent:{type:Boolean,default:false},
         buyer_state: {
             type: String,
             enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here

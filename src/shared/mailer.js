@@ -20,11 +20,6 @@
     // Function to send notification
     export async function sendEmail({ fromEmail, userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
         try {
-      
-           
-
-            userName = userName.toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-            // Resolve the absolute path to the EJS template (assuming it's named template.ejs)
             const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
 
 
@@ -38,14 +33,17 @@
             if (typeof orderIds === 'string') {
                 orderIds = [orderIds];
             }
+            if(typeof userName === 'string'){
+                userName = [userName];
+
+            }
     
-            // Loop through each email address and order id and send the email individually
             for (let i = 0; i < userEmails.length; i++) {
                 const userEmail = userEmails[i];
-                const orderId = orderIds[i]; // Get the corresponding orderId
+                const orderId = orderIds[i]; 
+                const userNames= userName[i].toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     
-                // Render the EJS template for each user
-                const html = ejs.render(template, { orderId, userName, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url,feedback_url });
+                const html = ejs.render(template, { orderId, userNames, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url,feedback_url });
     
                 // Email options
                 const mailOptions = {

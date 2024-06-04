@@ -2,7 +2,6 @@ import OrderStatusService from './orderStatus.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
 import {sendEmail} from "../../../shared/mailer.js"
 import Notification from "../../v2/db/notification.js";
-import {emailCronJob} from "../../../utils/emailCron.js"
 
 const orderStatusService = new OrderStatusService();
 
@@ -232,7 +231,6 @@ class OrderStatusController {
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-                        await emailCronJob(emailWithoutNumber,orderId,"/template/orderFeedback.ejs",nameWithoutNumber,"Order Feedback | Tell us about your experience")
     
     
                         res.json(orders);
@@ -242,10 +240,6 @@ class OrderStatusController {
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
                             name:userName || ""
-                             }).then(notification => {
-                         console.log('Notification created:', notification);
-                        }).catch(error => {
-                     console.error('Error creating notification:', error);
                        });
                         await sendEmail({
                             userEmails:userEmail,
@@ -256,7 +250,6 @@ class OrderStatusController {
                         });
                          
 
-                         await emailCronJob(userEmail,orderId,"/template/orderFeedback.ejs",userName,"Order Feedback | Tell us about your experience")
 
 
     

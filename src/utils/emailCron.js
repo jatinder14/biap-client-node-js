@@ -1,42 +1,53 @@
-import { sendEmail } from "../shared/mailer.js";
+import { CronJob } from "cron";
 import OrderMongooseModel from "../order/v1/db/order.js";
-import cron from "cron";
+import { sendEmail } from "../shared/mailer.js";
 
-export async function emailCronJob(
-  userEmails,
-  orderId,
-  HTMLtemplate,
-  userName,
-  subject
-) {
-  const CronJob = cron.CronJob;
+export const emailschedulerEachDay = () => {
+  new CronJob(
+    "*/2 * * * *",
+    async () => {
+      try {
+        const order = await OrderMongooseModel.aggregate([
+          {
+            $match: {
+              state: "Completed",
+              feedback_sent: false,
+            },
+          },
+        ]);
+        if (!order || order.length == 0) {
+          return 
+        } else {
+          console.log("20>>>>>>>>>>>...", JSON.stringify(order));
+          const orderData = order.map((data) => ({
+            orderIDs: data?.id,
+            userEmail: data?.customer?.contact?.email,
+            userName: data?.customer?.person?.name,
+          }));
 
-  const task = new CronJob("*/15 * * * * *", async () => {
-    try {
-      const order = await OrderMongooseModel.findOne({ id: orderId });
-      console.log("order", order);
-      console.log("order.feedback_send", order.feedback_send);
-      if (!order) {
-        throw new Error(`Order with id ${orderId} not found`);
-      } else if (order.feedback_send) {
-        task.stop();
-      } else {
-        await sendEmail({
-          userEmails,
-          orderIds: orderId,
-          HTMLtemplate,
-          userName,
-          subject,
-        });
-        const updatedOrder = await OrderMongooseModel.findOneAndUpdate(
-          { id: orderId },
-          { $set: { feedback_send: true } },
-          { new: true }
-        );
+          const orderIDsArray = orderData.map((item) => item.orderIDs);
+          const userEmailArray = orderData.map((item) => item.userEmail);
+          const userNameArray = orderData.map((item) => item.userName);
+
+          await sendEmail({
+            userEmails: userEmailArray,
+            orderIds: orderIDsArray,
+            HTMLtemplate: "/template/orderFeedback.ejs",
+            userName: userNameArray,
+            subject: "Order Feedback | Tell us about your experience",
+          });
+
+          await OrderMongooseModel.updateMany(
+            { id: { $in: orderIDsArray } },
+            { $set: { feedback_sent: true } }
+          );
+        }
+      } catch (e) {
+        console.log("e", e);
       }
-    } catch (error) {
-      console.error("Error in cron job:", error);
-    }
-  });
-  task.start();
-}
+    },
+    null,
+    true,
+    "Asia/Calcutta"
+  );
+};
