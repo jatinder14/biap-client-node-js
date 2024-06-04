@@ -891,7 +891,7 @@ class UpdateOrderService {
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
                         orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
                         if(calculateRefundAmountObject?.full_Cancel)
-                            protocolUpdateResponse?.message?.order?.state = "Cancelled";
+                            protocolUpdateResponse.message.order.state = "Cancelled";
 
                         await addOrUpdateOrderWithdOrderId(
                             protocolUpdateResponse.message.order.id,
