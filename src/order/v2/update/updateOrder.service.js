@@ -890,9 +890,10 @@ class UpdateOrderService {
                         orderSchema.items = updateItems;
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
                         orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
+                        lokiLogger.info(`------------------------calculateRefundAmountObject--------------${JSON.stringify(calculateRefundAmountObject)}`)
                         if(calculateRefundAmountObject?.full_Cancel)
-                            protocolUpdateResponse.message.order.state = "Cancelled";
-
+                            orderSchema.state = "Cancelled";
+                        lokiLogger.info(`------------------------orderSchema--------------${JSON.stringify(orderSchema)}`)
                         await addOrUpdateOrderWithdOrderId(
                             protocolUpdateResponse.message.order.id,
                             { ...orderSchema }
