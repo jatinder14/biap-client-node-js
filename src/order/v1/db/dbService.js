@@ -315,7 +315,7 @@ const getTotalItemsCountByAction = async (orderId, action) => {
             }
         ]);
 
-    return totalItemsCountByActionData[0]?.totalQuantity || 0;
+    return totalItemsCountByActionData[0]?.totalQuantity ? Number(totalItemsCountByActionData[0]?.totalQuantity): 0;
 
 }
 export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId };

@@ -1,5 +1,5 @@
 import FulfillmentHistory from "../../v2/db/fulfillmentHistory.js";
-import { ORDER_TYPE } from "../../../utils/constants.js";
+import { ORDER_STATUS, ORDER_TYPE } from "../../../utils/constants.js";
 import lokiLogger from "../../../utils/logger.js";
 
 const createNewFullfillmentObject = (
@@ -44,7 +44,8 @@ const checkFulfillmentExistence = (incomingFulfillment, fullfillmentHistoryData)
 
 const isCancelableOrReturn = (incomingFulfillment) => {
   const type = incomingFulfillment?.type?.toLowerCase();
-  return [ORDER_TYPE.CANCEL, ORDER_TYPE.RETURN].includes(type);
+  // const code = incomingFulfillment?.state?.descriptor?.code?.toLowerCase();
+  return [ORDER_TYPE.CANCEL, ORDER_TYPE.RTO, ORDER_TYPE.RETURN].includes(type); // [ORDER_STATUS.CANCELLED, ORDER_STATUS.RETURNED, ORDER_STATUS.RETURNED].includes(code)
 };
 
 const createFulfillmentHistory = (incomingFulfillment, orderId, currentFulfillmentHistoryData) => {
