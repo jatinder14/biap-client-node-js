@@ -397,7 +397,7 @@ class DashboardController {
         },
       ]);
 
-      let data = {};
+      const data = new Map();
       switch (filter) {
         case "yearly": {
           fetchData.forEach((dataEntry) => {
@@ -494,7 +494,6 @@ class DashboardController {
         default:
           throw new Error("Invalid Filter");
       }
-
       return res.status(200).json({
         success: true,
         message: "Data fetched successfully",
