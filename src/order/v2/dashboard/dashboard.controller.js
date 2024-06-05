@@ -498,7 +498,7 @@ class DashboardController {
       return res.status(200).json({
         success: true,
         message: "Data fetched successfully",
-        result,
+        data: result,
       });
     } catch (error) {
       return res.status(500).json({
