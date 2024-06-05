@@ -1,5 +1,5 @@
 import { onOrderCancel ,onUpdateStatus} from "../../../utils/protocolApis/index.js";
-import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
+import { ORDER_STATUS, PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import {
     addOrUpdateOrderWithTransactionIdAndOrderId,
     addOrUpdateOrderWithTransactionIdAndProvider,
@@ -358,6 +358,15 @@ class UpdateOrderService {
                             //setTimeout(async() => {
                                 await this.updateForPaymentObject(updateRequest.request,protocolUpdateResponse)
                            // }, 5000);
+                        }
+                        if (protocolUpdateResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.COMPLETED) {
+                            orderSchema.settle_status = SETTLE_STATUS.CREDIT
+                        }
+                        if (protocolUpdateResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.CANCELLED) {
+                            orderSchema.settle_status = SETTLE_STATUS.DEBIT
+                        }
+                        if (protocolUpdateResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.RETURNED) {
+                            orderSchema.settle_status = SETTLE_STATUS.DEBIT
                         }
 
                         await addOrUpdateOrderWithTransactionIdAndOrderId(

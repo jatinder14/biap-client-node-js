@@ -35,7 +35,12 @@ class SelectOrderController {
         if (requests && requests.length) {
 
             selectOrderService.selectMultipleOrder(requests).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });
@@ -77,8 +82,13 @@ class SelectOrderController {
         if(messageIds && messageIds.length && messageIds.trim().length) { 
             const messageIdArray = messageIds.split(",");
             
-            selectOrderService.onSelectMultipleOrder(messageIdArray).then(orders => {
-                res.json(orders);
+            selectOrderService.onSelectMultipleOrder(messageIdArray).then(response => {
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });

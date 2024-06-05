@@ -1,5 +1,5 @@
 import { onOrderCancel } from "../../../utils/protocolApis/index.js";
-import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
+import { ORDER_STATUS, PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import {
     addOrUpdateOrderWithTransactionId,
     addOrUpdateOrderWithTransactionIdAndProvider,
@@ -129,6 +129,16 @@ class CancelOrderService {
                     else {
                         const orderSchema = dbResponse?.[0].toJSON();
                         orderSchema.state = protocolCancelResponse?.message?.order?.state;
+                        if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.COMPLETED) {
+                            orderSchema.settle_status = SETTLE_STATUS.CREDIT
+                        }
+                        if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.CANCELLED) {
+                            orderSchema.settle_status = SETTLE_STATUS.DEBIT
+                            
+                        }
+                        if (protocolCancelResponse?.message?.order?.state?.toLowerCase() == ORDER_STATUS.RETURNED) {
+                            orderSchema.settle_status = SETTLE_STATUS.DEBIT
+                        }
 
                         await addOrUpdateOrderWithTransactionIdAndOrderId(
                             protocolCancelResponse.context.transaction_id,protocolCancelResponse.message.order.id,

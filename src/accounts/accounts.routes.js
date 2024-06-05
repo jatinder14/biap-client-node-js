@@ -4,12 +4,14 @@ import {bhashiniTranslator} from '../../src/middlewares/bhashiniTranslator/deliv
 import BillingController from "./billings/billing.controller.js";
 import DeliveryAddressController from "./deliveryAddress/deliveryAddress.controller.js";
 import MapController from "./map/map.controller.js";
+import UserController from "../accounts/users/user.controller.js";
 
 const rootRouter = new Router();
 
 const billingController = new BillingController();
 const mapController = new MapController();
 const deliveryAddressController = new DeliveryAddressController();
+const userController = new UserController();
 
 //#region billing details
 
@@ -25,10 +27,34 @@ rootRouter.get(
   billingController.onBillingDetails
 );
 
+
+rootRouter.post('/signup', userController.signUp);
+rootRouter.post('/resendOtp', userController.resendOtp);
+  
+rootRouter.post('/verifyotp', userController.verifyOTP);
+
+rootRouter.post('/userProfile', authentication(), userController.userProfile);
+
+rootRouter.get('/getUserProfile',authentication(), userController.getUserProfile);
+
+rootRouter.get('/', userController.getRefreshToken);
+
+  
+//I have to work on this route once cart issue will merge i will work on refresh token
+// rootRouter.post('/refreshToken', userController.genRefreshToken);
+
+
+
 rootRouter.post(
   "/v1/update_billing_details/:id",
   authentication(),
   billingController.updateBillingAddress
+);
+
+
+rootRouter.delete('/v1/delete_billing_details/:id',
+  authentication(),
+  billingController.deleteBillingAddress
 );
 
 //#endregion
@@ -60,7 +86,7 @@ rootRouter.delete(
   deliveryAddressController.deleteDeliveryAddress
 );
 
-rootRouter.get("/v2/map/accesstoken", authentication(), mapController.mmiToken);
+rootRouter.get("/v2/map/accesstoken", mapController.mmiToken);
 
 rootRouter.get("/v2/map/getCordinates", mapController.getCoordinates);
 rootRouter.get("/v2/map/getPinCode", mapController.getPincode);

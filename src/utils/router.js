@@ -18,7 +18,84 @@ import cartRoutesv2 from "../order/v2/cart/v2/cart.routes.js";
 import sseRoutesv2 from "../sse/v2/sse.routes.js";
 import razorPayv2 from "../razorPay/razorpay.routes.js";
 import rspRoutes from "../rsp_integration/rsp_routes/rsfRoutes.js"
+import wishlistRoutes from "../order/v2/wishlist/wishlist.routes.js"
+import User from '../accounts/users/db/user.js';
+import rootRouter from '../accounts/accounts.routes.js';
+import configurationRouter from '../configuration/index.js';
+import Order from '../order/v1/db/order.js';
+import Refund from '../order/v2/db/refund.js';
+import Settlements from '../order/v2/db/settlement.js';
+import Fulfillments from '../order/v2/db/fulfillments.js';
+import FulfillmentHistory from '../order/v2/db/fulfillmentHistory.js';
+import WishList from '../order/v2/db/wishlist.js';
+
 const router = new Router();
+router.get("/users",async (req,res) => {
+    let data = await User.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+//  for testing
+router.get("/users/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await User.findOne({userId : req.params.id});
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders",async (req,res) => {
+    let data = await Order.find();
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/refunds",async (req,res) => {
+    let data = await Refund.find();
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/settlements",async (req,res) => {
+    let data = await Settlements.find();
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/fulfillments",async (req,res) => {
+    let data = await Fulfillments.find();
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/fulfillment-History",async (req,res) => {
+    let data = await FulfillmentHistory.find();
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/orders/:id",async (req,res) => {
+    console.log('req.params.id',req.params.id)
+    let data = await Order.findOne({id: req.params.id});
+    if(!data) {
+     data = await Order.findOne({userId: req.params.id});
+    }
+ 
+     res.status(200).json({"use": "testing",
+     data: data
+ })
+ })
+router.get("/wishlishts",async (req,res) => {
+    let data = await WishList.find();
+
+     res.status(200).json({"use": "testing",
+     data: data 
+ })
+ })
+router.use("/refresh-token", rootRouter);
 //v1
 router.use(accountRoutes);
 router.use(migrationsRoutes);
@@ -38,6 +115,7 @@ router.use(trackRoutesv2);
 router.use(cartRoutesv2);
 router.use(sseRoutesv2);
 router.use(razorPayv2);
-
+router.use(wishlistRoutes);
+router.use(configurationRouter)
 
 export default router;

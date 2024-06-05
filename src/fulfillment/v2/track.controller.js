@@ -38,7 +38,12 @@ class TrackController {
 
         if (trackRequests && trackRequests.length) {
             trackService.trackMultipleOrder(trackRequests).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });
@@ -83,7 +88,12 @@ class TrackController {
             const messageIdArray = messageIds.split(",");
             
             trackService.onTrackMultipleOrder(messageIdArray).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });

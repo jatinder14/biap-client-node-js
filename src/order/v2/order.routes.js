@@ -1,15 +1,18 @@
-import {Router} from 'express';
+import { Router } from 'express';
 import { authentication } from '../../middlewares/index.js';
 import { bhashiniTranslator } from '../../middlewares/bhashiniTranslator/order.js';
 import CancelOrderController from './cancel/cancelOrder.controller.js';
 import ConfirmOrderController from './confirm/confirmOrder.controller.js';
 import InitOrderController from './init/initOrder.controller.js';
 import OrderHistoryController from './history/orderHistory.controller.js';
+import TopSellingController from './top_selling_product/topSellingProduct.controller.js'
 import OrderStatusController from './status/orderStatus.controller.js';
 import SelectOrderController from './select/selectOrder.controller.js';
 import UpdateOrderController from './update/updateOrder.controller.js';
 import ComplaintOrderController from './complaint/complaintOrder.controller.js';
 import UploadController from '../upload/upload.controller.js';
+import OrderFeedbackController from './feedback/feedback.controller.js';
+import multer from 'multer';
 
 const rootRouter = new Router();
 
@@ -17,11 +20,19 @@ const cancelOrderController = new CancelOrderController();
 const confirmOrderController = new ConfirmOrderController();
 const initOrderController = new InitOrderController();
 const orderHistoryController = new OrderHistoryController();
+const topSellingController= new TopSellingController()
 const orderStatusController = new OrderStatusController();
 const selectOrderController = new SelectOrderController();
 const updateOrderController = new UpdateOrderController();
-const complaintOrderController  = new  ComplaintOrderController ();
-const uploadController = new  UploadController();
+const complaintOrderController = new ComplaintOrderController();
+const uploadController = new UploadController();
+const orderFeedbackController = new OrderFeedbackController();
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // limit file size to 5MB
+    },
+  });
 
 //#region confirm order
 
@@ -60,6 +71,8 @@ rootRouter.get('/v2/on_cancel_order', authentication(), cancelOrderController.on
 
 //#region order history
 rootRouter.get('/v2/orders', authentication(), orderHistoryController.getOrdersList, bhashiniTranslator);
+rootRouter.get('/v2/top_selling_order/:userId', topSellingController.topSellingProduct);
+
 //#endregion
 
 //#region Initialize order
@@ -72,7 +85,7 @@ rootRouter.post(
 
 // initialize order v2
 rootRouter.post(
-    '/v2/initialize_order', 
+    '/v2/initialize_order',
     authentication(),
     initOrderController.initMultipleOrder,
 );
@@ -95,7 +108,7 @@ rootRouter.post(
 
 // order status v2
 rootRouter.post(
-    '/v2/order_status', 
+    '/v2/order_status',
     authentication(),
     orderStatusController.orderStatusV2,
 );
@@ -112,15 +125,15 @@ rootRouter.get('/v2/on_order_status', authentication(), orderStatusController.on
 
 // select order v1
 rootRouter.post(
-    '/v1/select', 
+    '/v1/select',
     authentication(),
     selectOrderController.selectOrder,
 );
 
 // select order v2
 rootRouter.post(
-    '/v2/select', 
-    authentication(),
+    '/v2/select',
+    // authentication(),
     selectOrderController.selectMultipleOrder,
 );
 
@@ -134,15 +147,20 @@ rootRouter.post(
 rootRouter.get('/v1/on_select', authentication(), selectOrderController.onSelectOrder);
 
 // on select order v2
-rootRouter.get('/v2/on_select', authentication(), selectOrderController.onSelectMultipleOrder);
+rootRouter.get('/v2/on_select', selectOrderController.onSelectMultipleOrder); // authentication(),
 
 rootRouter.post('/v2/update', authentication(), updateOrderController.update);
 
 rootRouter.get('/v2/on_update', authentication(), updateOrderController.onUpdate);
 
-rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), uploadController.upload);
+rootRouter.post('/v2/getSignUrlForUpload/:orderId', authentication(), upload.single('file'), uploadController.upload);
+
+rootRouter.get('/v2/getResource/:fileKey', uploadController.download);
 
 rootRouter.get('/v2/orders/:orderId', authentication(), confirmOrderController.orderDetails);
+rootRouter.post('/v2/feedback/:orderId',  orderFeedbackController.feedback);
+rootRouter.get('/v2/feedback/:orderId',  orderFeedbackController.getfeedback);
+rootRouter.post('/v2/contact', orderFeedbackController.contactUs);
 
 //#endregion
 

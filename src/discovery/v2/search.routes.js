@@ -3,13 +3,14 @@ import {bhashiniTranslator} from '../../middlewares/bhashiniTranslator/search.js
 import {providerTranslator} from '../../middlewares/bhashiniTranslator/provider.js';
 
 import SearchController from './search.controller.js';
+import authentication from '../../middlewares/authentication.js';
 
 const router = new Router();
 const searchController = new SearchController();
 
 // search
 router.get(
-    '/v2/search',  
+    '/v2/search/:userId',  
     searchController.search,bhashiniTranslator
     
 );
@@ -27,7 +28,26 @@ router.get(
 
 // get item details
 router.get(
-    '/v2/locations/:id',  searchController.getLocation,
+    '/v2/providers/:itemId', authentication(), searchController.getProvider,
+);
+
+// get item details
+router.get(
+    '/v2/provider-details',authentication(),searchController.getProvideDetails,
+);
+// get item details
+router.get(
+    '/v2/location-details',authentication(),searchController.getLocationDetails,
+);
+
+// get item details
+router.get(
+    '/v2/item-details', searchController.getItemDetails,
+);
+
+// get item details
+router.get(
+    '/v2/locations/:id', authentication(), searchController.getLocation,
 );
 
 

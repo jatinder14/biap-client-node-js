@@ -12,21 +12,28 @@ class UpdateOrderController {
     * @return {callback}
     */
     async update(req, res, next) {
-        const {body: orders} = req;
-
-        // console.log("orderStatus-------------------->",orders)
+        const { body: orders } = req;
         const onUpdateOrderResponse = await Promise.all(
             orders.map(async order => {
                 try {
-
-                    console.log("update orders--------------->",order);
                     return await cancelOrderService.update(order);
                 } catch (err) {
+                    console.log("error update order ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while updating the order!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while updating the order!"
+                        }
+                    }
 
-                    console.log("update orders---------err------>",err);
-
-                    return err.response.data;
-                    // throw err;
                 }
             })
         );
@@ -36,9 +43,8 @@ class UpdateOrderController {
         // return onUpdateOrderResponse;
     }
 
-
     /**
-    * on cancel order
+    * INFO: on update order
     * @param {*} req    HTTP request object
     * @param {*} res    HTTP response object
     * @param {*} next   Callback argument to the middleware function
@@ -47,9 +53,9 @@ class UpdateOrderController {
     onUpdate(req, res, next) {
         const { query } = req;
         const { messageId } = query;
-        
-        if(messageId) {
-            cancelOrderService.onUpdate(messageId).then(order => {
+
+        if (messageId) {
+            cancelOrderService.onUpdate(messageId).then(async order => {
                 res.json(order);
             }).catch((err) => {
                 next(err);

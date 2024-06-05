@@ -4,6 +4,7 @@ import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId,getOrderByTr
 
 import BppInitService from "./bppInit.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
+import getCityCode from "../../../utils/AreaCodeMap.js";
 
 const bppInitService = new BppInitService();
 
@@ -35,19 +36,15 @@ class InitOrderService {
      */
     async createOrder(response, userId = null, orderRequest) {
         if (response) {
-            const provider = orderRequest?.items?.[0]?.provider || {};
-
+            const provider = orderRequest?.items?.[0]?.provider || [];
+            
             const providerDetails = {
                 id: provider.local_id,
                 descriptor:provider.descriptor,
-                locations: provider.locations.map(location => {
+                locations: provider?.locations?.map(location => {
                     return { id: location.local_id };
                 })
             };
-
-
-            console.log("orderRequest---------name------->",orderRequest?.delivery_info?.name)
-            console.log("orderRequest-----------delivery_info----->",orderRequest?.delivery_info)
             const fulfillment = {
                 end: {
                     contact: {
@@ -70,9 +67,6 @@ class InitOrderService {
                 },
                 provider_id: provider?.local_id
             };
-
-            console.log('itemProducts--------before------->',orderRequest.items);
-
             let itemProducts = []
             for(let item of orderRequest.items){
 
@@ -80,7 +74,7 @@ class InitOrderService {
                 let selectitem = {
                     id: item?.local_id?.toString(),
                     quantity: item?.quantity,
-                    location_id: provider.locations[0].local_id?.toString()
+                    location_id: provider?.locations[0]?.local_id?.toString()
                 }
                 let tag=undefined
                 if(item.tags && item.tags.length>0){
@@ -132,14 +126,12 @@ class InitOrderService {
 
             }
 
-            console.log('itemProducts--------aftr------->',itemProducts);
-            // console.log('itemProducts--------response?.context?.bpp_id------->',response?.context?.bpp_id);
-            console.log('itemProducts--------response?.context?.bpp_id------->',fulfillment);
-
             await addOrUpdateOrderWithTransactionIdAndProvider(
                 response.context.transaction_id,provider.local_id,
                 {
                     userId: userId,
+                    // cart_key: cart_key,
+                    // wishlist_key: wishlist_key,
                     messageId: response?.context?.message_id,
                     transactionId: response?.context?.transaction_id,
                     parentOrderId: response?.context?.parent_order_id,
@@ -159,17 +151,10 @@ class InitOrderService {
      * @param {Object} dbResponse
      */
     async updateOrder(response, dbResponse) {
-
-        //console.log("update order-------------------->",dbResponse);
-        //console.log("update order-----------response--------->",response);
-        // console.log("update order-----------response--------->",orderSchema.fulfillment);
         if (response?.message?.order && dbResponse) {
             dbResponse = dbResponse?.toJSON();
 
             let orderSchema = { ...response.message.order };
-
-            console.log("update order-----------fulfillment--------->",orderSchema.fulfillment);
-
             orderSchema.items = dbResponse?.items.map(item => {
                 return {
                     id: item?.id?.toString(),
@@ -200,12 +185,6 @@ class InitOrderService {
                 orderSchema.fulfillments = [orderSchema.fulfillment];
                 delete orderSchema.fulfillment;
             }
-
-
-            console.log("update order----------orderSchema?.billing--------->",orderSchema?.billing);
-            console.log("update order----------orderSchema?.billing---quote------>",orderSchema?.quote);
-            console.log("update order----------orderSchema?.billing--response -quote------>",dbResponse?.quote);
-
             dbResponse.quote = orderSchema.quote
 
             if (orderSchema.fulfillments && orderSchema.fulfillments.length) {
@@ -241,9 +220,9 @@ class InitOrderService {
     async initOrder(orderRequest, isMultiSellerRequest = false) {
         try {
             const { context: requestContext = {}, message: order = {} } = orderRequest || {};
-            const parentOrderId = requestContext?.transaction_id; //FIXME: verify usage
+            const parentOrderId = requestContext?.transaction_id;
+            requestContext.city = getCityCode(requestContext?.city)
 
-            console.log("order--->",orderRequest)
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.INIT,
@@ -260,18 +239,21 @@ class InitOrderService {
             if (!(order?.items?.length)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "Empty order received" }
                 };
             }
             else if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(order?.items)) {
                 return {
                     context,
+                    success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             }
@@ -295,20 +277,31 @@ class InitOrderService {
      * @param {Object} user
      */
     async initMultipleOrder(orders, user) {
-
-        console.log("orders------->",orders)
         const initOrderResponse = await Promise.all(
             orders.map(async order => {
                 try {
-                    console.log("orders---pre---->",order)
                     const bppResponse = await this.initOrder(order, orders.length > 1);
                     await this.createOrder(bppResponse, user?.decodedToken?.uid, order?.message);
 
                     return bppResponse;
                 }
                 catch (err) {
-                    console.log(err)
-                    return err.response.data;
+                    console.log("error initMultipleOrder ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to proceed with this order!"
+                        }
+                    }
+                    
                 }
 
             })
@@ -337,6 +330,7 @@ class InitOrderService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -362,14 +356,7 @@ class InitOrderService {
                 messageIds.map(async messageId => {
                     try {
                         let protocolInitResponse = await this.onInitOrder(messageId);
-
-                        //console.log("protocolInitResponse------------->",protocolInitResponse);
-                        //console.log("protocolInitResponse-------provider------>",protocolInitResponse.message.order.provider);
-
                         let dbResponse = await getOrderByTransactionIdAndProvider(protocolInitResponse?.context?.transaction_id,protocolInitResponse?.message.order.provider.id);
-
-                        //console.log("on init --protocolInitResponse--dbResponse",dbResponse);
-
                         await this.updateOrder(protocolInitResponse, dbResponse);
 
                         dbResponse = dbResponse?.toJSON();
@@ -382,7 +369,22 @@ class InitOrderService {
                         return protocolInitResponse;
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onInitMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to proceed with this order!"
+                            }
+                        }
+                        
                     }
                 })
             );

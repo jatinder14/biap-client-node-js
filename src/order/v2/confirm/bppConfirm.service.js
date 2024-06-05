@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../utils/constants.js";
 import {protocolConfirm, protocolGetDumps} from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../../v1/db/order.js";
+import lokiLogger from '../../../utils/logger.js';
 
 class BppConfirmService {
 
@@ -17,7 +18,7 @@ class BppConfirmService {
             const response = await protocolConfirm(confirmRequest);
 
             if(response.error){
-                return { message: response.data ,error:response.error};
+                return { success: false, message: response.data ,error:response.error};
             }else{
                 return { context: confirmRequest.context, message: response.message };
             }
@@ -26,7 +27,7 @@ class BppConfirmService {
         catch (err) {
 
             //set confirm request in error data
-            err.response.data.confirmRequest =confirmRequest
+            // err.response.data.confirmRequest =confirmRequest
             throw err;
         }
     }
@@ -120,53 +121,35 @@ class BppConfirmService {
     async confirmV2(context, order = {}, storedOrder = {}) {
         try {
             storedOrder = storedOrder?.toJSON();
-
             const n = new Date();
-            const count = await OrderMongooseModel.count({
-            });
-
-
-            //get TAT object from select request
-
-            let on_select = await protocolGetDumps({type:"on_select",transaction_id:context.transaction_id})
-
-            console.log("on_select------------->",on_select)
-
-            let on_select_fulfillments = on_select.request?.message?.order?.fulfillments??[]
-
-
-            let orderId = `${n.getFullYear()}-${this.pad(n.getMonth()+1)}-${this.pad(n.getDate())}-${Math.floor(100000 + Math.random() * 900000)}`;
-
-            let qoute = {...(order?.quote || storedOrder?.quote)}
-
-            let value = ""+qoute?.price?.value
+            let on_select = await protocolGetDumps({ type: "on_select", transaction_id: context.transaction_id })
+            let on_select_fulfillments = on_select.request?.message?.order?.fulfillments ?? []
+            let orderId = `${n.getFullYear()}-${this.pad(n.getMonth() + 1)}-${this.pad(n.getDate())}-${Math.floor(100000 + Math.random() * 900000)}`;
+            let qoute = { ...(order?.quote || storedOrder?.quote) }
+            let value = "" + qoute?.price?.value
             qoute.price.value = value
 
-
-            //find terms from init call
-
             let bpp_term = storedOrder?.tags?.find(x => x.code === 'bpp_terms')
-
             let tax_number = bpp_term?.list?.find(x => x.code === 'tax_number')
 
-            let bpp_terms =[
+            let bpp_terms = [
                 {
-                    code:"bpp_terms",
+                    code: "bpp_terms",
                     list:
                         [
                             {
-                                "code":"tax_number",
-                                "value":tax_number?.value
+                                "code": "tax_number",
+                                "value": tax_number?.value
                             }
                         ]
                 },
                 {
-                    code:"bap_terms",
+                    code: "bap_terms",
                     list:
                         [
                             {
-                                "code":"tax_number",
-                                "value":"GSTIN1234567890"
+                                "code": "tax_number",
+                                "value": process.env.BAP_GSTNO
                             }
                         ]
                 }
@@ -178,13 +161,16 @@ class BppConfirmService {
             // Completed - when all fulfillments completed
             // Cancelled - when order cancelled
 
-            console.log({id:storedOrder?.provider.id,locations:storedOrder?.provider.locations})
+            let settlement_details = order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                storedOrder?.settlementDetails?.["@ondc/org/settlement_details"] :
+                order.payment['@ondc/org/settlement_details']
+
             const confirmRequest = {
                 context: context,
                 message: {
                     order: {
                         id: orderId,
-                        state:"Created",
+                        state: "Created",
                         billing: {
                             address: {
                                 name: storedOrder?.billing?.address?.name,
@@ -199,8 +185,8 @@ class BppConfirmService {
                             phone: storedOrder?.billing?.phone,
                             name: storedOrder?.billing?.name,
                             email: storedOrder?.billing?.email,
-                            created_at:storedOrder?.billing?.created_at,
-                            updated_at:storedOrder?.billing?.updated_at
+                            created_at: storedOrder?.billing?.created_at,
+                            updated_at: storedOrder?.billing?.updated_at
                         },
                         items: storedOrder?.items && storedOrder?.items?.length &&
                             [...storedOrder?.items].map(item => {
@@ -210,24 +196,18 @@ class BppConfirmService {
                                         count: item.quantity.count
                                     },
                                     fulfillment_id: item.fulfillment_id,
-                                    tags:item.tags,
-                                    parent_item_id:item.parent_item_id??undefined
+                                    tags: item.tags,
+                                    parent_item_id: item.parent_item_id ?? undefined
                                 };
                             }) || [],
-                        provider: {id:storedOrder?.provider.id,locations:storedOrder?.provider.locations},
+                        provider: { id: storedOrder?.provider.id, locations: storedOrder?.provider.locations },
                         fulfillments: [...storedOrder.fulfillments].map((fulfillment) => {
-
-                            console.log(on_select_fulfillments)
-                            console.log(fulfillment)
-                           let mappedFulfillment = on_select_fulfillments.find((data)=>{return data.id==fulfillment?.id});
-
-                            console.log("mappedFulfillment",mappedFulfillment)
-                            console.log(mappedFulfillment)
+                            let mappedFulfillment = on_select_fulfillments.find((data) => { return data.id == fulfillment?.id });
 
                             return {
-                                '@ondc/org/TAT':mappedFulfillment['@ondc/org/TAT'],
+                                '@ondc/org/TAT': mappedFulfillment['@ondc/org/TAT'],
                                 id: fulfillment?.id,
-                                tracking: fulfillment?.tracking??false,
+                                tracking: fulfillment?.tracking ?? false,
                                 end: {
                                     contact: {
                                         email: fulfillment?.end?.contact?.email,
@@ -254,61 +234,49 @@ class BppConfirmService {
                             }
                         }),
                         payment: {
-                            uri:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                "https://razorpay.com/":
-                                undefined, //In case of pre-paid collection by the buyer app, the payment link is rendered after the buyer app sends ACK for /on_init but before calling /confirm;
-                            tl_method:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                "http/get":
-                                undefined,
+                            // uri: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? "https://razorpay.com/" :
+                            //     undefined, //In case of pre-paid collection by the buyer app, the payment link is rendered after the buyer app sends ACK for /on_init but before calling /confirm;
+                            // tl_method: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                            //     "http/get" :
+                            //     undefined,
+                            // razorpayPaymentId: order?.payment?.razorpayPaymentId,
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
-                                transaction_id:order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                    order.jusPayTransactionId??uuidv4():
-                                    undefined//payment transaction id
+                                transaction_id: uuidv4() // order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? order.jusPayTransactionId ?? uuidv4() : undefined //payment transaction id
                             },
                             status: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 PROTOCOL_PAYMENT.PAID :
                                 PROTOCOL_PAYMENT["NOT-PAID"],
                             type: order?.payment?.type,
-                            collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? 
-                                PAYMENT_COLLECTED_BY.BAP : 
+                            collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
+                                PAYMENT_COLLECTED_BY.BAP :
                                 PAYMENT_COLLECTED_BY.BPP,
                             '@ondc/org/buyer_app_finder_fee_type': process.env.BAP_FINDER_FEE_TYPE,
-                            '@ondc/org/buyer_app_finder_fee_amount':  process.env.BAP_FINDER_FEE_AMOUNT,
-                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis']??undefined,
-                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window']??undefined,
-                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount']??undefined,
-                            "@ondc/org/settlement_details":order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
-                                storedOrder?.settlementDetails?.["@ondc/org/settlement_details"]:
-                                order.payment['@ondc/org/settlement_details'],
+                            '@ondc/org/buyer_app_finder_fee_amount': process.env.BAP_FINDER_FEE_AMOUNT,
+                            '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis'] ?? "delivery",
+                            '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window'] ?? "P1D",
+                            '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount'] ?? "0",
+                            "@ondc/org/settlement_details": settlement_details,
 
                         },
                         quote: {
                             ...(qoute)
                         },
                         tags: bpp_terms
-                            ,
-                        created_at:context.timestamp,
-                        updated_at:context.timestamp
+                        ,
+                        created_at: context.timestamp,
+                        updated_at: context.timestamp
                     }
                 }
             };
-
-
-            console.log({confirmRequest})
             let confirmResponse = await this.confirm(confirmRequest);
-
-            if(confirmResponse.error){
+            if (confirmResponse.error) {
                 //retrial attempt
-                console.log("error--------->",confirmResponse.message);
-
-
+                console.log("confirmResponse.error--------->", confirmResponse.error);
             }
-
             return confirmResponse
-
-           // return await this.confirm(confirmRequest);
+            // return await this.confirm(confirmRequest);
         }
         catch (err) {
             throw err;

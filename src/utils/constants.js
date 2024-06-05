@@ -100,7 +100,15 @@ export const JUSPAY_PAYMENT_STATUS = {
 
 export const ORDER_STATUS = {
     COMPLETED: "completed",
+    CANCELLED: "cancelled",
+    RETURNED: "returned",
     "IN-PROGRESS": "in-progress"
+}
+
+export const ORDER_TYPE = {
+    RETURN: "return",
+    CANCEL: "cancel",
+    RTO: "rto",
 }
 
 export const PAYMENT_COLLECTED_BY = {
@@ -119,4 +127,30 @@ export const CHANGE_TYPES = {
     TRANSACTION: 'TRANSACTION',
     STATUS_UPDATE: 'STATUS_UPDATE',
     INTENT_UPDATE: 'INTENT_UPDATE',
+};
+
+
+export const PAYERDETAIL={
+    PAYER_NAME:'Example1 company Pvt. Ltd',
+    PAYERADDRESS:'The Velvet Vignette',
+    PAYER_ACCOUNT_NO:"509424924294248",
+    PAYER_BANK_CODE:"HDFC0000000",
+    PAYER_VIRTUAL_PAYMENT_ADDRESS:"80abc@abctMh2h"
+}
+
+
+export const SETTLE_STATUS = {
+    PENDING: "Pending",
+    DEBIT: "Debit",
+    CREDIT: "Credit",
+    SETTLE: "Settle",
+}
+export const OBJECT_TYPE = {
+    ITEM: 'ITEM',
+    PROVIDER: 'PROVIDER',
+    LOCATIONS: 'LOCATIONS',
+    PROVIDER_DETAILS: 'PROVIDER_DETAILS',
+    LOCATION_DETAILS: 'LOCATION_DETAILS',
+    ITEM_DETAILS:'ITEM_DETAILS',
+    CUSTOMMENU_ITEMS: 'CUSTOMMENU_ITEMS'
 };

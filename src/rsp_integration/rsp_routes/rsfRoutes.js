@@ -1,20 +1,9 @@
-import {Router} from 'express';
-import { authentication } from '../../middlewares/index.js';
-
-import {onCollectorReconController} from "../rsp_controller/index.js"
+import { Router } from 'express';
+import { rspController } from "../rsp_controller/index.js"
 export const rootRouter = new Router();
 
-// const recieivereconController= new RecieiverReconController()
-
-
-    //#region confirm order
-
-// confirm order v1
-rootRouter.post(
-    '/v2/on_collector_recon',onCollectorReconController.onCollectorRecon,
-);
-
-
-//#endregion
+rootRouter.post('/response/v2/on_collector_recon', rspController.onCollectorRecon);
+rootRouter.post('/response/v2/on_prepare_recon', rspController.onPrepareRecon);
+rootRouter.post("/response/v2/receiver_recon", rspController.receiverRecon)
 
 export default rootRouter;

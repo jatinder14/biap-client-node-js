@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { BUYER_STATES } from "../../../utils/constant/order.js";
 const AddOnsSchema = new mongoose.Schema(
     {
         id: { type: String, required: true },
@@ -42,7 +42,7 @@ const TimeRangeSchema = new mongoose.Schema(
 const TimeSchema = new mongoose.Schema(
     {
         label: { type: String },
-        timestamp: { type: Date },
+        timestamp: { type: Date, default: Date.now },
         duration: { type: String },
         range: { type: TimeRangeSchema },
         days: { type: String },
@@ -61,8 +61,8 @@ const BillingSchema = new mongoose.Schema(
         time: { type: TimeSchema },
         taxNumber: { type: String },
         locationId: { type: String },
-        updated_at:{type: String},
-        created_at:{type: String}
+        updated_at: { type: String },
+        created_at: { type: String }
     },
     { _id: false }
 );
@@ -99,7 +99,7 @@ const PersonSchema = new mongoose.Schema(
         dob: { type: Date },
         gender: { type: String },
         cred: { type: String },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -182,7 +182,7 @@ const ContactSchema = new mongoose.Schema(
     {
         phone: { type: String },
         email: { type: String },
-        tags: { type: Map }
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -212,7 +212,7 @@ const CustomerSchema = new mongoose.Schema(
         person: { type: PersonSchema },
         contact: { type: ContactSchema }
     },
-    { _id: false }
+    { _id: true }
 );
 
 const FulfillmentSchema = new mongoose.Schema(
@@ -227,7 +227,7 @@ const FulfillmentSchema = new mongoose.Schema(
         end: { type: FulfillmentEndSchema },
         purpose: { type: String },
         customer: { type: CustomerSchema },
-        tags: { type: Map },
+        tags: { type: mongoose.Schema.Types.Mixed },
     },
     { _id: false }
 );
@@ -243,7 +243,7 @@ const ProviderSchema = new mongoose.Schema(
     {
         id: { type: String, required: true },
         locations: [ProviderLocationSchema],
-        descriptor:{type:Object}
+        descriptor: { type: Object }
     },
     { _id: false }
 );
@@ -261,12 +261,13 @@ const ItemsSchema = new mongoose.Schema(
         id: { type: String, required: true },
         quantity: { type: ItemQuantityAllocatedSchema, required: true },
         tags: { type: Object },
-        product:{type:Object, required: false},
-        fulfillment_status:{type: String, required:false },
-        cancellation_status:{type: String, required:false },
-        return_status:{type: String, required:false },
-        fulfillment_id:{type:String},
-        parent_item_id:{type:String}
+        product: { type: Object, required: false },
+        fulfillment_status: { type: String, required: false },
+        cancellation_status: { type: String, required: false },
+        return_status: { type: String, required: false },
+        // returned_item_count: { type: String, required: false },
+        fulfillment_id: { type: String },
+        parent_item_id: { type: String }
     },
     { _id: false }
 );
@@ -314,6 +315,7 @@ const QuotationSchema = new mongoose.Schema(
 const PaymentSchema = mongoose.Schema(
     {
         uri: { type: String },
+        razorpayPaymentId: { type: String },
         tlMethod: { type: String, enum: ['http/get', 'http/post'] },
         params: { type: Map },
         type: { type: String, enum: ['ON-ORDER', 'PRE-FULFILLMENT', 'ON-FULFILLMENT', 'POST-FULFILLMENT'] },
@@ -326,13 +328,16 @@ const PaymentSchema = mongoose.Schema(
 const OrderSchema = new mongoose.Schema(
     {
         provider: { type: ProviderSchema },
+        payment_origin_source: { type: String },
+        payment_return_destination: { type: String },
+        customer: { type: CustomerSchema },
         items: { type: [ItemsSchema] },
         addOns: { type: [AddOnsSchema] },
         offers: { type: [OfferSchema] },
         billing: { type: BillingSchema },
-        fulfillments: { type: Object },
+        fulfillments: { type: [FulfillmentSchema] },
         quote: { type: Object },
-        updatedQuote: { type: Object},
+        updatedQuote: { type: Object },
         payment: { type: PaymentSchema },
         id: { type: String },
         city: { type: String },
@@ -345,15 +350,35 @@ const OrderSchema = new mongoose.Schema(
         bppId: { type: String },
         bpp_uri: { type: String },
         bapOrderId: { type: String },
-        settlementDetails:{type:Object},
-        tags:{type:Object},
-        domain:{type:String},
-        documents:{type:Object}
+        settlementDetails: { type: Object },
+        tags: { type: Object },
+        domain: { type: String },
+        documents: { type: Object },
+        settle_status: { type: String },
+        is_order_confirmed: { type: Boolean, default: false },
+        is_settlement_sent: { type: Boolean, default: false },
+        is_settlement_done: { type: Boolean, default: false },
+        is_settlement_receiver_verified: { type: Boolean },
+        settlement_id: { type: String },
+        settlement_reference_no: { type: String },
+        order_recon_status: { type: String },
+        counterparty_recon_status: { type: String },
+        counterparty_diff_amount_value: { type: String },
+        counterparty_diff_amount_currency: { type: String },
+        receiver_settlement_message: { type: String },
+        receiver_settlement_message_code: { type: String },
+        feedback_sent:{type:Boolean,default:false},
+        buyer_state: {
+            type: String,
+            enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here
+            default: BUYER_STATES.UNCONFIRMED // Set the default value
+          },
+        remaining_cart_value: { type: Number },
     },
     { _id: true, timestamps: true }
 );
 
-OrderSchema.index({userId: 1, createdAt: -1});
+OrderSchema.index({ userId: 1, createdAt: -1 });
 
 const Order = mongoose.model('order', OrderSchema, "order");
 

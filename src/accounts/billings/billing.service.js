@@ -116,6 +116,32 @@ class BillingService {
             throw err;
         }
     }
+
+    /**
+    * delete billing address
+    * @param {String} id
+    * **/
+
+    async deleteBillingAddress(id){
+        try {
+            const BilingAddressDetails =
+              await BillingMongooseModel.deleteOne({ id: id });
+      
+            if (BilingAddressDetails.deletedCount === 0) {
+              throw new NoRecordFoundError(
+                "Billing address not found or already deleted."
+              );
+            }
+            
+
+                return {message:"Billing address deleted successfully!",BilingAddressDetails };
+            
+      
+          } catch (err) {
+            console.error("Error deleting Billing address:", err);
+            throw err;
+          }
+    }
 }
 
 export default BillingService;

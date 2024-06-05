@@ -11,7 +11,7 @@ export const bhashiniTranslator = async (req, res, next) => {
     const { page } = req.query; // Extract page number from query parameter
 
     let responseData = req.body.responseData;
-    const itemsPerPage = 10;
+    const itemsPerPage = 8;
     const startIndex = (page - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const itemsToTranslate = responseData.response.data
@@ -24,10 +24,16 @@ export const bhashiniTranslator = async (req, res, next) => {
       }));
 
     // Extract values for translation
-    const valuesToTranslate = itemsToTranslate.flatMap((item) => [
+    let valuesToTranslate = itemsToTranslate.flatMap((item) => [
       item.itemName,
       item.providerName,
     ]);
+     valuesToTranslate = valuesToTranslate.map(item => item.replace(/[’]/g, ''));
+    //  valuesToTranslate=["Amul Lassi","Rocket Grocery","Cavins Kaju Butterscotch Milk Shake","Rocket Grocery","Cavins Chocolate Milk Shake","Rocket Grocery","Cavins Strawberry Milk Shake","Rocket Grocery","Hersheys Chocolate Milk Shake","Rocket Grocery","Hersheys Cookies n Creme Milk Shake","Rocket Grocery","Hersheys Strawberry Milk Shake","Rocket Grocery","Nescafe Hazelnut Cold Coffee (Ready to Drink)","Rocket Grocery","Nescafe Ready To Drink Coffee, Iced Latte Flavoured Milk","Rocket Grocery","Bingo Mad Angles Cheese Nachos","Rocket Grocery"]
+
+    // valuesToTranslate=["Amul Lassi","Rocket Grocery","Cavins Kaju Butterscotch Milk Shake","Rocket Grocery","Cavins Chocolate Milk Shake","Rocket Grocery","Cavins Strawberry Milk Shake","Rocket Grocery","Hersheys Chocolate Milk Shake","Rocket Grocery","Hersheys Cookies n Creme Milk Shake","Rocket Grocery","Hersheys Strawberry Milk Shake","Rocket Grocery","Nescafe Hazelnut Cold Coffee (Ready to Drink)","Rocket Grocery"]
+    console.log("valuesToTranslate",JSON.stringify(valuesToTranslate))
+    console.log("valuesToTranslate",valuesToTranslate.length)
 
     let data = {
       pipelineTasks: [
@@ -69,6 +75,8 @@ export const bhashiniTranslator = async (req, res, next) => {
           response.data.pipelineResponse[0].output[0].target
             .split(",")
             .map((item) => item.split('"')[1]);
+         console.log("translatedValues",translatedValues)
+         console.log("translatedValues",translatedValues.length)
 
         let translatedData = responseData.response.data.map((item, index) => {
           let transIndex = index * 2;
@@ -77,8 +85,9 @@ export const bhashiniTranslator = async (req, res, next) => {
             translatedValues[transIndex + 1];
           return item;
         });
-        responseData.response.data = translatedData;
+        const paginatedTranslatedData = translatedData.slice(0, itemsPerPage);
 
+        responseData.response.data = paginatedTranslatedData;
         return res.status(200).json(responseData);
       })
       .catch((error) => {
@@ -87,6 +96,7 @@ export const bhashiniTranslator = async (req, res, next) => {
       });
   } catch (error) {
     console.error("Error:", error);
+    res.header("Access-Control-Allow-Origin", "*");
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };

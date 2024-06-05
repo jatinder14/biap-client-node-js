@@ -51,7 +51,22 @@ class TrackService {
                     return trackResponse;
                 }
                 catch (err) {
-                    throw err;
+                    console.log("error trackMultipleOrder ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while fetching your tracking details!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue while fetching your tracking details!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -77,6 +92,7 @@ class TrackService {
 
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -101,7 +117,22 @@ class TrackService {
                         return { ...onTrackResponse };
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onTrackMultipleOrder ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while fetching your tracking details!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue while fetching your tracking details!"
+                            }
+                        }
+                        
                     }
                 })
             );

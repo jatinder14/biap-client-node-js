@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const AddressSchema = new mongoose.Schema(
     {
         door: { type: String, default: null },
+        address_name: { type: String, default: null },
         name: { type: String, default: null },
         building: { type: String, default: null },
         street: { type: String, default: null },
@@ -23,6 +24,7 @@ const DescriptorSchema = new mongoose.Schema(
     {
         name: String,
         phone: { type: String, default: null },
+        userName:{ type: String, default: null },
         email: { type: String, default: null },
         code: { type: String, default: null },
         symbol: { type: String, default: null },
@@ -37,7 +39,7 @@ const DescriptorSchema = new mongoose.Schema(
 
 const DeliveryAddressSchema = new mongoose.Schema(
     {
-        userId: String,
+        userId: { type: String,default:null},
         id: { type: String, required: true },
         descriptor: { type: DescriptorSchema, default: null },
         gps: { type: String, default: null },

@@ -55,6 +55,25 @@ class BillingController {
             next(err);
         });
     }
+
+    /**
+    * delete billing address
+    * @param {*} req    HTTP request object
+    * @param {*} res    HTTP response object
+    * @param {*} next   Callback argument to the middleware function
+    * @return {callback}
+    */
+
+    deleteBillingAddress(req,res, next) {
+        const { body: request, params, user } = req;
+        const { id } = params;
+
+        billingService.deleteBillingAddress(id,request,user?.decodedToken?.uid).then(response => {
+            res.json(response);
+        }).catch((err) => {
+            next(err);
+        });
+    }
 }
 
 export default BillingController;

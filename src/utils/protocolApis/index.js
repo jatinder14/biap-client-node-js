@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 
 import HttpRequest from "../HttpRequest.js";
 import PROTOCOL_API_URLS from "./routes.js";
+import logger from '../../utils/logger.js';
 
 /**
  * order confirm
@@ -53,6 +54,7 @@ const onOrderConfirm = async (messageId) => {
 
     const result = await apiCall.send();
     console.log("onOrderConfirm--->",result.data)
+    logger.info(`ONDC API call - on_confirm --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -89,6 +91,7 @@ const onOrderCancel = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_cancel --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -125,6 +128,7 @@ const onOrderInit = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_init --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -160,6 +164,22 @@ const protocolSearchItems = async (data) => {
     const apiCall = new HttpRequest(
         process.env.PROTOCOL_BASE_URL,
         PROTOCOL_API_URLS.SEARCH_ITEM,
+        "GET",
+        {
+            ...data
+        }
+    );
+
+    const result = await apiCall.send();
+    // logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
+    return result.data;
+}
+
+const protocolProvideDetails = async (data) => {
+
+    const apiCall = new HttpRequest(
+        process.env.PROTOCOL_BASE_URL,
+        PROTOCOL_API_URLS.PROVIDER_DETAILS,
         "GET",
         {
             ...data
@@ -336,6 +356,22 @@ const protocolGetLocationDetails = async (searchRequest) => {
     return result.data;
 }
 
+const protocolGetItemDetails = async (searchRequest) => {
+
+    const apiCall = new HttpRequest(
+        process.env.PROTOCOL_BASE_URL,
+        PROTOCOL_API_URLS.SEARCH_ITEM_DETAILS,
+        "GET",
+        {
+            ...searchRequest
+        }
+    );
+
+    const result = await apiCall.send();
+
+    return result.data;
+}
+
 /**
  * on search products
  * @param {Object} query 
@@ -354,6 +390,7 @@ const onSearch = async (query) => {
     );
 
     const result = await apiCall.json();
+    // logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
     return result;
 };
 
@@ -461,6 +498,7 @@ const onOrderStatus = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_status --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -495,6 +533,7 @@ const onUpdateStatus = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call verification purpose - on_update --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -532,6 +571,7 @@ const onOrderSelect = async (messageId) => {
     );
 
     const result = await apiCall.send();
+    logger.info(`ONDC API call - on_select --> ${JSON.stringify(result.data)}`)
     return result.data;
 };
 
@@ -565,5 +605,7 @@ export {
     protocolGetItemList,
     protocolGetLocations,
     protocolGetLocationDetails,
-    protocolGetDumps
+    protocolGetDumps,
+    protocolProvideDetails,
+    protocolGetItemDetails
 };

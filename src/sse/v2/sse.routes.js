@@ -6,7 +6,7 @@ import SseController from './sse.controller.js';
 const sseController = new SseController();
 const rootRouter = new Router();
 
-rootRouter.get('/events/v2', authentication(), sseController.onEvent);
+rootRouter.get('/events/v2', sseController.onEvent);
 
 rootRouter.post('/response/v2/on_cancel', sseController.onCancel);
 rootRouter.post('/response/v2/on_confirm', sseController.onConfirm);

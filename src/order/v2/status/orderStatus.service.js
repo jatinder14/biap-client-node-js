@@ -1,5 +1,5 @@
 import { onOrderStatus } from "../../../utils/protocolApis/index.js";
-import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
+import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import {
     addOrUpdateOrderWithTransactionId,getOrderRequestLatestFirst,
     addOrUpdateOrderWithTransactionIdAndProvider,
@@ -15,6 +15,9 @@ import BppUpdateService from "../update/bppUpdate.service.js";
 import Fulfillments from "../db/fulfillments.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import OrderHistory from "../db/orderHistory.js";
+import sendAirtelSingleSms from "../../../utils/sms/smsUtils.js";
+import {getItemsIdsDataForFulfillment} from "../../v1/db/fullfillmentHistory.helper.js"
+
 const bppOrderStatusService = new BppOrderStatusService();
 const bppUpdateService = new BppUpdateService();
 
@@ -30,17 +33,15 @@ class OrderStatusService {
             const { context: requestContext, message } = order || {};
 
             const orderDetails = await getOrderById(order.message.order_id);
-
-            console.log('domain--------XX------>',orderDetails)
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.STATUS,
                 transactionId: orderDetails[0]?.transactionId,
                 bppId: requestContext?.bpp_id,
                 bpp_uri: orderDetails[0]?.bpp_uri,
-                cityCode: orderDetails[0].city,
-                city: orderDetails[0].city,
-                domain:orderDetails[0].domain
+                cityCode: orderDetails[0]?.city,
+                city: orderDetails[0]?.city,
+                domain:orderDetails[0]?.domain
             });
 
             return await bppOrderStatusService.getOrderStatus(
@@ -62,16 +63,26 @@ class OrderStatusService {
         const orderStatusResponse = await Promise.all(
             orders.map(async order => {
                 try {
-
-                    console.log("order------------------>",order);
-
-
-
                     const orderResponse = await this.orderStatus(order);
                     return orderResponse;
                 }
                 catch (err) {
-                    return err.response.data;
+                    console.log("error orderStatusV2 ----", err)
+                    if (err?.response?.data) {
+                        return err?.response?.data;
+                    } else if (err?.message) {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to fetch the order status!",
+                            error: err?.message
+                        }
+                    } else {
+                        return {
+                            success: false,
+                            message: "We are encountering issue to fetch the order status!"
+                        }
+                    }
+                    
                 }
             })
         );
@@ -86,13 +97,10 @@ class OrderStatusService {
     async onOrderStatus(messageId) {
         try {
             let protocolOrderStatusResponse = await onOrderStatus(messageId);
-
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse);
-            // console.log("protocolOrderStatusResponse------------>",protocolOrderStatusResponse.fulfillments);
-            console.log("protocolOrderStatusResponse------------>",JSON.stringify(protocolOrderStatusResponse));
-
-            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length)
+            if(protocolOrderStatusResponse && protocolOrderStatusResponse.length) {
                 return protocolOrderStatusResponse?.[0];
+            }
+            
             else {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -100,6 +108,7 @@ class OrderStatusService {
                 });
                 return {
                     context,
+                    success: false,
                     error: {
                         message: "No data found"
                     }
@@ -115,13 +124,12 @@ class OrderStatusService {
     * on multiple order status
     * @param {String} messageIds
     */
-    async onOrderStatusV2(messageIds) {
+    async onOrderStatusV2(messageIds,userEmail,userName) {
         try {
             const onOrderStatusResponse = await Promise.all(
                 messageIds.map(async messageId => {
                     try {
                         const onOrderStatusResponse = await this.onOrderStatus(messageId);
-
                         if(!onOrderStatusResponse.error) {
                             const dbResponse = await OrderMongooseModel.find({
                                 transactionId: onOrderStatusResponse?.context?.transaction_id,
@@ -130,7 +138,22 @@ class OrderStatusService {
 
                             if ((dbResponse && dbResponse.length)) {
                                 const orderSchema = dbResponse?.[0].toJSON();
+                                
+                                if(orderSchema.state!==onOrderStatusResponse?.message?.order?.state && onOrderStatusResponse?.message?.order?.state ==='Completed'){
+                             
+                
+                                    let billingContactPerson = orderSchema.billing.phone
+                                    let provider = orderSchema.provider.descriptor.name
+                                    orderSchema.settle_status = SETTLE_STATUS.CREDIT
+                                    await sendAirtelSingleSms(billingContactPerson, [provider,'delivered'], 'ORDER_DELIVERED', false)
+                                }
+                                if(onOrderStatusResponse?.message?.order?.state ==='Cancelled') {
+                                    orderSchema.settle_status = SETTLE_STATUS.DEBIT
+                                }
                                 orderSchema.state = onOrderStatusResponse?.message?.order?.state;
+
+
+
                                 orderSchema.fulfillments = onOrderStatusResponse?.message?.order?.fulfillments;
                                 if (onOrderStatusResponse?.message?.order?.quote) {
 
@@ -201,25 +224,24 @@ class OrderStatusService {
                             //         updateItems.push(item)
                             // }
 
-                                for(let fulfillment of onOrderStatusResponse.message?.order?.fulfillments){
-                                    console.log("fulfillment--->",fulfillment)
-                                    // if(fulfillment.type==='Delivery'){
-                                        let existingFulfillment  =await FulfillmentHistory.findOne({
-                                            id:fulfillment.id,
-                                            state:fulfillment.state.descriptor.code,
-                                            orderId:onOrderStatusResponse.message.order.id
+                                for (let fulfillment of onOrderStatusResponse.message?.order?.fulfillments) {
+                                    let existingFulfillment = await FulfillmentHistory.findOne({
+                                        id: fulfillment.id,
+                                        state: fulfillment.state.descriptor.code,
+                                        orderId: onOrderStatusResponse?.message?.order?.id
+                                    }).lean().exec()
+                                    if (!existingFulfillment?.id) {
+                                        let incomingItemQuoteTrailData = {};
+                                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fulfillment, orderSchema, incomingItemQuoteTrailData);
+                                        await FulfillmentHistory.create({
+                                            orderId: onOrderStatusResponse.message.order.id,
+                                            type: fulfillment.type,
+                                            id: fulfillment.id,
+                                            state: fulfillment.state.descriptor.code,
+                                            updatedAt: onOrderStatusResponse.message.order?.updated_at || new Date(),
+                                            itemIds: currentfulfillmentHistoryData
                                         })
-                                        if(!existingFulfillment){
-                                            await FulfillmentHistory.create({
-                                                orderId:onOrderStatusResponse.message.order.id,
-                                                type:fulfillment.type,
-                                                id:fulfillment.id,
-                                                state:fulfillment.state.descriptor.code,
-                                                updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
-                                            })
-                                        }
-                                        console.log("existingFulfillment--->",existingFulfillment);
-                                    // }
+                                    }
                                 }
                                 let orderHistory = await OrderHistory.findOne({
                                     orderId:onOrderStatusResponse.message.order.id,
@@ -229,11 +251,9 @@ class OrderStatusService {
                                     await OrderHistory.create({
                                         orderId:onOrderStatusResponse.message.order.id,
                                         state:onOrderStatusResponse.message.order.state,
-                                        updatedAt:onOrderStatusResponse.message.order.updated_at.toString()
+                                        updatedAt:onOrderStatusResponse.message.order.updated_at
                                     })
                                 }
-
-                                // console.log("updateItems",updateItems)
                                 let updateItems = []
                                 for(let item of protocolItems){
                                     let updatedItem = {}
@@ -241,12 +261,9 @@ class OrderStatusService {
 
                                     updatedItem = orderSchema.items.filter(element=> element.id === item.id);
                                     let temp=updatedItem[0];
-                                    console.log("item----length-before->",item)
-                                    console.log("item----length-before->",updatedItem)
-                                    // console.log("ifulfillmentStatus->",fulfillmentStatus)
                                     let temp1 = onOrderStatusResponse.message?.order?.fulfillments?.find(fulfillment=> fulfillment?.id === item?.fulfillment_id)
 
-                                    if(temp1.type==='Return' || temp1.type==='Cancel' ){
+                                    if(temp1?.type==='Return' || temp1?.type==='Cancel' ){
                                         item.return_status = temp1?.state?.descriptor?.code;
                                         item.cancellation_status = temp1?.state?.descriptor?.code;
                                     }else{
@@ -265,12 +282,6 @@ class OrderStatusService {
                                     //item.quantity = item.quantity.count
                                     updateItems.push(item)
                                 }
-
-
-                                console.log("updateItems",updateItems)
-                                //get item from db and update state for item
-                                // orderSchema.items = updateItems;
-
                                orderSchema.items = updateItems;
 
 
@@ -300,6 +311,7 @@ class OrderStatusService {
 
                                 return {
                                     context,
+                                    success: false,
                                     error: {
                                         message: "No data found"
                                     }
@@ -312,7 +324,22 @@ class OrderStatusService {
                         
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onOrderStatusV2 ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!"
+                            }
+                        }
+                        
                     }
                 })
             );
@@ -445,7 +472,22 @@ class OrderStatusService {
                             return { ...onOrderStatusResponse };
                     }
                     catch (err) {
-                        throw err;
+                        console.log("error onOrderStatusDbOperation ----", err)
+                        if (err?.response?.data) {
+                            return err?.response?.data;
+                        } else if (err?.message) {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!",
+                                error: err?.message
+                            }
+                        } else {
+                            return {
+                                success: false,
+                                message: "We are encountering issue to fetch the order status!"
+                            }
+                        }
+                        
                     }
                 })
             );

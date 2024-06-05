@@ -6,7 +6,14 @@ const  FulfillmentsHistory = new mongoose.Schema(
         type:{ type: String },
         state:{ type: Object },
         id:{ type: String },
-        updatedAt:{ type: String }
+        updatedAt:{ type: Date },
+        itemIds: {
+            type: Map,
+            of: new mongoose.Schema({
+              quantity: { type: Number, required: true },
+              value: { type: Number, required: true },
+            }),
+          },
     },
     { _id: true, timestamps: true }
 );
