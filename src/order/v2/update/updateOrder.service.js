@@ -834,7 +834,7 @@ class UpdateOrderService {
                                                                 "settlement_counterparty": "buyer",
                                                                 "settlement_phase": "refund",
                                                                 "settlement_type": "upi",
-                                                                "settlement_amount": `${refundAmount * -1}`, //TODO; fix this post qoute calculation
+                                                                "settlement_amount": `${refundAmount}`, //TODO; fix this post qoute calculation
                                                                 "settlement_timestamp": settlementTimeStamp
                                                             }
                                                         ]
