@@ -90,17 +90,19 @@ export async function getSettlementsHandler(req, res) {
         const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, messageId, context, createdAt, updatedAt, state, quote, items, id, 
             settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
-            updatedQuote, payment }) => {
-            const buyerPercentage = Number(payment?.params?.amount) * (Number(payment['@ondc/org/buyer_app_finder_fee_amount']) / 100)
-            const withHoldAmount = !payment['@ondc/org/withholding_amount'] ? 0 : payment['@ondc/org/withholding_amount']
+            updatedQuote, payment, settlementDetails }) => {
+            const buyerPercentage = Number(payment?.params?.get('amount')) * (Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+            const withHoldAmount = !settlementDetails['@ondc/org/withholding_amount'] ? 0 : settlementDetails['@ondc/org/withholding_amount']    
 
-            const settlementAmount = payment["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
-            Number(payment?.params?.amount) - Number(buyerPercentage) - Number(withHoldAmount)
-            : Number(payment?.params?.amount) - Number(payment['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
+            const settlementAmount = settlementDetails["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
+            Number(payment?.params?.get('amount')) - Number(buyerPercentage) - Number(withHoldAmount)
+            : Number(payment?.params?.get('amount')) - Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
-            const buyer_take = payment["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
+            const buyer_take = settlementDetails["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
-            : Number(payment['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
+            : Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
+            console.log("------------------------buyer_take------------------",buyer_take)
+
             const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
             const settlementItem = {
                 id: id || _id,
