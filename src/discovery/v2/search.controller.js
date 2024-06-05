@@ -118,27 +118,49 @@ class SearchController {
         });
     }
 
-    getItemDetails(req, res, next) {
-        const searchRequest = req.query;
+  getItemDetails(req, res, next) {
+    const searchRequest = req.query;
 
-        console.log({searchRequest})
-        const headers = req.headers;
+    console.log({ searchRequest })
+    const headers = req.headers;
 
-        let targetLanguage = headers['targetlanguage'];
+    let targetLanguage = headers['targetlanguage'];
 
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        searchService.getItemDetails(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    const userId = searchRequest.userId
+    const wishlistKey = searchRequest.wishlist_key || searchRequest.deviceId
+    if (searchRequest.userId) delete searchRequest.userId
+    if (searchRequest.wishlist_key) delete searchRequest.wishlist_key
+    if (searchRequest.deviceId) delete searchRequest.deviceId
+    searchService.getItemDetails(searchRequest, targetLanguage).then(async (response) => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else {
+        let wishlist, wishlist2, wishlistIds = [];
+        if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
+          wishlist = await WishList.findOne({ wishlist_key: wishlistKey });
+        }
+        if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
+          wishlist2 = await WishList.findOne({ userId: userId });
+        }
+        if (wishlist?._id) wishlistIds.push(wishlist?._id)
+        if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
+        let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
+        if (wishlistData.length) {
+          const isWishlisted = wishlistData.find((el) => response?.item_details?.id ==  el?.item?.id);
+          if (isWishlisted) {
+            response.wishlistAdded = true;
+          }
+        }
+        res.json(response);
+      }
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
     /**
     * get item
