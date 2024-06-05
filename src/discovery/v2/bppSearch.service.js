@@ -91,10 +91,7 @@ class BppSearchService {
         try {
 
             const response = await protocolGetItemDetails(searchRequest);
-
-            console.log({response});
-
-            return { response };
+            return response;
         }
         catch (err) {
             throw err;

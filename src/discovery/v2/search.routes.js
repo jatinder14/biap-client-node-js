@@ -42,7 +42,7 @@ router.get(
 
 // get item details
 router.get(
-    '/v2/item-details',authentication(),searchController.getItemDetails,
+    '/v2/item-details', searchController.getItemDetails,
 );
 
 // get item details
