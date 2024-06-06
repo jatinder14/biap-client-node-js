@@ -18,7 +18,7 @@ import Fulfillments from "../db/fulfillments.js";
 import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import Refund from "../db/refund.js";
-import { getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
+import { checkFulfillmentExists, getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
 import { sendEmail } from "../../../shared/mailer.js";
 
 const bppUpdateService = new BppUpdateService();
@@ -433,7 +433,7 @@ class UpdateOrderService {
             let fulfillments = obj?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
             lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
-            if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
+            if (["Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
                         tag?.list?.forEach((item) => {
@@ -460,13 +460,14 @@ class UpdateOrderService {
                 }
             });
 
-            if (full_Cancel) {
-                lokiLogger.info(`full_Cancel ---->> :  ${full_Cancel}`);
+            // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
+            // if (full_Cancel) {
+            //     lokiLogger.info(`full_Cancel ---->> :  ${full_Cancel}`);
 
-                quoteBreakup.forEach((breakupItem) => {
-                    totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-                });
-            }
+            //     quoteBreakup.forEach((breakupItem) => {
+            //         totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+            //     });
+            // }
             lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
             totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
             lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
@@ -518,13 +519,14 @@ class UpdateOrderService {
                 }
             });
 
-            if (full_Cancel) {
-                console.log(`full_Cancel ---->> :  ${full_Cancel}`);
+            // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
+            // if (full_Cancel) {
+            //     console.log(`full_Cancel ---->> :  ${full_Cancel}`);
 
-                quoteBreakup.forEach((breakupItem) => {
-                    totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-                });
-            }
+            //     quoteBreakup.forEach((breakupItem) => {
+            //         totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+            //     });
+            // }
             console.log(`Sum of quoteBreakup values: ${totalCharges}`);
             totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
             lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
@@ -581,17 +583,23 @@ class UpdateOrderService {
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
                     const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
-
-                    const fullfillmentHistory = new FulfillmentHistory({
+                    let existingFulfillment = await FulfillmentHistory.findOne({
                         id: dbResponse.id,
-                        type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds: getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {})
-                    })
-
+                    }).lean().exec()
+                    if (!existingFulfillment?.id) {
+                        const fullfillmentHistory = new FulfillmentHistory({
+                            id: dbResponse.id,
+                            type: latestFullfilement.type,
+                            state: latestFullfilement.state.descriptor.code,
+                            orderId: protocolUpdateResponse.message.order.id,
+                            itemIds: getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {})
+                        })
+                        fullfillmentHistory.save()
+                    }
+                    
                     dbResponse.save()
-                    fullfillmentHistory.save()
                     if (protocolUpdateResponse) await this.updateReturnOnEssentialDashboard(protocolUpdateResponse)
                 }
 
@@ -642,6 +650,7 @@ class UpdateOrderService {
                         throw new NoRecordFoundError();
                     else {
                         let refundAmount = 0;
+                        let refunded_amount = 0;
                         let calculateRefundAmountObject = {};
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                         let latest_fulfillment = fulfillments[fulfillments.length - 1];
@@ -654,7 +663,7 @@ class UpdateOrderService {
                         lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                         lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
-                        let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({ id: latest_fulfillment?.id });
+                        let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, dbResponse?.id, latest_fulfillment?.state?.descriptor?.code);
                         lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
                         lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
@@ -681,17 +690,18 @@ class UpdateOrderService {
                                             (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
                                         )?.quantity?.count;
                                 }
-                                if (return_item_count <= left_order_item_count || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
+                                if (return_item_count <= left_order_item_count || ["Cancelled","Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                                     if (razorpayPaymentId && refundAmount) {
                                         let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
                                         lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                         let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                                        refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
                                         lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                         let order_details = dbResponse;
                                         const refundDetails = await Refund.create({
                                             orderId: order_details?.id,
                                             refundId: response?.id,
-                                            refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                                            refundedAmount: refunded_amount,
                                             // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
                                             // itemQty: dbResponse.items[0].quantity.count,
                                             isRefunded: true,
@@ -720,6 +730,8 @@ class UpdateOrderService {
                         }
                         const orderSchema = dbResponse;
                         orderSchema.state = protocolUpdateResponse?.message?.order?.state;
+                        lokiLogger.info(`refunded_amount >>>>>>>>>>, ${refunded_amount} --------- ${orderSchema?.refunded_amount}`)
+                        orderSchema.refunded_amount = refunded_amount + orderSchema?.refunded_amount;
 
                         if (protocolUpdateResponse?.message?.order?.quote) {
                             orderSchema.updatedQuote = protocolUpdateResponse?.message?.order?.quote

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { onOrderCancel, protocolUpdate } from "../../../utils/protocolApis/index.js";
+import Order from "../../v1/db/order.js"
 import {
   ORDER_STATUS,
   PROTOCOL_CONTEXT,
@@ -14,6 +15,7 @@ import {
   getTotalItemsCountByAction,
   getOrderByIdAndTransactionId
 } from "../../v1/db/dbService.js";
+ 
 
 import BppCancelService from "./bppCancel.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
@@ -25,7 +27,7 @@ import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
-import { createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
+import { checkFulfillmentExists, createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 const bppCancelService = new BppCancelService();
@@ -104,8 +106,13 @@ class CancelOrderService {
           },
         };
       } else {
-        if (!protocolCancelResponse?.[0].error) {
+        if (!protocolCancelResponse?.[0].error && protocolCancelResponse?.[0]?.message?.order?.state) {
           protocolCancelResponse = protocolCancelResponse?.[0];
+          const updateOrderState = await Order.findOneAndUpdate(
+            { id: protocolCancelResponse?.message?.order?.id }, 
+            { state: protocolCancelResponse?.message?.order?.state }, 
+            { new: true } 
+          );
         }
         return protocolCancelResponse;
       }
@@ -182,6 +189,7 @@ class CancelOrderService {
                 : {};
             }
             let refundAmount = 0;
+            let refunded_amount = 0;
             //RTO scenario is for pramaan flow-4 RTO-Initiated case  
             if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
               refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
@@ -190,7 +198,7 @@ class CancelOrderService {
 
             console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
             let order_details = dbResponse[0];
-            let checkFulfillmentAlreadyExist = await getFulfillmentById(latest_fulfillment?.id);
+            let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, order_details?.id, latest_fulfillment?.state?.descriptor?.code);
             lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
             if (!checkFulfillmentAlreadyExist) {
@@ -201,13 +209,14 @@ class CancelOrderService {
                   lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
 
                   let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                  refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
 
                   lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
                   let order_details = dbResponse[0];
                   const refundDetails = await Refund.create({
                     orderId: order_details?.id,
                     refundId: response?.id,
-                    refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                    refundedAmount: refunded_amount,
                     isRefunded: true,
                     transationId: order_details?.transactionId,
                     razorpayPaymentId: order_details?.payment?.razorpayPaymentId
@@ -227,6 +236,8 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
+            lokiLogger.info(`refunded_amount >>>>>>>>>>, ${refunded_amount} --------- ${orderSchema?.refunded_amount}`)
+            orderSchema.refunded_amount = refunded_amount + orderSchema?.refunded_amount;
             const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
             const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
@@ -395,13 +406,14 @@ class CancelOrderService {
           console.log(`full cancel by user: ${full_Cancel_by_user}`)
         }
       });
-      if (full_Cancel_by_seller && !full_Cancel_by_user) {
-        console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
-        sumOfNegativeValues = 0;
-        quoteBreakup.forEach((breakupItem) => {
-          totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-        });
-      }
+      // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
+      // if (full_Cancel_by_seller && !full_Cancel_by_user) {
+      //   console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
+      //   sumOfNegativeValues = 0;
+      //   quoteBreakup.forEach((breakupItem) => {
+      //     totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+      //   });
+      // }
       console.log(`Sum of quoteBreakup values: ${totalCharges}`);
       totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
       lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
