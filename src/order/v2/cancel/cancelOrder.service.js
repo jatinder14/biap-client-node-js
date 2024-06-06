@@ -402,13 +402,14 @@ class CancelOrderService {
           console.log(`full cancel by user: ${full_Cancel_by_user}`)
         }
       });
-      if (full_Cancel_by_seller && !full_Cancel_by_user) {
-        console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
-        sumOfNegativeValues = 0;
-        quoteBreakup.forEach((breakupItem) => {
-          totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-        });
-      }
+      // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
+      // if (full_Cancel_by_seller && !full_Cancel_by_user) {
+      //   console.log(`full_Cancel_by_seller ---->> :  ${full_Cancel_by_seller}`);
+      //   sumOfNegativeValues = 0;
+      //   quoteBreakup.forEach((breakupItem) => {
+      //     totalCharges += parseFloat(breakupItem?.price?.value) || 0;
+      //   });
+      // }
       console.log(`Sum of quoteBreakup values: ${totalCharges}`);
       totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
       lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
