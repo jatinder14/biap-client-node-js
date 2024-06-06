@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { onOrderCancel, protocolUpdate } from "../../../utils/protocolApis/index.js";
+import Order from "../../v1/db/order.js"
 import {
   ORDER_STATUS,
   PROTOCOL_CONTEXT,
@@ -14,6 +15,7 @@ import {
   getTotalItemsCountByAction,
   getOrderByIdAndTransactionId
 } from "../../v1/db/dbService.js";
+ 
 
 import BppCancelService from "./bppCancel.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
@@ -106,6 +108,11 @@ class CancelOrderService {
       } else {
         if (!protocolCancelResponse?.[0].error) {
           protocolCancelResponse = protocolCancelResponse?.[0];
+          const updateOrderState = await Order.findOneAndUpdate(
+            { id: protocolCancelResponse?.message?.order?.id }, 
+            { state: protocolCancelResponse?.message?.order?.state }, 
+            { new: true } 
+          );
         }
         return protocolCancelResponse;
       }
