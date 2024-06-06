@@ -433,7 +433,7 @@ class UpdateOrderService {
             let fulfillments = obj?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
             lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
-            if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
+            if (["Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
                         tag?.list?.forEach((item) => {
