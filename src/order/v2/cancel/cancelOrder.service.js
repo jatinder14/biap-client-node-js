@@ -189,6 +189,7 @@ class CancelOrderService {
                 : {};
             }
             let refundAmount = 0;
+            let refunded_amount = 0;
             //RTO scenario is for pramaan flow-4 RTO-Initiated case  
             if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
               refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
@@ -208,13 +209,14 @@ class CancelOrderService {
                   lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
 
                   let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                  refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
 
                   lokiLogger.info(`response_razorpay_on_update>>>>>>>>>>177 ${JSON.stringify(response)}`)
                   let order_details = dbResponse[0];
                   const refundDetails = await Refund.create({
                     orderId: order_details?.id,
                     refundId: response?.id,
-                    refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                    refundedAmount: refunded_amount,
                     isRefunded: true,
                     transationId: order_details?.transactionId,
                     razorpayPaymentId: order_details?.payment?.razorpayPaymentId
@@ -234,6 +236,7 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
+            orderSchema.refunded_amount = refunded_amount + dbResponse?.refunded_amount;
             const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
             const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 
