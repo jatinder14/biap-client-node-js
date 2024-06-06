@@ -583,17 +583,23 @@ class UpdateOrderService {
                     const latestFullfilementIndex = protocolUpdateResponse.message.order.fulfillments.length - 1
 
                     const latestFullfilement = protocolUpdateResponse.message.order.fulfillments[latestFullfilementIndex]
-
-                    const fullfillmentHistory = new FulfillmentHistory({
+                    let existingFulfillment = await FulfillmentHistory.findOne({
                         id: dbResponse.id,
-                        type: latestFullfilement.type,
                         state: latestFullfilement.state.descriptor.code,
                         orderId: protocolUpdateResponse.message.order.id,
-                        itemIds: getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {})
-                    })
-
+                    }).lean().exec()
+                    if (!existingFulfillment?.id) {
+                        const fullfillmentHistory = new FulfillmentHistory({
+                            id: dbResponse.id,
+                            type: latestFullfilement.type,
+                            state: latestFullfilement.state.descriptor.code,
+                            orderId: protocolUpdateResponse.message.order.id,
+                            itemIds: getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {})
+                        })
+                        fullfillmentHistory.save()
+                    }
+                    
                     dbResponse.save()
-                    fullfillmentHistory.save()
                     if (protocolUpdateResponse) await this.updateReturnOnEssentialDashboard(protocolUpdateResponse)
                 }
 

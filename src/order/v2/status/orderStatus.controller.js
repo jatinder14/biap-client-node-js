@@ -87,7 +87,6 @@ class OrderStatusController {
                 const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
                 if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
-
                     if (emailWithoutNumber && nameWithoutNumber) {
                         await Notification.create({
                             event_type: 'out-for-delivery',
@@ -103,7 +102,6 @@ class OrderStatusController {
                             subject: 'Order Update | Your Order is out for delivery'
                         });
                         res.json(orders);
-
                     }
                     else if (userEmail && userName) {
                         await Notification.create({
@@ -119,15 +117,11 @@ class OrderStatusController {
                             subject: 'Order Update | Your Order is out for delivery'
                         });
                         res.json(orders);
-
                     }
                     else {
                         res.json(orders);
-
                     }
-
                 } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
-
                     if (emailWithoutNumber && nameWithoutNumber) {
                         await Notification.create({
                             event_type: 'order-picked-up',
@@ -161,18 +155,12 @@ class OrderStatusController {
                             subject: 'Order Update | Your Order has been picked up'
                         });
                         console.log("orders2", orders)
-
                         res.json(orders);
                     }
-
                     else {
                         res.json(orders);
-
                     }
-
                 } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
-
-
                     if (emailWithoutNumber && nameWithoutNumber) {
                         await Notification.create({
                             event_type: 'agent-assigned',
@@ -188,7 +176,6 @@ class OrderStatusController {
                             subject: 'Order Update | Agent has been assigned for Your Order'
                         });
                         console.log("orders3", orders)
-
                         res.json(orders);
                     }
                     else if (userEmail && userName) {
@@ -206,15 +193,11 @@ class OrderStatusController {
                             subject: 'Order Update | Agent has been assigned for Your Order'
                         });
                         console.log("orders3", orders)
-
                         res.json(orders);
                     }
                     else {
                         res.json(orders);
-
                     }
-
-
                 } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
 
                     if (emailWithoutNumber && nameWithoutNumber) {
@@ -225,55 +208,38 @@ class OrderStatusController {
                             name: nameWithoutNumber
                         })
                         await sendEmail({
-                            userEmails:emailWithoutNumber,
-                            orderIds:orderId,
+                            userEmails: emailWithoutNumber,
+                            orderIds: orderId,
                             HTMLtemplate: "/template/orderDelivered.ejs",
                             userName: nameWithoutNumber || "",
                             subject: "Order Confirmation | Your order has been successfully delivered",
                         });
-    
-    
                         res.json(orders);
-
                     } else if (userEmail && userName) {
                         await Notification.create({
                             event_type: 'order_delivery',
                             details: `Order has been Delivered with id: ${orderId}`,
-                            name:userName || ""
-                       });
-                        await sendEmail({
-                            userEmails:userEmail,
-                            orderIds:orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs", 
-                            subject: "Order Confirmation | Your order has been successfully delivered",
-                            userName:userName || ""
+                            name: userName || ""
                         });
-                         
-
-
-
-    
-    
+                        await sendEmail({
+                            userEmails: userEmail,
+                            orderIds: orderId,
+                            HTMLtemplate: "/template/orderDelivered.ejs",
+                            subject: "Order Confirmation | Your order has been successfully delivered",
+                            userName: userName || ""
+                        });
                         res.json(orders);
-    
                     }
-                    else{
-
+                    else {
                         res.json(orders);
-
                     }
-
                 }
                 else {
-
                     res.json(orders);
-
                 }
-
             }).catch((err) => {
                 next(err);
             });
-
         }
         else
             throw new BadRequestParameterError();

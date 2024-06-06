@@ -101,7 +101,6 @@ export async function getSettlementsHandler(req, res) {
             const buyer_take = settlementDetails["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
             : Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
-            console.log("------------------------buyer_take------------------",buyer_take)
 
             const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
             const settlementItem = {
