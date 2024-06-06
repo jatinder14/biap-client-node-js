@@ -106,7 +106,7 @@ class CancelOrderService {
           },
         };
       } else {
-        if (!protocolCancelResponse?.[0].error) {
+        if (!protocolCancelResponse?.[0].error && protocolCancelResponse?.[0]?.message?.order?.state) {
           protocolCancelResponse = protocolCancelResponse?.[0];
           const updateOrderState = await Order.findOneAndUpdate(
             { id: protocolCancelResponse?.message?.order?.id }, 
