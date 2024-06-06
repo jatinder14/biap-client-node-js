@@ -27,7 +27,7 @@ import logger from "../../../utils/logger.js";
 import Refund from "../db/refund.js";
 import { sendEmail } from "../../../shared/mailer.js"
 import Settlements from "../db/settlement.js";
-import { createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
+import { checkFulfillmentExists, createNewFullfillmentObject, getFulfillmentById, getFulfillmentByOrderId } from "../../v1/db/fullfillmentHistory.helper.js";
 
 
 const bppCancelService = new BppCancelService();
@@ -198,7 +198,7 @@ class CancelOrderService {
 
             console.log("protocolCancelResponse----------------->", JSON.stringify(protocolCancelResponse));
             let order_details = dbResponse[0];
-            let checkFulfillmentAlreadyExist = await getFulfillmentById(latest_fulfillment?.id);
+            let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, order_details?.id, latest_fulfillment?.state?.descriptor?.code);
             lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
             if (!checkFulfillmentAlreadyExist) {
@@ -236,7 +236,8 @@ class CancelOrderService {
               }
             }
             const orderSchema = dbResponse?.[0]?.toJSON();
-            orderSchema.refunded_amount = refunded_amount + dbResponse?.refunded_amount;
+            lokiLogger.info(`refunded_amount >>>>>>>>>>, ${refunded_amount} --------- ${orderSchema?.refunded_amount}`)
+            orderSchema.refunded_amount = refunded_amount + orderSchema?.refunded_amount;
             const totalItemsOrderedCount = await getTotalOrderedItemsCount(responseOrderData.id)
             const totalCancelledItemsCount = await getTotalItemsCountByAction(responseOrderData.id, "Cancelled")
 

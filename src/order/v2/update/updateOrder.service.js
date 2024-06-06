@@ -18,7 +18,7 @@ import Fulfillments from "../db/fulfillments.js";
 import Settlements from "../db/settlement.js";
 import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import Refund from "../db/refund.js";
-import { getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
+import { checkFulfillmentExists, getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
 import { sendEmail } from "../../../shared/mailer.js";
 
 const bppUpdateService = new BppUpdateService();
@@ -663,7 +663,7 @@ class UpdateOrderService {
                         lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                         lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
-                        let checkFulfillmentAlreadyExist = await FulfillmentHistory.findOne({ id: latest_fulfillment?.id });
+                        let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, dbResponse?.id, latest_fulfillment?.state?.descriptor?.code);
                         lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
                         lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
 
@@ -730,7 +730,8 @@ class UpdateOrderService {
                         }
                         const orderSchema = dbResponse;
                         orderSchema.state = protocolUpdateResponse?.message?.order?.state;
-                        orderSchema.refunded_amount = refunded_amount + dbResponse?.refunded_amount;
+                        lokiLogger.info(`refunded_amount >>>>>>>>>>, ${refunded_amount} --------- ${orderSchema?.refunded_amount}`)
+                        orderSchema.refunded_amount = refunded_amount + orderSchema?.refunded_amount;
 
                         if (protocolUpdateResponse?.message?.order?.quote) {
                             orderSchema.updatedQuote = protocolUpdateResponse?.message?.order?.quote

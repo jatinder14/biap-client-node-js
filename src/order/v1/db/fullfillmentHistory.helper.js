@@ -153,6 +153,15 @@ const getFulfillmentById = async (fulfilmentId) => {
 };
 
 /**
+ * INFO: Get Fulfilement by id
+ * @param {String} orderId 
+ * @returns 
+ */
+const checkFulfillmentExists = async (fulfilmentId, orderId, state) => {
+  return await FulfillmentHistory.findOne({id: fulfilmentId, orderId, state }).lean().exec();
+};
+
+/**
  * INFO: Get Fulfilement by order id
  * @param {String} orderId 
  * @returns 
@@ -161,4 +170,4 @@ const getFulfillmentByOrderId = async (orderId) => {
   return await FulfillmentHistory.find({orderId: orderId }).lean().exec();
 };
 
-export { createNewFullfillmentObject, getItemsIdsDataForFulfillment, getFulfillmentById, getFulfillmentByOrderId };
+export { createNewFullfillmentObject, getItemsIdsDataForFulfillment, getFulfillmentById, getFulfillmentByOrderId, checkFulfillmentExists };
