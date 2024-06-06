@@ -36,8 +36,9 @@ export async function getSettlementsHandler(req, res) {
         }
 
         allOrders.forEach((el) => {
-            let { createdAt, items, quote, settle_status } = el
-            const gross_order_price = quote?.price?.value || 0
+            let { createdAt, items, quote, settle_status, refunded_amount } = el
+            const refundedAmount = refunded_amount ? refunded_amount : 0
+            const gross_order_price = quote?.price?.value ? Number(quote?.price?.value) - refundedAmount : 0
             const item_price = items.reduce((accumulator, currentItem) => accumulator + (currentItem.product?.price?.value || 0) * (currentItem.quantity?.count || 0), 0);
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "June",
                 "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
@@ -53,13 +54,13 @@ export async function getSettlementsHandler(req, res) {
             const itemPrice = item_price
 
             if (settle_status == SETTLE_STATUS.SETTLE)  {
-                sumCompletedOrderAmount += parseFloat(quote?.price?.value) || 0;
+                sumCompletedOrderAmount += gross_order_price;
             } else {
-                sumPendingOrderAmount += parseFloat(quote?.price?.value) || 0;
+                sumPendingOrderAmount += gross_order_price;
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (createdAt >= today) {
-                    sumTodayOrderAmount += parseFloat(quote?.price?.value) || 0;
+                    sumTodayOrderAmount += gross_order_price;
                 }
             }
 
@@ -88,21 +89,25 @@ export async function getSettlementsHandler(req, res) {
             orderAnalysis.week[orderWeek].netItemPrice += parseFloat(itemPrice)
         })
         const settlementData = await Promise.all(completedOrders.map(async ({ _id, transactionId, messageId, context, createdAt, updatedAt, state, quote, items, id, 
-            settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status,
+            settle_status, is_settlement_sent, settlement_id, settlement_reference_no, order_recon_status, counterparty_recon_status, refunded_amount,
             counterparty_diff_amount_value, counterparty_diff_amount_currency, receiver_settlement_message, receiver_settlement_message_code,
             updatedQuote, payment, settlementDetails }) => {
-            const buyerPercentage = Number(payment?.params?.get('amount')) * (Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) / 100)
+
+            const refundedAmount = refunded_amount ? refunded_amount : 0
+            const paymentAmount = payment?.params?.get('amount') ? Number(payment?.params?.get('amount')) - refundedAmount : 0
+            const buyerPercentage = paymentAmount * (Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) / 100)
             const withHoldAmount = !settlementDetails['@ondc/org/withholding_amount'] ? 0 : settlementDetails['@ondc/org/withholding_amount']    
 
             const settlementAmount = settlementDetails["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
-            Number(payment?.params?.get('amount')) - Number(buyerPercentage) - Number(withHoldAmount)
-            : Number(payment?.params?.get('amount')) - Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
+            paymentAmount - Number(buyerPercentage) - Number(withHoldAmount)
+            : paymentAmount - Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) - Number(withHoldAmount)
 
             const buyer_take = settlementDetails["@ondc/org/buyer_app_finder_fee_type"]?.toLowerCase()=='percent'?
             Number(buyerPercentage) + Number(withHoldAmount)
             : Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
 
-            const seller_take = quote?.price?.value ? Number(quote?.price?.value) - Number(buyer_take) : 0
+            const orderAmount = quote?.price?.value ? Number(quote?.price?.value) - refundedAmount : 0
+            const seller_take = orderAmount ? orderAmount - Number(buyer_take) : 0
             const settlementItem = {
                 id: id || _id,
                 order_id: _id,
@@ -126,7 +131,7 @@ export async function getSettlementsHandler(req, res) {
                 updated_at: updatedAt,
                 collector_recon_sent: false,
                 on_collector_recon_received: false,
-                order_amount: quote?.price?.value,
+                order_amount: orderAmount,
                 settle_status,
                 quote, 
                 updatedQuote, 
