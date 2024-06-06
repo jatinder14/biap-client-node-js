@@ -433,7 +433,7 @@ class UpdateOrderService {
             let fulfillments = obj?.message?.order?.fulfillments || [];
             let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
             lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
-            if (["Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
+            if (latest_fulfillment?.state?.descriptor?.code === "Liquidated") {
                 latest_fulfillment?.tags?.forEach((tag) => {
                     if (tag?.code === "quote_trail") {
                         tag?.list?.forEach((item) => {
@@ -642,6 +642,7 @@ class UpdateOrderService {
                         throw new NoRecordFoundError();
                     else {
                         let refundAmount = 0;
+                        let refunded_amount = 0;
                         let calculateRefundAmountObject = {};
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                         let latest_fulfillment = fulfillments[fulfillments.length - 1];
@@ -681,17 +682,18 @@ class UpdateOrderService {
                                             (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
                                         )?.quantity?.count;
                                 }
-                                if (return_item_count <= left_order_item_count || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
+                                if (return_item_count <= left_order_item_count || ["Cancelled","Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                                     if (razorpayPaymentId && refundAmount) {
                                         let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
                                         lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                         let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
+                                        refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
                                         lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                         let order_details = dbResponse;
                                         const refundDetails = await Refund.create({
                                             orderId: order_details?.id,
                                             refundId: response?.id,
-                                            refundedAmount: (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+                                            refundedAmount: refunded_amount,
                                             // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
                                             // itemQty: dbResponse.items[0].quantity.count,
                                             isRefunded: true,
@@ -720,6 +722,7 @@ class UpdateOrderService {
                         }
                         const orderSchema = dbResponse;
                         orderSchema.state = protocolUpdateResponse?.message?.order?.state;
+                        orderSchema.refunded_amount = refunded_amount + dbResponse?.refunded_amount;
 
                         if (protocolUpdateResponse?.message?.order?.quote) {
                             orderSchema.updatedQuote = protocolUpdateResponse?.message?.order?.quote
