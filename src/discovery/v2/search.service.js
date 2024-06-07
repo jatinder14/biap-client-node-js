@@ -497,6 +497,40 @@ class SearchService {
             throw err;
         }
     }
+
+
+    /**
+     * sync providers
+     * @param {Object} payload
+     */
+    async syncProviders(payload) {
+        try {
+            const contextFactory = new ContextFactory();
+            const context = contextFactory.create({
+                city: payload.city,
+                domain: payload.domain
+            });
+            const searchPayload = {
+                context,
+                message: {
+                    intent: {
+                        fulfillment: {
+                            type: "Delivery"
+                        },
+                        payment: {
+                            "@ondc/org/buyer_app_finder_fee_type": "percent",
+                            "@ondc/org/buyer_app_finder_fee_amount": process.env.BAP_FINDER_FEE_AMOUNT
+                        }
+                    }
+                }
+            }
+            let searchResponses = await bppSearchService.syncProviders(searchPayload);
+            return searchResponses
+
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
 export default SearchService;

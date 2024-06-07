@@ -66,19 +66,16 @@ class HttpRequest {
             }
             return result;
         } 
-        catch (err) 
-        {
-
+        catch (err) {
             if (err.response) {
                 // The client was given an error response (5xx, 4xx)
-                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.response}`)
-                console.log('Error response',err,'\n', err.response);
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err?.response?.data}`)
             } else if (err.request) {
                 // The client never received a response, and the request was never left
-                console.log('Error request',err,'\n', err.request);
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.request}`)
             } else {
                 // Anything else
-                console.log('Error message',err,'\n', err.message);
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err?.message}`)
             }
 
             throw err;

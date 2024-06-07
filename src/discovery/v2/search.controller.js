@@ -409,6 +409,42 @@ class SearchController {
         });
     } else throw new BadRequestParameterError();
   }
+
+
+  /**
+  * sync Providers
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  syncProviders(req, res, next) {
+    try {
+      const apiKey = req.headers['wil-api-key'];
+
+      if (apiKey !== process.env.WIL_API_KEY) {
+        return res.status(401).send({ success: false, message: 'Missing or wrong wil-api-key header' });
+      }
+      const { body } = req;
+      const { domain, city } = body;
+      if (!domain) {
+        return res.status(400).send({ success: false, message: 'Missing required field domain' });
+      }
+      if (!city || !city?.includes("std:")) {
+        return res.status(400).send({ success: false, message: 'Missing or wrong required field city' });
+      }
+
+      searchService.syncProviders(body).then(result => {
+        res.json(result);
+      }).catch((err) => {
+        next(err);
+      });
+    } catch (err) {
+      next(err);
+    }
+
+  }
+
 }
 
 export default SearchController;

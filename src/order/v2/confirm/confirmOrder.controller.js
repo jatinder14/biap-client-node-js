@@ -36,10 +36,8 @@ class ConfirmOrderController {
    */
   confirmMultipleOrder(req, res, next) {
     const { body: orderRequests } = req;
-
     if (orderRequests && orderRequests.length) {
-      confirmOrderService
-        .confirmMultipleOrder(orderRequests)
+      confirmOrderService.confirmMultipleOrder(orderRequests)
         .then((response) => {
           if (response?.some(el => el.success == false || el.status == 'failed')) {
             res.header("Access-Control-Allow-Origin", "*");

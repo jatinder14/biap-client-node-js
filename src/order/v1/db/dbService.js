@@ -222,7 +222,29 @@ const getOrderById = async (orderId) => {
         }
     }
     catch (error) {
-        return error
+        throw error
+    }
+
+};
+
+/**
+ * INFO: get order details by id
+ * @param {String} orderId 
+ * @returns 
+ */
+const getOrderBasicDetailsById = async (orderId) => {
+    try {
+        let order = await OrderMongooseModel.findOne({
+            id: orderId
+        }).lean().exec();
+
+        if (!order)
+            throw new NoRecordFoundError();
+
+        return order;
+    }
+    catch (error) {
+        throw error
     }
 
 };
@@ -318,4 +340,4 @@ const getTotalItemsCountByAction = async (orderId, action) => {
     return totalItemsCountByActionData[0]?.totalQuantity ? Number(totalItemsCountByActionData[0]?.totalQuantity): 0;
 
 }
-export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId };
+export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId, getOrderBasicDetailsById };
