@@ -247,7 +247,7 @@ class ConfirmOrderService {
                 // await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
                 
                 //clear cart
-                cartService.clearCart({ userId: dbResponse.userId });
+                cartService.clearCart({ userId: dbResponse.userId, cart_key: dbResponse?.deviceId || undefined });
             }
             return response;
         }

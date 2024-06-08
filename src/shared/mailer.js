@@ -18,7 +18,7 @@
     });
 
     // Function to send notification
-    export async function sendEmail({ fromEmail, userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery }) {
+    export async function sendEmail({ fromEmail, userEmails, orderIds, HTMLtemplate, userName, subject, itemName, itemQuantity, itemPrice, estimatedDelivery, items, totalPrice }) {
         try {
             const templatePath = new URL(`.${HTMLtemplate}`, import.meta.url).pathname;
 
@@ -42,8 +42,8 @@
                 const userEmail = userEmails[i];
                 const orderId = orderIds[i]; 
                 const userNames= userName[i].toLowerCase().split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-    
-                const html = ejs.render(template, { orderId, userNames, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url,feedback_url });
+                const orderPrice = totalPrice ? parseFloat(totalPrice).toFixed(2) : undefined
+                const html = ejs.render(template, { orderId, userNames, itemName, itemQuantity, itemPrice, estimatedDelivery,profile_site_url,feedback_url, items, totalPrice: orderPrice });
     
                 // Email options
                 const mailOptions = {

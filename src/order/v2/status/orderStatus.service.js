@@ -124,7 +124,7 @@ class OrderStatusService {
     * on multiple order status
     * @param {String} messageIds
     */
-    async onOrderStatusV2(messageIds,userEmail,userName) {
+    async onOrderStatusV2(messageIds) {
         try {
             const onOrderStatusResponse = await Promise.all(
                 messageIds.map(async messageId => {

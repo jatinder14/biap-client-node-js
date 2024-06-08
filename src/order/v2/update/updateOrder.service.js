@@ -383,6 +383,9 @@ class UpdateOrderService {
             const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
 
             const returnType = lastFulfillment?.type;
+            let quote_trail = lastFulfillment?.tags?.find(el => el.code == "quote_trail");
+            quote_trail = quote_trail?.list?.filter(item => item.code === "value")
+            .reduce((acc, item) => acc + parseFloat(item.value), 0);
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             if (
                 validReturnStates.includes(returnState) &&
@@ -396,6 +399,7 @@ class UpdateOrderService {
                             id: returnId,
                             remarks: returnType,
                             returnStatus: returnState,
+                            refunded_amount: quote_trail ? Math.abs(quote_trail): undefined
                         },
                     },
                 };

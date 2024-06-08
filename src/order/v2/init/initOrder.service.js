@@ -130,6 +130,7 @@ class InitOrderService {
                 response.context.transaction_id,provider.local_id,
                 {
                     userId: userId,
+                    deviceId: response?.deviceId,
                     // cart_key: cart_key,
                     // wishlist_key: wishlist_key,
                     messageId: response?.context?.message_id,

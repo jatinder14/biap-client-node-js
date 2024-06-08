@@ -96,61 +96,7 @@ class ConfirmOrderController {
           } else {
             const userEmails = req.user.decodedToken.email;
             const userName = req.user.decodedToken.name;
-            const orderIds = orders[0]?.message?.order?.id;
-            const emailWithoutNumber = orders[0]?.message?.order?.fulfillments?.[0]?.end?.contact?.email
-            const nameWithoutNumber = orders[0]?.message?.order?.fulfillments?.[0]?.end?.location?.address?.name
-            const itemName = orders[0]?.message?.order?.quote?.breakup?.[0]?.title;
-            const itemQuantity = orders[0]?.message?.order?.items?.[0]?.quantity?.count;
-            const itemPrice = orders[0]?.message?.order?.quote?.price?.value;
-            const estimatedDelivery = orders[0]?.message?.order?.fulfillments?.[0]["@ondc/org/TAT"];
-            const duration = estimatedDelivery ? moment.duration(estimatedDelivery): undefined;
-            let days = duration?.days();
-
-            // If duration is less than 1 day, set days to 1
-            if (days === 0 && duration?.asMinutes() < 1440) {
-              days = "1";
-            } else {
-              days = Math.ceil(`${days}`);
-            }
-
-            if (emailWithoutNumber && nameWithoutNumber) {
-              Notification.create({
-                event_type: "order_creation",
-                details: `Order has been Accepted with id: ${orderIds}`,
-                name: nameWithoutNumber,
-              })
-
-              sendEmail({
-                userEmails: emailWithoutNumber,
-                orderIds,
-                HTMLtemplate: "/template/acceptedOrder.ejs",
-                userName: nameWithoutNumber || "",
-                subject: "Order Acceptance | Your Order has been Accepted",
-                itemName: itemName,
-                itemQuantity: itemQuantity,
-                itemPrice: itemPrice,
-                estimatedDelivery: days,
-              });
-
-            } else if (userEmails && userName) {
-              Notification.create({
-                event_type: "order_creation",
-                details: `Order has been Accepted with id: ${orderIds}`,
-                name: userName,
-              })
-
-              sendEmail({
-                userEmails,
-                orderIds,
-                HTMLtemplate: "/template/acceptedOrder.ejs",
-                userName: userName || "",
-                subject: "Order Acceptance | Your Order has been Accepted",
-                itemName: itemName,
-                itemQuantity: itemQuantity,
-                itemPrice: itemPrice,
-                estimatedDelivery: days,
-              });
-            }
+            triggerOrderNotification(orders, userEmails, userName)
             res.json(orders);
           }
 
@@ -173,6 +119,67 @@ class ConfirmOrderController {
       .catch((err) => {
         next(err);
       });
+  }
+}
+
+const triggerOrderNotification = (orders, userEmails, userName) => {
+  for (let order of orders) {
+    const orderIds = order?.message?.order?.id;
+    const emailWithoutNumber = order?.message?.order?.fulfillments?.[0]?.end?.contact?.email
+    const nameWithoutNumber = order?.message?.order?.fulfillments?.[0]?.end?.location?.address?.name
+    const itemPrice = order?.message?.order?.quote?.price?.value;
+    const estimatedDelivery = order?.message?.order?.fulfillments?.[0]["@ondc/org/TAT"];
+    const duration = estimatedDelivery ? moment.duration(estimatedDelivery) : undefined;
+    let days = duration?.days();
+    // If duration is less than 1 day, set days to 1
+    if (days === 0 && duration?.asMinutes() < 1440) {
+      days = "1";
+    } else {
+      days = Math.ceil(`${days}`);
+    }
+    const itemList = order?.message?.order?.quote?.breakup?.filter(el => el['@ondc/org/title_type'] == 'item').map(el => {
+      return {
+        name: el.title,
+        quantity: el['@ondc/org/item_quantity'].count,
+        price: el?.price?.value,
+        estimatedDelivery: days,
+      }
+    })
+
+    if (emailWithoutNumber && nameWithoutNumber) {
+      Notification.create({
+        event_type: "order_creation",
+        details: `Order has been Accepted with id: ${orderIds}`,
+        name: nameWithoutNumber,
+      })
+
+      sendEmail({
+        userEmails: emailWithoutNumber,
+        orderIds,
+        HTMLtemplate: "/template/acceptedOrder.ejs",
+        userName: nameWithoutNumber || "",
+        subject: "Order Acceptance | Your Order has been Accepted",
+        items: itemList,
+        totalPrice: itemPrice
+      });
+
+    } else if (userEmails && userName) {
+      Notification.create({
+        event_type: "order_creation",
+        details: `Order has been Accepted with id: ${orderIds}`,
+        name: userName,
+      })
+
+      sendEmail({
+        userEmails,
+        orderIds,
+        HTMLtemplate: "/template/acceptedOrder.ejs",
+        userName: userName || "",
+        subject: "Order Acceptance | Your Order has been Accepted",
+        items: itemList,
+        totalPrice: itemPrice
+      });
+    }
   }
 }
 

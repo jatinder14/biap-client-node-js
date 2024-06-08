@@ -81,7 +81,7 @@ class OrderStatusController {
             const userEmail = req.user.decodedToken.email
             const userName = req.user.decodedToken.name
 
-            orderStatusService.onOrderStatusV2(messageIdsArray, userEmail, userName).then(async orders => {
+            orderStatusService.onOrderStatusV2(messageIdsArray).then(async orders => {
                 const orderId = orders[0].message.order.id
                 const emailWithoutNumber = orders[0].message.order.fulfillments[0].end?.contact?.email
                 const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
