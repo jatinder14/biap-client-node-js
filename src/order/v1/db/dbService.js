@@ -28,16 +28,12 @@ const addOrUpdateOrderWithTransactionId = async (transactionId, orderSchema = {}
  * @returns 
  */
 const addOrUpdateOrderWithTransactionIdAndProvider = async (transactionId, providerId, orderSchema = {}) => {
-    return await OrderMongooseModel.findOneAndUpdate(
-        {
-            transactionId: transactionId,
-            "provider.id": providerId
-
-        },
-        {
-            ...orderSchema
-        },
-        { upsert: true }
+    return await OrderMongooseModel.findOneAndUpdate({
+        transactionId: transactionId,
+        "provider.id": providerId
+    }, {
+        ...orderSchema
+    }, { upsert: true }
     );
 };
 
@@ -137,15 +133,15 @@ const getOrderByTransactionAndOrderId = async (transactionId, orderId) => {
  * @returns 
  */
 const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => {
-    const order = await OrderMongooseModel.find({
+    const order = await OrderMongooseModel.findOne({
         transactionId: transactionId,
         "provider.id": providerId
     });
 
-    if (!(order || order.length))
+    if (!order)
         throw new NoRecordFoundError();
     else
-        return order?.[0];
+        return order;
 };
 
 /**

@@ -96,31 +96,31 @@ class ConfirmOrderController {
           } else {
             const userEmails = req.user.decodedToken.email;
             const userName = req.user.decodedToken.name;
-            const orderIds = orders[0].message.order.id;
-            const emailWithoutNumber = orders[0].message.order.fulfillments[0].end.contact.email
-            const nameWithoutNumber = orders[0].message.order.fulfillments[0].end.location.address.name
-            const itemName = orders[0].message.order.quote.breakup[0].title;
-            const itemQuantity = orders[0].message.order.items[0].quantity.count;
-            const itemPrice = orders[0].message.order.quote.price.value;
-            const estimatedDelivery = orders[0].message.order.fulfillments[0]["@ondc/org/TAT"];
-            const duration = moment.duration(estimatedDelivery);
-            let days = duration.days();
+            const orderIds = orders[0]?.message?.order?.id;
+            const emailWithoutNumber = orders[0]?.message?.order?.fulfillments?.[0]?.end?.contact?.email
+            const nameWithoutNumber = orders[0]?.message?.order?.fulfillments?.[0]?.end?.location?.address?.name
+            const itemName = orders[0]?.message?.order?.quote?.breakup?.[0]?.title;
+            const itemQuantity = orders[0]?.message?.order?.items?.[0]?.quantity?.count;
+            const itemPrice = orders[0]?.message?.order?.quote?.price?.value;
+            const estimatedDelivery = orders[0]?.message?.order?.fulfillments?.[0]["@ondc/org/TAT"];
+            const duration = estimatedDelivery ? moment.duration(estimatedDelivery): undefined;
+            let days = duration?.days();
 
             // If duration is less than 1 day, set days to 1
-            if (days === 0 && duration.asMinutes() < 1440) {
+            if (days === 0 && duration?.asMinutes() < 1440) {
               days = "1";
             } else {
               days = Math.ceil(`${days}`);
             }
 
             if (emailWithoutNumber && nameWithoutNumber) {
-              await Notification.create({
+              Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: nameWithoutNumber,
               })
 
-              await sendEmail({
+              sendEmail({
                 userEmails: emailWithoutNumber,
                 orderIds,
                 HTMLtemplate: "/template/acceptedOrder.ejs",
@@ -131,16 +131,15 @@ class ConfirmOrderController {
                 itemPrice: itemPrice,
                 estimatedDelivery: days,
               });
-              res.json(orders);
 
             } else if (userEmails && userName) {
-              await Notification.create({
+              Notification.create({
                 event_type: "order_creation",
                 details: `Order has been Accepted with id: ${orderIds}`,
                 name: userName,
               })
 
-              await sendEmail({
+              sendEmail({
                 userEmails,
                 orderIds,
                 HTMLtemplate: "/template/acceptedOrder.ejs",
@@ -151,12 +150,8 @@ class ConfirmOrderController {
                 itemPrice: itemPrice,
                 estimatedDelivery: days,
               });
-              res.json(orders);
-
             }
-            else {
-              res.json(orders);
-            }
+            res.json(orders);
           }
 
         })

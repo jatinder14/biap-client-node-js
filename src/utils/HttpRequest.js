@@ -1,4 +1,4 @@
-import axios from 'axios';
+import got from 'got';
 import logger from './logger.js';
 
 /**
@@ -14,10 +14,10 @@ class HttpRequest {
      * @param {*} data HTTP request data (If applicable)
      * @param {*} options other params
      */
-    constructor(baseUrl, url, method = 'get', data = {}, headers = {}, options) {
+    constructor(baseUrl, url, method = 'get', data = {}, headers = {}, options = {}) {
         this.baseUrl = baseUrl;
         this.url = url;
-        this.method = method;
+        this.method = method.toLowerCase();
         this.data = data;
         this.headers = headers;
         this.options = options;
@@ -25,62 +25,46 @@ class HttpRequest {
 
     /**
      * Send http request to server to write data to / read data from server
-     * axios library provides promise implementation to send request to server
-     * Here we are using axios library for requesting a resource
+     * got library provides promise implementation to send request to server
+     * Here we are using got library for requesting a resource
      */
-    async send() 
-    {
-    
-        try 
-        {
-            logger.info(`ONDC API call inside try- ${this.url} --> ${JSON.stringify(this.data)}`)
+    async send() {
+        try {
+            logger.info(`ONDC API call inside try- ${this.url} --> ${JSON.stringify(this.data)}`);
             let headers = {
                 ...this.headers, 
                 ...(this.method.toLowerCase() != "get" && {'Content-Type': 'application/json'})
             };
-            
-            let result;
+            const options = {
+                prefixUrl: this.baseUrl,
+                url: this.url,
+                method: this.method,
+                headers: headers,
+                timeout: { request: 180000 },
+                responseType: 'json',
+                ...(this.method === 'get' ? { searchParams: this.data } : { json: this.data }),
+                ...this.options
+            };
 
-            if (this.method.toLowerCase() == 'get') 
-            {
-                result = await axios({
-                    baseURL: this.baseUrl,
-                    url: this.url,
-                    method: this.method,
-                    headers: headers,
-                    timeout: 180000, // If the request takes longer than `timeout`, the request will be aborted.
-                    params:this.data
-                });
-            } 
-            else 
-            {
-                // Make server request using axios
-                result = await axios({
-                    baseURL: this.baseUrl,
-                    url: this.url,
-                    method: this.method,
-                    headers: headers,
-                    timeout: 180000, // If the request takes longer than `timeout`, the request will be aborted.
-                    data: JSON.stringify(this.data)
-                });
-            }
-            return result;
-        } 
-        catch (err) {
+            // Make server request using got
+            const result = await got(options);
+
+            return { data: result.body };
+        } catch (err) {
             if (err.response) {
                 // The client was given an error response (5xx, 4xx)
-                logger.info(`ONDC API call inside catch - ${this.url} --> ${err?.response?.data}`)
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.response.body}`);
             } else if (err.request) {
                 // The client never received a response, and the request was never left
-                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.request}`)
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.request}`);
             } else {
                 // Anything else
-                logger.info(`ONDC API call inside catch - ${this.url} --> ${err?.message}`)
+                logger.info(`ONDC API call inside catch - ${this.url} --> ${err.message}`);
             }
 
             throw err;
         }
-    };
+    }
 }
 
 export default HttpRequest;

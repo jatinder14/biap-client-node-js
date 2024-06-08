@@ -78,10 +78,7 @@ class ConfirmOrderService {
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
 
         if (paymentObj) orderSchema.payment = paymentObj
-        //if (razorpayPaymentId && orderSchema && orderSchema?.payment) orderSchema['payment']['razorpayPaymentId'] = razorpayPaymentId
-        lokiLogger.info(`---------------orderSchema after ==================:>> ${paymentObj} ------- ${JSON.stringify(orderSchema)}`)
-
-        await addOrUpdateOrderWithTransactionIdAndProvider(
+        return await addOrUpdateOrderWithTransactionIdAndProvider(
             confirmResponse?.context?.transaction_id, dbResponse.provider.id,
             { ...orderSchema }
         );
@@ -93,7 +90,7 @@ class ConfirmOrderService {
      * @param {Number} total
      * @param {Boolean} confirmPayment
      */
-    async confirmAndUpdateOrder(orderRequest = {}, total, confirmPayment = true) {
+    async confirmAndUpdateOrder(orderRequest = {}) {
         const {
             context: requestContext = {},
             message: order = {}
@@ -243,11 +240,12 @@ class ConfirmOrderService {
                     response.context.transaction_id, dbResponse.provider.id,
                     { ...orderSchema }
                 );
-
-                let billingContactPerson = orderSchema.billing.phone
-                let provider = orderSchema.provider.descriptor.name
-                await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
                 response.parentOrderId = dbResponse?.[0]?.parentOrderId;
+                /* ****** Currently not using to send OTP ****** */
+                // let billingContactPerson = orderSchema.billing.phone
+                // let provider = orderSchema.provider.descriptor.name
+                // await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
+                
                 //clear cart
                 cartService.clearCart({ userId: dbResponse.userId });
             }
@@ -328,15 +326,10 @@ class ConfirmOrderService {
      * @param {Array} orders 
      */
     async confirmMultipleOrder(orders) {
-        let total = 0;
-        orders.forEach(order => {
-            total += order?.message?.payment?.paid_amount;
-        });
-
         const confirmOrderResponse = await Promise.all(
             orders.map(async orderRequest => {
                 try {
-                    return await this.confirmAndUpdateOrder(orderRequest, total, true);
+                    return await this.confirmAndUpdateOrder(orderRequest);
                 }
                 catch (err) {
                     console.log("error confirmMultipleOrder ----", err)
