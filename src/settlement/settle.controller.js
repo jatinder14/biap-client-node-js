@@ -131,7 +131,7 @@ export async function getSettlementsHandler(req, res) {
                 updated_at: updatedAt,
                 collector_recon_sent: false,
                 on_collector_recon_received: false,
-                order_amount: orderAmount,
+                order_amount: orderAmount?.toFixed(2),
                 settle_status,
                 quote, 
                 updatedQuote, 

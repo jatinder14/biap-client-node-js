@@ -192,8 +192,10 @@ class SelectOrderService {
                                 const isItemNotExist = allItem.find(el => el.item?.quantity?.available?.count != "99")
                                 if (isItemNotExist) {
                                     return {
-                                        success: false,
-                                        message: "Item out of stock!",
+                                        context: onSelectResponse?.context,
+                                        message: onSelectResponse?.message,
+                                        success: true,
+                                        // message: "Item out of stock!",
                                         error: {
                                             type: "DOMAIN-ERROR",
                                             code: "40002",
