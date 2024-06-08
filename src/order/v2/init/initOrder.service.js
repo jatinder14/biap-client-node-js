@@ -34,7 +34,7 @@ class InitOrderService {
      * @param {String} userId
      * @param {String} parentOrderId
      */
-    async createOrder(response, userId = null, orderRequest) {
+    async createOrder(response, userId = null, orderRequest, deviceId = null) {
         if (response) {
             const provider = orderRequest?.items?.[0]?.provider || [];
             
@@ -130,7 +130,7 @@ class InitOrderService {
                 response.context.transaction_id,provider.local_id,
                 {
                     userId: userId,
-                    deviceId: response?.deviceId,
+                    deviceId,
                     // cart_key: cart_key,
                     // wishlist_key: wishlist_key,
                     messageId: response?.context?.message_id,
@@ -282,7 +282,7 @@ class InitOrderService {
             orders.map(async order => {
                 try {
                     const bppResponse = await this.initOrder(order, orders.length > 1);
-                    await this.createOrder(bppResponse, user?.decodedToken?.uid, order?.message);
+                    await this.createOrder(bppResponse, user?.decodedToken?.uid, order?.message, order?.deviceId);
 
                     return bppResponse;
                 }
