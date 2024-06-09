@@ -240,13 +240,15 @@ class ConfirmOrderService {
                     response.context.transaction_id, dbResponse.provider.id,
                     { ...orderSchema }
                 );
-                response.parentOrderId = dbResponse?.[0]?.parentOrderId;
+                response.parentOrderId = dbResponse?.parentOrderId;
                 /* ****** Currently not using to send OTP ****** */
                 // let billingContactPerson = orderSchema.billing.phone
                 // let provider = orderSchema.provider.descriptor.name
                 // await sendAirtelSingleSms(billingContactPerson, [provider], 'ORDER_PLACED', false)
                 
                 //clear cart
+                console.log("dbResponse?.deviceId processOnConfirmResponse ===============", dbResponse?.deviceId);
+                console.log("dbResponse?.userId processOnConfirmResponse ===============", dbResponse?.userId);
                 cartService.clearCart({ userId: dbResponse.userId, cart_key: dbResponse?.deviceId || undefined });
             }
             return response;

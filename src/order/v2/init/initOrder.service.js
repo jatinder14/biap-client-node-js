@@ -125,7 +125,7 @@ class InitOrderService {
                 }
 
             }
-
+            console.log("deviceId createOrder -------------", deviceId);
             await addOrUpdateOrderWithTransactionIdAndProvider(
                 response.context.transaction_id,provider.local_id,
                 {
@@ -282,6 +282,7 @@ class InitOrderService {
             orders.map(async order => {
                 try {
                     const bppResponse = await this.initOrder(order, orders.length > 1);
+                    console.log("order?.deviceId initMultipleOrder -------------", order?.deviceId);
                     await this.createOrder(bppResponse, user?.decodedToken?.uid, order?.message, order?.deviceId);
 
                     return bppResponse;
