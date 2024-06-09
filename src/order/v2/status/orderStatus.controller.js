@@ -37,7 +37,12 @@ class OrderStatusController {
         if (orders && orders.length) {
 
             orderStatusService.orderStatusV2(orders).then(response => {
-                res.json(response);
+                if (response?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(response);
+                } else {
+                    res.json(response);
+                }
             }).catch((err) => {
                 next(err);
             });
@@ -82,160 +87,165 @@ class OrderStatusController {
             const userName = req.user.decodedToken.name
 
             orderStatusService.onOrderStatusV2(messageIdsArray).then(async orders => {
-                const orderId = orders[0].message.order.id
-                const emailWithoutNumber = orders[0].message.order.fulfillments[0].end?.contact?.email
-                const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
+                if (orders?.some(el => el.success == false || el.status == 'failed')) {
+                    res.header("Access-Control-Allow-Origin", "*");
+                    res.status(400).json(orders);
+                } else {
+                    const orderId = orders[0].message.order.id
+                    const emailWithoutNumber = orders[0].message.order.fulfillments[0].end?.contact?.email
+                    const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
-                if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
-                    if (emailWithoutNumber && nameWithoutNumber) {
-                        await Notification.create({
-                            event_type: 'out-for-delivery',
-                            details: `Order is out for delivery for orderId: ${orderId}`,
-                            name: nameWithoutNumber
-                        })
+                    if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
+                        if (emailWithoutNumber && nameWithoutNumber) {
+                            await Notification.create({
+                                event_type: 'out-for-delivery',
+                                details: `Order is out for delivery for orderId: ${orderId}`,
+                                name: nameWithoutNumber
+                            })
 
-                        await sendEmail({
-                            userEmails: emailWithoutNumber,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/outForDelivery.ejs',
-                            userName: nameWithoutNumber || '',
-                            subject: 'Order Update | Your Order is out for delivery'
-                        });
-                        res.json(orders);
-                    }
-                    else if (userEmail && userName) {
-                        await Notification.create({
-                            event_type: 'out-for-delivery',
-                            details: `Order is out for delivery for orderId: ${orderId}`,
-                            name: userName
-                        })
-                        await sendEmail({
-                            userEmails: userEmail,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/outForDelivery.ejs',
-                            userName: userName || '',
-                            subject: 'Order Update | Your Order is out for delivery'
-                        });
-                        res.json(orders);
+                            await sendEmail({
+                                userEmails: emailWithoutNumber,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/outForDelivery.ejs',
+                                userName: nameWithoutNumber || '',
+                                subject: 'Order Update | Your Order is out for delivery'
+                            });
+                            res.json(orders);
+                        }
+                        else if (userEmail && userName) {
+                            await Notification.create({
+                                event_type: 'out-for-delivery',
+                                details: `Order is out for delivery for orderId: ${orderId}`,
+                                name: userName
+                            })
+                            await sendEmail({
+                                userEmails: userEmail,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/outForDelivery.ejs',
+                                userName: userName || '',
+                                subject: 'Order Update | Your Order is out for delivery'
+                            });
+                            res.json(orders);
+                        }
+                        else {
+                            res.json(orders);
+                        }
+                    } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
+                        if (emailWithoutNumber && nameWithoutNumber) {
+                            await Notification.create({
+                                event_type: 'order-picked-up',
+                                details: `Order has been picked up with id: ${orderId}`,
+                                name: nameWithoutNumber
+                            })
+
+                            await sendEmail({
+                                userEmails: emailWithoutNumber,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/orderPickedup.ejs',
+                                userName: nameWithoutNumber || '',
+                                subject: 'Order Update | Your Order has been picked up'
+                            });
+                            console.log("orders2", orders)
+
+                            res.json(orders);
+                        }
+                        else if (userEmail && userName) {
+                            await Notification.create({
+                                event_type: 'order-picked-up',
+                                details: `Order has been picked up with id: ${orderId}`,
+                                name: userName
+                            })
+
+                            await sendEmail({
+                                userEmails: userEmail,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/orderPickedup.ejs',
+                                userName: userName || '',
+                                subject: 'Order Update | Your Order has been picked up'
+                            });
+                            console.log("orders2", orders)
+                            res.json(orders);
+                        }
+                        else {
+                            res.json(orders);
+                        }
+                    } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
+                        if (emailWithoutNumber && nameWithoutNumber) {
+                            await Notification.create({
+                                event_type: 'agent-assigned',
+                                details: `Agent has been assigned for order id: ${orderId}`,
+                                name: nameWithoutNumber
+                            })
+
+                            await sendEmail({
+                                userEmails: emailWithoutNumber,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/agentAssigned.ejs',
+                                userName: nameWithoutNumber || '',
+                                subject: 'Order Update | Agent has been assigned for Your Order'
+                            });
+                            console.log("orders3", orders)
+                            res.json(orders);
+                        }
+                        else if (userEmail && userName) {
+                            await Notification.create({
+                                event_type: 'agent-assigned',
+                                details: `Agent has been assigned for order id: ${orderId}`,
+                                name: userName
+                            })
+
+                            await sendEmail({
+                                userEmails: userEmail,
+                                orderIds: orderId,
+                                HTMLtemplate: '/template/agentAssigned.ejs',
+                                userName: userName || '',
+                                subject: 'Order Update | Agent has been assigned for Your Order'
+                            });
+                            console.log("orders3", orders)
+                            res.json(orders);
+                        }
+                        else {
+                            res.json(orders);
+                        }
+                    } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
+
+                        if (emailWithoutNumber && nameWithoutNumber) {
+
+                            await Notification.create({
+                                event_type: 'order_delivery',
+                                details: `Order has been Delivered with id: ${orderId}`,
+                                name: nameWithoutNumber
+                            })
+                            await sendEmail({
+                                userEmails: emailWithoutNumber,
+                                orderIds: orderId,
+                                HTMLtemplate: "/template/orderDelivered.ejs",
+                                userName: nameWithoutNumber || "",
+                                subject: "Order Confirmation | Your order has been successfully delivered",
+                            });
+                            res.json(orders);
+                        } else if (userEmail && userName) {
+                            await Notification.create({
+                                event_type: 'order_delivery',
+                                details: `Order has been Delivered with id: ${orderId}`,
+                                name: userName || ""
+                            });
+                            await sendEmail({
+                                userEmails: userEmail,
+                                orderIds: orderId,
+                                HTMLtemplate: "/template/orderDelivered.ejs",
+                                subject: "Order Confirmation | Your order has been successfully delivered",
+                                userName: userName || ""
+                            });
+                            res.json(orders);
+                        }
+                        else {
+                            res.json(orders);
+                        }
                     }
                     else {
                         res.json(orders);
                     }
-                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
-                    if (emailWithoutNumber && nameWithoutNumber) {
-                        await Notification.create({
-                            event_type: 'order-picked-up',
-                            details: `Order has been picked up with id: ${orderId}`,
-                            name: nameWithoutNumber
-                        })
-
-                        await sendEmail({
-                            userEmails: emailWithoutNumber,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/orderPickedup.ejs',
-                            userName: nameWithoutNumber || '',
-                            subject: 'Order Update | Your Order has been picked up'
-                        });
-                        console.log("orders2", orders)
-
-                        res.json(orders);
-                    }
-                    else if (userEmail && userName) {
-                        await Notification.create({
-                            event_type: 'order-picked-up',
-                            details: `Order has been picked up with id: ${orderId}`,
-                            name: userName
-                        })
-
-                        await sendEmail({
-                            userEmails: userEmail,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/orderPickedup.ejs',
-                            userName: userName || '',
-                            subject: 'Order Update | Your Order has been picked up'
-                        });
-                        console.log("orders2", orders)
-                        res.json(orders);
-                    }
-                    else {
-                        res.json(orders);
-                    }
-                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
-                    if (emailWithoutNumber && nameWithoutNumber) {
-                        await Notification.create({
-                            event_type: 'agent-assigned',
-                            details: `Agent has been assigned for order id: ${orderId}`,
-                            name: nameWithoutNumber
-                        })
-
-                        await sendEmail({
-                            userEmails: emailWithoutNumber,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/agentAssigned.ejs',
-                            userName: nameWithoutNumber || '',
-                            subject: 'Order Update | Agent has been assigned for Your Order'
-                        });
-                        console.log("orders3", orders)
-                        res.json(orders);
-                    }
-                    else if (userEmail && userName) {
-                        await Notification.create({
-                            event_type: 'agent-assigned',
-                            details: `Agent has been assigned for order id: ${orderId}`,
-                            name: userName
-                        })
-
-                        await sendEmail({
-                            userEmails: userEmail,
-                            orderIds: orderId,
-                            HTMLtemplate: '/template/agentAssigned.ejs',
-                            userName: userName || '',
-                            subject: 'Order Update | Agent has been assigned for Your Order'
-                        });
-                        console.log("orders3", orders)
-                        res.json(orders);
-                    }
-                    else {
-                        res.json(orders);
-                    }
-                } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
-
-                    if (emailWithoutNumber && nameWithoutNumber) {
-
-                        await Notification.create({
-                            event_type: 'order_delivery',
-                            details: `Order has been Delivered with id: ${orderId}`,
-                            name: nameWithoutNumber
-                        })
-                        await sendEmail({
-                            userEmails: emailWithoutNumber,
-                            orderIds: orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs",
-                            userName: nameWithoutNumber || "",
-                            subject: "Order Confirmation | Your order has been successfully delivered",
-                        });
-                        res.json(orders);
-                    } else if (userEmail && userName) {
-                        await Notification.create({
-                            event_type: 'order_delivery',
-                            details: `Order has been Delivered with id: ${orderId}`,
-                            name: userName || ""
-                        });
-                        await sendEmail({
-                            userEmails: userEmail,
-                            orderIds: orderId,
-                            HTMLtemplate: "/template/orderDelivered.ejs",
-                            subject: "Order Confirmation | Your order has been successfully delivered",
-                            userName: userName || ""
-                        });
-                        res.json(orders);
-                    }
-                    else {
-                        res.json(orders);
-                    }
-                }
-                else {
-                    res.json(orders);
                 }
             }).catch((err) => {
                 next(err);
