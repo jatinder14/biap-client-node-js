@@ -6,7 +6,7 @@ import {
     getOrderById, getOrderRequest, saveOrderRequest
 } from "../../v1/db/dbService.js";
 import OrderMongooseModel from '../../v1/db/order.js';
-
+import lokiLogger from '../../../utils/logger.js'
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppOrderStatusService from "./bppOrderStatus.service.js";
 import CustomError from "../../../lib/errors/custom.error.js";
@@ -124,7 +124,7 @@ class OrderStatusService {
     * on multiple order status
     * @param {String} messageIds
     */
-    async onOrderStatusV2(messageIds,userEmail,userName) {
+    async onOrderStatusV2(messageIds) {
         try {
             const onOrderStatusResponse = await Promise.all(
                 messageIds.map(async messageId => {
@@ -355,6 +355,8 @@ class OrderStatusService {
         try {
 
             console.log("orderRequest.message--->",orderRequest)
+            lokiLogger.info(`orderRequest updateForPaymentObject ----------------------',${JSON.stringify(orderRequest)}`)
+            lokiLogger.info(`protocolUpdateResponse updateForPaymentObject ----------------------',${JSON.stringify(protocolUpdateResponse)}`)
             const orderDetails = await getOrderById(orderRequest.message.order.id);
 
             const orderRequestDb = await getOrderRequest({transaction_id:orderRequest?.context?.transaction_id,requestType:'update'})
@@ -419,7 +421,7 @@ class OrderStatusService {
                     if(updateQoute){
 
                         const refundAmount = parseInt(updatedValue) - parseInt(protocolUpdateResponse.message.order.quote?.price?.value)
-
+                        lokiLogger.info(`refundAmount updateForPaymentObject ----------------------',${refundAmount}`)
                         let paymentSettlementDetails =
                             {
                                 "@ondc/org/settlement_details":

@@ -14,20 +14,14 @@ class BppConfirmService {
      */
     async confirm(confirmRequest = {}) {
         try {
-
             const response = await protocolConfirm(confirmRequest);
-
-            if(response.error){
-                return { success: false, message: response.data ,error:response.error};
-            }else{
+            if (response.error) {
+                return { success: false, message: response.data, error: response.error };
+            } else {
                 return { context: confirmRequest.context, message: response.message };
             }
-
         }
         catch (err) {
-
-            //set confirm request in error data
-            // err.response.data.confirmRequest =confirmRequest
             throw err;
         }
     }
@@ -243,7 +237,7 @@ class BppConfirmService {
                             params: {
                                 amount: order?.payment?.paid_amount?.toFixed(2)?.toString(),
                                 currency: "INR",
-                                transaction_id: uuidv4() // order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? order.jusPayTransactionId ?? uuidv4() : undefined //payment transaction id
+                                transaction_id: uuidv4()
                             },
                             status: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 PROTOCOL_PAYMENT.PAID :
@@ -271,12 +265,7 @@ class BppConfirmService {
                 }
             };
             let confirmResponse = await this.confirm(confirmRequest);
-            if (confirmResponse.error) {
-                //retrial attempt
-                console.log("confirmResponse.error--------->", confirmResponse.error);
-            }
             return confirmResponse
-            // return await this.confirm(confirmRequest);
         }
         catch (err) {
             throw err;

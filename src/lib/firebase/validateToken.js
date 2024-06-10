@@ -1,9 +1,6 @@
 import admin from "firebase-admin";
 import { decodeJwtToken } from '../../utils/token.utils.js';
-import User from "../../accounts/users/db/user.js";
 import lokiLogger from '../../utils/logger.js'
-import axios from "axios";
-import qs from 'qs';
 
 /**
  *

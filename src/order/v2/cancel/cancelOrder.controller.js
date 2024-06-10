@@ -17,6 +17,7 @@ class CancelOrderController {
         cancelOrderService.cancelOrder(orderRequest).then(response => {
             res.json(response);
         }).catch((err) => {
+            console.log("err cancelOrder ------- ", err);
             next(err);
         });
     }

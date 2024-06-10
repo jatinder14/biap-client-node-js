@@ -27,6 +27,7 @@ import Refund from '../order/v2/db/refund.js';
 import Settlements from '../order/v2/db/settlement.js';
 import Fulfillments from '../order/v2/db/fulfillments.js';
 import FulfillmentHistory from '../order/v2/db/fulfillmentHistory.js';
+import WishList from '../order/v2/db/wishlist.js';
 
 const router = new Router();
 router.get("/users",async (req,res) => {
@@ -85,6 +86,13 @@ router.get("/orders/:id",async (req,res) => {
  
      res.status(200).json({"use": "testing",
      data: data
+ })
+ })
+router.get("/wishlishts",async (req,res) => {
+    let data = await WishList.find();
+
+     res.status(200).json({"use": "testing",
+     data: data 
  })
  })
 router.use("/refresh-token", rootRouter);

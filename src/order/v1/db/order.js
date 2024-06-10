@@ -343,6 +343,7 @@ const OrderSchema = new mongoose.Schema(
         city: { type: String },
         state: { type: String }, //["PENDING-CONFIRMATION", "Ordered", "CANCELLED", "Pending", "Active", "Processing"]
         userId: String,
+        deviceId: String,
         transactionId: { type: String },
         messageId: { type: String },
         parentOrderId: { type: String },
@@ -362,6 +363,7 @@ const OrderSchema = new mongoose.Schema(
         settlement_id: { type: String },
         settlement_reference_no: { type: String },
         order_recon_status: { type: String },
+        refunded_amount: { type: Number, default: 0 },
         counterparty_recon_status: { type: String },
         counterparty_diff_amount_value: { type: String },
         counterparty_diff_amount_currency: { type: String },
