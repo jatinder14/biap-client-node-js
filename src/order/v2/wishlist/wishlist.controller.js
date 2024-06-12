@@ -7,9 +7,14 @@ class WishlistController {
 
     async addItem(req, res, next) {
         try {
-            console.log('req.body', JSON.stringify(req.body))
-            if(!req.body.product?.descriptor?.name || !req.body?.product?.price?.value){
-                return res.send({status:400,message:"Product name or product price fields are required"})
+
+            if (!req.body.product?.descriptor?.name || !req.body?.product?.price?.value) {
+                return res.send({
+                    success: false,
+                    status: 400,
+                    message: "Product name or product price fields are required"
+                });
+
             }
             return res.send(await wishlistService.addItem({ ...req.body, ...req.params }));
         } catch (err) {
