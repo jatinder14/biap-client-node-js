@@ -16,7 +16,7 @@ import {
   getTotalItemsCountByAction,
   getOrderByIdAndTransactionId
 } from "../../v1/db/dbService.js";
- 
+
 
 import BppCancelService from "./bppCancel.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
@@ -114,9 +114,9 @@ class CancelOrderService {
         if (!protocolCancelResponse?.[0].error && protocolCancelResponse?.[0]?.message?.order?.state) {
           protocolCancelResponse = protocolCancelResponse?.[0];
           const updateOrderState = await Order.findOneAndUpdate(
-            { id: protocolCancelResponse?.message?.order?.id }, 
-            { state: protocolCancelResponse?.message?.order?.state }, 
-            { new: true } 
+            { id: protocolCancelResponse?.message?.order?.id },
+            { state: protocolCancelResponse?.message?.order?.state },
+            { new: true }
           );
         }
         return protocolCancelResponse;
@@ -190,7 +190,7 @@ class CancelOrderService {
             if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
               refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
             else
-              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySeller(protocolCancelResponse);
+              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(protocolCancelResponse);
 
             let order_details = dbResponse?.[0]?.toJSON();
             let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, order_details?.id, latest_fulfillment?.state?.descriptor?.code);
@@ -335,19 +335,21 @@ class CancelOrderService {
  * @param {object} obj 
  * @returns 
  */
-  calculateRefundAmountForFullOrderCancellationBySeller(obj) {
+  calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(obj) {
     let totalRefundAmount = 0;
     lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
     if (obj) {
       let sumOfNegativeValues = 0;
       let fulfillments = obj?.message?.order?.fulfillments || [];
-      let latest_fulfillment = fulfillments.length
-        ? fulfillments.find(
-          (el) => el?.state?.descriptor?.code === "Cancelled",
-        )
-        : {};
-
-      if (latest_fulfillment?.state?.descriptor?.code === "Cancelled") {
+      let latest_fulfillment;
+      if (fulfillments.length) {
+        latest_fulfillment = fulfillments.find(
+          (el) =>
+            el?.state?.descriptor?.code === "Cancelled" &&
+            el?.type === "Cancel",
+        );
+      }
+      if (latest_fulfillment) {
         latest_fulfillment?.tags?.forEach((tag) => {
           if (tag?.code === "quote_trail") {
             tag?.list?.forEach((item) => {
