@@ -1,3 +1,4 @@
+import { createDeliveryInfoFromBillingInfo } from "../../../utils/AreaCodeMap.js";
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES } from "../../../utils/constants.js";
 import { protocolInit } from "../../../utils/protocolApis/index.js";
 
@@ -13,6 +14,7 @@ class BppInitService {
             const provider = order?.items?.[0]?.provider || {};
 
             console.log("context---------------->",context);
+            order.delivery_info = createDeliveryInfoFromBillingInfo(order?.billing_info)
             order.delivery_info.location.address.area_code = order.delivery_info.location.address.areaCode
             delete order.delivery_info.location.address.areaCode
 
