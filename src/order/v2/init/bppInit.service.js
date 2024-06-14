@@ -14,8 +14,9 @@ class BppInitService {
             const provider = order?.items?.[0]?.provider || {};
 
             console.log("context---------------->",context);
-            order.delivery_info = createDeliveryInfoFromBillingInfo(order?.billing_info)
-            order.delivery_info.location.address.area_code = order.delivery_info.location.address.areaCode
+            if(order?.billing_info)
+                order.delivery_info = createDeliveryInfoFromBillingInfo(order.billing_info)
+            order.delivery_info.location.address.area_code = order?.delivery_info?.location.address?.areaCode
             delete order.delivery_info.location.address.areaCode
 
             order.billing_info.address.area_code = order.billing_info.address.areaCode
