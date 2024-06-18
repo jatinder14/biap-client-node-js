@@ -147,7 +147,7 @@ class CancelOrderService {
    */
   async onCancelOrderDbOperation(messageId) {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 20000)) // Just for pramaan report
+      // await new Promise((resolve) => setTimeout(resolve, 20000)) // Just for pramaan report
       let protocolCancelResponse = await onOrderCancel(messageId);
       if (!(protocolCancelResponse && protocolCancelResponse.length)) {
         const contextFactory = new ContextFactory();
