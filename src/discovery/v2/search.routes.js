@@ -26,10 +26,10 @@ router.get(
     '/v2/providers/:itemId',  searchController.getProvider,
 );
 
-// get item details
-router.get(
-    '/v2/providers/:itemId', authentication(), searchController.getProvider,
-);
+// // get item details
+// router.get(
+//     '/v2/providers/:itemId', authentication(), searchController.getProvider,
+// );
 
 // get item details
 router.get(
@@ -76,6 +76,11 @@ router.get(
 // get custom menus
 router.get(
     '/v2/custom-menus',  searchController.getCustomMenus,
+);
+
+// search provider
+router.post(
+    '/v2/sync_providers', searchController.syncProviders,
 );
 
 // // get custom menus

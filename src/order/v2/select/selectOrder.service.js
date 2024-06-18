@@ -185,6 +185,26 @@ class SelectOrderService {
                 messageIds.map(async messageId => {
                     try {
                         const onSelectResponse = await this.onSelectOrder(messageId);
+                        if (onSelectResponse && !onSelectResponse?.error) {
+                            const breakup = onSelectResponse?.message?.quote?.quote?.breakup
+                            if (breakup.length) {
+                                const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
+                                const isItemNotExist = allItem.find(el => el.item?.quantity?.available?.count != "99")
+                                if (isItemNotExist) {
+                                    return {
+                                        context: onSelectResponse?.context,
+                                        message: onSelectResponse?.message,
+                                        success: true,
+                                        // message: "Item out of stock!",
+                                        error: {
+                                            type: "DOMAIN-ERROR",
+                                            code: "40002",
+                                            message: `"[{\"item_id\":\"${isItemNotExist['@ondc/org/item_id']}\",\"error\":\"40002\"}]"`
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         return { ...onSelectResponse };
                     }
                     catch (err) {

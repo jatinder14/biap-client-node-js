@@ -11,7 +11,6 @@ class BppCancelService {
      */
     async cancelOrder(context, orderId, cancellationReasonId = "001") {
         try {
-
             const cancelRequest = {
                 context: context,
                 message: {
@@ -19,13 +18,12 @@ class BppCancelService {
                     cancellation_reason_id: cancellationReasonId
                 }
             }
-
             const response = await protocolCancel(cancelRequest);
-
+            console.log("bpp cancelOrder response -------", response.message);
             return { context: context, message: response.message };
         }
         catch (err) {
-
+            console.log("bpp cancelOrder -------", err);
             throw err;
         }
     }

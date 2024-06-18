@@ -343,6 +343,7 @@ const OrderSchema = new mongoose.Schema(
         city: { type: String },
         state: { type: String }, //["PENDING-CONFIRMATION", "Ordered", "CANCELLED", "Pending", "Active", "Processing"]
         userId: String,
+        deviceId: String,
         transactionId: { type: String },
         messageId: { type: String },
         parentOrderId: { type: String },

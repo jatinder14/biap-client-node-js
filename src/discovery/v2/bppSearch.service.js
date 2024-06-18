@@ -10,7 +10,8 @@ import {
     protocolGetItemList,
     protocolGetLocations,
     protocolProvideDetails, protocolGetLocationDetails,
-    protocolGetItemDetails
+    protocolGetItemDetails,
+    protocolSearch
 } from "../../utils/protocolApis/index.js";
 
 class BppSearchService {
@@ -207,6 +208,16 @@ class BppSearchService {
 
             const response = await protocolGetCustomMenus(searchRequest);
 
+            return { response };
+        }
+        catch (err) {
+            throw err;
+        }
+    }
+
+    async syncProviders(searchRequest) {
+        try {
+            const response = await protocolSearch(searchRequest);
             return { response };
         }
         catch (err) {

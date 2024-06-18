@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
+import axios from "axios"; // Need to replace with got
 import { onOrderCancel, onUpdateStatus } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT, SETTLE_STATUS } from "../../../utils/constants.js";
 import RazorPayService from "../../../razorPay/razorPay.service.js";
@@ -372,6 +373,7 @@ class UpdateOrderService {
      */
     async updateReturnOnEssentialDashboard(order) {
         try {
+            lokiLogger.info(`SENDING UPDATED RETURN TO BUYER ADMIN - ${JSON.stringify(order)}`)
             const lastFulfillment =
                 order?.message?.order?.fulfillments[
                 order?.message?.order?.fulfillments.length - 1
@@ -382,6 +384,9 @@ class UpdateOrderService {
             const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
 
             const returnType = lastFulfillment?.type;
+            let quote_trail = lastFulfillment?.tags?.find(el => el.code == "quote_trail");
+            quote_trail = quote_trail?.list?.filter(item => item.code === "value")
+            .reduce((acc, item) => acc + parseFloat(item.value), 0);
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
             if (
                 validReturnStates.includes(returnState) &&
@@ -390,11 +395,12 @@ class UpdateOrderService {
                 order.context?.bap_id
             ) {
                 const payload = {
-                    0: {
-                        json: {
+                    "0": {
+                        "json": {
                             id: returnId,
                             remarks: returnType,
                             returnStatus: returnState,
+                            refunded_amount: quote_trail ? Math.abs(quote_trail): undefined
                         },
                     },
                 };
@@ -409,7 +415,9 @@ class UpdateOrderService {
                     },
                     data: data,
                 };
+                lokiLogger.info(`UPDATE RETURN - config - ${JSON.stringify(config)}`)
                 const response = await axios.request(config);
+                lokiLogger.info(`UPDATE RETURN - BUYER ADMIN RESPONSE - ${JSON.stringify(response)}`)
             } else {
                 return;
             }
@@ -622,7 +630,7 @@ class UpdateOrderService {
      */
     async onUpdateDbOperation(messageId) {
         try {
-            await new Promise((resolve) => setTimeout(resolve, 30000)) // Just for pramaan report
+            // await new Promise((resolve) => setTimeout(resolve, 20000)) // Just for pramaan report
             let protocolUpdateResponse = await onUpdateStatus(messageId);
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
@@ -905,6 +913,7 @@ class UpdateOrderService {
                             protocolUpdateResponse.message.order.id,
                             { ...orderSchema }
                         );
+                        if (protocolUpdateResponse) await this.updateReturnOnEssentialDashboard(protocolUpdateResponse)
 
                     }
                 }

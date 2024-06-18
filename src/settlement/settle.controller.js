@@ -106,7 +106,7 @@ export async function getSettlementsHandler(req, res) {
             Number(buyerPercentage) + Number(withHoldAmount)
             : Number(settlementDetails['@ondc/org/buyer_app_finder_fee_amount']) + Number(withHoldAmount)
 
-            const orderAmount = quote?.price?.value ? Number(quote?.price?.value) - refundedAmount : 0
+            const orderAmount = quote?.price?.value ? parseFloat((Number(quote?.price?.value) - refundedAmount).toFixed(2)) : 0
             const seller_take = orderAmount ? orderAmount - Number(buyer_take) : 0
             const settlementItem = {
                 id: id || _id,
@@ -131,7 +131,7 @@ export async function getSettlementsHandler(req, res) {
                 updated_at: updatedAt,
                 collector_recon_sent: false,
                 on_collector_recon_received: false,
-                order_amount: orderAmount,
+                order_amount: orderAmount?.toFixed(2),
                 settle_status,
                 quote, 
                 updatedQuote, 

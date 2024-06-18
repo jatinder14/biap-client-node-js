@@ -14,7 +14,7 @@ class TopSellingService {
                 $unwind: "$items"
             },
             {
-                $match: { "items.quantity.count": { $gt: 1 } }
+                $match: { "items.quantity.count": { $gte: 1 } }
             },
             {
                 $group: {

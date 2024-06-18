@@ -9,35 +9,49 @@ import logger from '../../utils/logger.js';
  * @param {Object} data 
  * @returns 
  */
-const 
-protocolConfirm = async (data) => {
+const
+    protocolConfirm = async (data) => {
+        try {
+            const apiCall = new HttpRequest(
+                process.env.PROTOCOL_BASE_URL,
+                PROTOCOL_API_URLS.CONFIRM,
+                "POST",
+                {
+                    ...data
+                }
+            );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.CONFIRM,
-        "POST",
-        {
-            ...data
+            const result = await apiCall.send();
+            return result.data;
+        } catch (err) {
+            if (err?.response?.data) {
+                throw err?.response?.data;
+            } else {
+                throw err
+            }
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
-}
+    }
 
 const protocolGetDumps = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.DUMP,
+            "GET",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.DUMP,
-        "GET",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -45,17 +59,24 @@ const protocolGetDumps = async (data) => {
  * @param {String} messageId 
  */
 const onOrderConfirm = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_confirm',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_confirm', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    console.log("onOrderConfirm--->",result.data)
-    logger.info(`ONDC API call - on_confirm --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call - on_confirm --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -64,18 +85,25 @@ const onOrderConfirm = async (messageId) => {
  * @returns 
  */
 const protocolCancel = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.CANCEL,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.CANCEL,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -83,16 +111,24 @@ const protocolCancel = async (data) => {
  * @param {String} messageId 
  */
 const onOrderCancel = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_cancel',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_cancel', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    logger.info(`ONDC API call - on_cancel --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call - on_cancel --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -101,18 +137,25 @@ const onOrderCancel = async (messageId) => {
  * @returns 
  */
 const protocolInit = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.INIT,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.INIT,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -120,16 +163,24 @@ const protocolInit = async (data) => {
  * @param {String} messageId 
  */
 const onOrderInit = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_init',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_init', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    logger.info(`ONDC API call - on_init --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call - on_init --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -138,20 +189,27 @@ const onOrderInit = async (messageId) => {
  * @returns 
  */
 const protocolSearch = async (data) => {
-    
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH,
-        "POST",
-        {
-            ...data
-        },
-        
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH,
+            "POST",
+            {
+                ...data
+            },
 
-    const result = await apiCall.send();
+        );
 
-    return result.data;
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 }
 
 /**
@@ -160,35 +218,49 @@ const protocolSearch = async (data) => {
  * @returns
  */
 const protocolSearchItems = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ITEM,
+            "GET",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ITEM,
-        "GET",
-        {
-            ...data
+        const result = await apiCall.send();
+        // logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    // logger.info(`ONDC API call - search --> ${JSON.stringify(result.data)}`)
-    return result.data;
+    }
 }
 
 const protocolProvideDetails = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.PROVIDER_DETAILS,
+            "GET",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.PROVIDER_DETAILS,
-        "GET",
-        {
-            ...data
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 /**
@@ -196,180 +268,257 @@ const protocolProvideDetails = async (data) => {
  * @param {Object} data
  * @returns
  */
-const protocolGetItems = async (searchRequest,itemId) => {
+const protocolGetItems = async (searchRequest, itemId) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ITEM + "/" + itemId,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ITEM +"/"+itemId,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetItemList = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ITEM,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ITEM,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetAttributes = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ATTRIBUTE,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ATTRIBUTE,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetAttributesValues = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ATTRIBUTE_VALUE,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ATTRIBUTE_VALUE,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetCustomMenus = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.CUSTOM_MENU,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.CUSTOM_MENU,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetProviders = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.PROVIDERS,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.PROVIDERS,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
-const protocolGetProvider = async (searchRequest,brandId) => {
+const protocolGetProvider = async (searchRequest, brandId) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.PROVIDERS + "/" + brandId,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.PROVIDERS+"/"+brandId,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
-const protocolGetLocation = async (searchRequest,id) => {
+const protocolGetLocation = async (searchRequest, id) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.LOCATIONS + "/" + id,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.LOCATIONS+"/"+id,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetLocations = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.LOCATIONS,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.LOCATIONS,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetLocationDetails = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.LOCATIONS_DETAILS,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.LOCATIONS_DETAILS,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 const protocolGetItemDetails = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ITEM_DETAILS,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SEARCH_ITEM_DETAILS,
-        "GET",
-        {
-            ...searchRequest
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-
-    return result.data;
+    }
 }
 
 /**
@@ -377,21 +526,28 @@ const protocolGetItemDetails = async (searchRequest) => {
  * @param {Object} query 
  */
 const onSearch = async (query) => {
+    try {
+        const queryString = Object.keys(query).map(key => {
+            if (typeof key !== "undefined" && typeof query[key] !== "undefined")
+                return encodeURIComponent(key) + '=' + encodeURIComponent(query[key]);
+        }).join('&');
 
-    const queryString = Object.keys(query).map(key => {
-        if (typeof key !== "undefined" && typeof query[key] !== "undefined")
-            return encodeURIComponent(key) + '=' + encodeURIComponent(query[key]);
-    }).join('&');
+        const apiCall = await fetch(
+            process.env.PROTOCOL_BASE_URL
+            + "/" +
+            PROTOCOL_API_URLS.ON_SEARCH + "?" + queryString
+        );
 
-    const apiCall = await fetch(
-        process.env.PROTOCOL_BASE_URL
-        + "/" +
-        PROTOCOL_API_URLS.ON_SEARCH + "?" + queryString
-    );
-
-    const result = await apiCall.json();
-    // logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
-    return result;
+        const result = await apiCall.json();
+        // logger.info(`ONDC API call - on_search --> ${JSON.stringify(result)}`)
+        return result;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -400,18 +556,25 @@ const onSearch = async (query) => {
  * @returns 
  */
 const protocolTrack = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.TRACK,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.TRACK,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -419,15 +582,23 @@ const protocolTrack = async (data) => {
  * @param {String} messageId 
  */
 const onOrderTrack = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_track',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_track', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    return result.data;
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -436,18 +607,25 @@ const onOrderTrack = async (messageId) => {
  * @returns 
  */
 const protocolSupport = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SUPPORT,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SUPPORT,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -455,14 +633,22 @@ const protocolSupport = async (data) => {
  * @param {String} messageId 
  */
 const onOrderSupport = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.ON_SUPPORT + "?messageId=" + messageId,
-        "get",
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.ON_SUPPORT + "?messageId=" + messageId,
+            "get",
+        );
 
-    const result = await apiCall.send();
-    return result.data;
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -471,18 +657,25 @@ const onOrderSupport = async (messageId) => {
  * @returns 
  */
 const protocolOrderStatus = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.STATUS,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.STATUS,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -490,16 +683,24 @@ const protocolOrderStatus = async (data) => {
  * @param {String} messageId 
  */
 const onOrderStatus = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_status',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_status', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    logger.info(`ONDC API call - on_status --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call - on_status --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -507,17 +708,25 @@ const onOrderStatus = async (messageId) => {
  * @param {String} messageId
  */
 const protocolUpdate = async (data) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.UPDATE,
-        "POST",
-        {
-            ...data
-        }
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.UPDATE,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    const result = await apiCall.send();
-    return result.data;
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -525,16 +734,24 @@ const protocolUpdate = async (data) => {
  * @param {String} messageId
  */
 const onUpdateStatus = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_update',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_update', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    logger.info(`ONDC API call verification purpose - on_update --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call verification purpose - on_update --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 /**
@@ -543,19 +760,25 @@ const onUpdateStatus = async (messageId) => {
  * @returns 
  */
 const protocolSelect = async (data) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SELECT,
+            "POST",
+            {
+                ...data
+            }
+        );
 
-    console.log("protocolSelect-------------------------",data);
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.SELECT,
-        "POST",
-        {
-            ...data
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
         }
-    );
-
-    const result = await apiCall.send();
-    return result.data;
+    }
 }
 
 /**
@@ -563,16 +786,24 @@ const protocolSelect = async (data) => {
  * @param {String} messageId 
  */
 const onOrderSelect = async (messageId) => {
-    const apiCall = new HttpRequest(
-        process.env.PROTOCOL_BASE_URL,
-        PROTOCOL_API_URLS.RESPONSE,
-        "get",
-        {requestType:'on_select',messageId:messageId}
-    );
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.RESPONSE,
+            "get",
+            { requestType: 'on_select', messageId: messageId }
+        );
 
-    const result = await apiCall.send();
-    logger.info(`ONDC API call - on_select --> ${JSON.stringify(result.data)}`)
-    return result.data;
+        const result = await apiCall.send();
+        logger.info(`ONDC API call - on_select --> ${JSON.stringify(result.data)}`)
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
 };
 
 export {
