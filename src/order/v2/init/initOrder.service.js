@@ -1,4 +1,4 @@
-import { onOrderInit } from "../../../utils/protocolApis/index.js";
+import { onOrderInit, protocolGetItemDetails } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
 import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId,getOrderByTransactionIdAndProvider,addOrUpdateOrderWithTransactionIdAndProvider } from "../../v1/db/dbService.js";
 
@@ -236,6 +236,25 @@ class InitOrderService {
                 pincode:requestContext?.pincode,
                 // ...(!isMultiSellerRequest && { transactionId: requestContext?.transaction_id })
             });
+            for (let i = 0; i < order?.items?.length; i++) {
+                if (order?.items?.[i]?.id) {
+                    let productsDetails = await protocolGetItemDetails({ "id": order.items[0].id });
+                    order.items[i].bpp_id = productsDetails?.bpp_details?.bpp_id
+                    order.items[i].bpp_uri = productsDetails?.bpp_details?.bpp_uri
+                    order.items[i].contextCity = productsDetails?.bpp_details?.contextCity
+                    let subtotal = productsDetails?.item_details?.price?.value
+                    order.items[i].product = {
+                        id: productsDetails?.id,
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    };
+                    order.items[i].provider = {
+                        id: productsDetails?.bpp_details?.bpp_id,
+                        locations: productsDetails?.locations,
+                        ...productsDetails?.provider_details,
+                    };
+                }
+            }
 
             if (!(order?.items?.length)) {
                 return {
