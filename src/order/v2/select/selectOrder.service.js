@@ -105,7 +105,6 @@ class SelectOrderService {
                 return item;
             });
 
-            // Await all promises and update cart items
             cart.items = await Promise.all(itemDetailsPromises);
 
             if (this.areMultipleBppItemsSelected(cart?.items)) {
