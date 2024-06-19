@@ -71,32 +71,44 @@ class SelectOrderService {
                 state: requestContext?.state,
                 domain: requestContext?.domain
             });
-            for (let i = 0; i < cart?.items?.length; i++) {
-                if (cart?.items?.[i]?.id) {
-                    let productsDetails = await protocolGetItemDetails({ "id": cart.items[0].id });
-                    cart.items[i].bpp_id = productsDetails?.bpp_details?.bpp_id
-                    cart.items[i].bpp_uri = productsDetails?.bpp_details?.bpp_uri
-                    cart.items[i].contextCity = productsDetails?.bpp_details?.contextCity
-                    let subtotal = productsDetails?.item_details?.price?.value
-                    cart.items[i].product = {
-                        id: productsDetails?.id,
-                        subtotal,
-                        ...productsDetails?.item_details,
-                    };
-                    cart.items[i].provider = {
-                        id: productsDetails?.bpp_details?.bpp_id,
-                        locations: productsDetails?.locations,
-                        ...productsDetails?.provider_details,
-                    };
-                }
-            }
+
             if (!(cart?.items || cart?.items?.length)) {
                 return {
                     context,
                     success: false,
                     error: { message: "Empty order received" }
                 };
-            } else if (this.areMultipleBppItemsSelected(cart?.items)) {
+            }
+
+            const itemDetailsPromises = cart.items.map(async item => {
+                if (item?.id) {
+                    const productsDetails = await protocolGetItemDetails({ id: item.id });
+                    const subtotal = productsDetails?.item_details?.price?.value;
+
+                    return {
+                        ...item,
+                        bpp_id: productsDetails?.bpp_details?.bpp_id,
+                        bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                        contextCity: productsDetails?.bpp_details?.contextCity,
+                        product: {
+                            id: productsDetails?.id,
+                            subtotal,
+                            ...productsDetails?.item_details,
+                        },
+                        provider: {
+                            id: productsDetails?.bpp_details?.bpp_id,
+                            locations: productsDetails?.locations,
+                            ...productsDetails?.provider_details,
+                        },
+                    };
+                }
+                return item;
+            });
+
+            // Await all promises and update cart items
+            cart.items = await Promise.all(itemDetailsPromises);
+
+            if (this.areMultipleBppItemsSelected(cart?.items)) {
                 return {
                     context,
                     success: false,
