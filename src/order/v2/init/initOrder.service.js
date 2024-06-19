@@ -1,4 +1,4 @@
-import { onOrderInit, protocolGetItemDetails } from "../../../utils/protocolApis/index.js";
+import { onOrderInit, protocolGetItemDetails, protocolGetItemList } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
 import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId, getOrderByTransactionIdAndProvider, addOrUpdateOrderWithTransactionIdAndProvider } from "../../v1/db/dbService.js";
 
@@ -245,6 +245,34 @@ class InitOrderService {
                     error: { message: "Empty order received" }
                 };
             }
+
+            let productIds = '';
+            productIds += order.items.map(item => item?.local_id || '') + ',';
+            let result = await protocolGetItemList({ "itemIds": productIds });
+            const productsDetailsArray = result.data
+
+            order.items = order.items.map(item => {
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
+                )
+                console.log("productsDetails ----", productsDetails)
+                const subtotal = productsDetails?.item_details?.price?.value;
+                return {
+                    ...item,
+                    bpp_id: productsDetails?.bpp_details?.bpp_id,
+                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                    contextCity: productsDetails?.bpp_details?.contextCity,
+                    product: {
+                        id: productsDetails?.id,
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    },
+                    provider: {
+                        id: productsDetails?.bpp_details?.bpp_id,
+                        locations: productsDetails?.locations,
+                        ...productsDetails?.provider_details,
+                    },
+                };
+            })
 
             const itemDetailsPromises = order.items.map(async item => {
                 if (item?.id) {

@@ -1,4 +1,4 @@
-import { onOrderSelect, protocolGetItemDetails } from "../../../utils/protocolApis/index.js";
+import { onOrderSelect, protocolGetItemList } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
 import { RetailsErrorCode } from "../../../utils/retailsErrorCode.js";
 
@@ -80,32 +80,32 @@ class SelectOrderService {
                 };
             }
 
-            const itemDetailsPromises = cart.items.map(async item => {
-                if (item?.id) {
-                    const productsDetails = await protocolGetItemDetails({ id: item.id });
-                    const subtotal = productsDetails?.item_details?.price?.value;
+            let productIds = '';
+            productIds += cart.items.map(item => item?.local_id || '') + ',';
+            let result = await protocolGetItemList({ "itemIds": productIds });
+            const productsDetailsArray = result.data
 
-                    return {
-                        ...item,
-                        bpp_id: productsDetails?.bpp_details?.bpp_id,
-                        bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                        contextCity: productsDetails?.bpp_details?.contextCity,
-                        product: {
-                            id: productsDetails?.id,
-                            subtotal,
-                            ...productsDetails?.item_details,
-                        },
-                        provider: {
-                            id: productsDetails?.bpp_details?.bpp_id,
-                            locations: productsDetails?.locations,
-                            ...productsDetails?.provider_details,
-                        },
-                    };
-                }
-                return item;
-            });
-
-            cart.items = await Promise.all(itemDetailsPromises);
+            cart.items = cart.items.map(item => {
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
+                )
+                const subtotal = productsDetails?.item_details?.price?.value;
+                return {
+                    ...item,
+                    bpp_id: productsDetails?.bpp_details?.bpp_id,
+                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                    contextCity: productsDetails?.bpp_details?.contextCity,
+                    product: {
+                        id: productsDetails?.id,
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    },
+                    provider: {
+                        id: productsDetails?.bpp_details?.bpp_id,
+                        locations: productsDetails?.locations,
+                        ...productsDetails?.provider_details,
+                    },
+                };
+            })
 
             if (this.areMultipleBppItemsSelected(cart?.items)) {
                 return {
