@@ -7,17 +7,18 @@ class CartService {
     // return data
     try {
       let cart;
-      if (data.cart_key && (!data.userId || data.userId == "null" || data.userId == "undefined" || data.userId == "guestUser")) {
-        cart = await Cart.findOne({ cart_key: data.cart_key });
-      } else if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
-        cart = await Cart.findOne({ userId: data.userId });
-      }
-
-      if (data.cart_key && data.userId && data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser") {
+      if (data.cart_key && data.userId && data.cart_key != "undefined" && data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser") {
         await User.findOneAndUpdate(
           { userId: data.userId },
           { $set: { cart_key: data.cart_key } },
           { new: true, upsert: true });
+        cart = await Cart.findOne({ cart_key: data.cart_key, userId: data.userId });
+      } 
+      if (!cart && data.cart_key && data.cart_key != "undefined") {
+        cart = await Cart.findOne({ cart_key: data.cart_key });
+      } 
+      if (!cart && data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
+        cart = await Cart.findOne({ userId: data.userId });
       }
 
       if (cart) {
@@ -36,7 +37,7 @@ class CartService {
         return await cartItem.save();
       } else {
         //create a new cart
-        let cart = {};
+        cart = {};
         if (data.cart_key && data.cart_key != "undefined") {
           cart = { ...cart, cart_key: data.cart_key }
         }
@@ -78,7 +79,7 @@ class CartService {
     try {
       let cart, cart2, cart3;
 
-      if (data.cart_key) {
+      if (data.cart_key && data.cart_key != "undefined") {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
       }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
@@ -118,7 +119,7 @@ class CartService {
     try {
       let cart, cart2;
 
-      if (data.cart_key) {
+      if (data.cart_key && data.cart_key != "undefined") {
         cart2 = await Cart.findOne({ cart_key: data.cart_key });
       }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
