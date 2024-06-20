@@ -79,26 +79,26 @@ class SelectOrderService {
 
                 const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
                 )
-            console.log('---------bpp_id------',productsDetails.bpp_details)
+            console.log('---------bpp_id------',productsDetails)
 
                 const subtotal = productsDetails?.item_details?.price?.value;
                 return {
                     ...item,
-                    bpp_id: productsDetails?.bpp_details?.bpp_id,
-                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                    contextCity: productsDetails?.bpp_details?.contextCity,
+                    bpp_id: productsDetails?.context?.bpp_id,
+                    bpp_uri: productsDetails?.context?.bpp_uri,
+                    contextCity: productsDetails?.context?.city,
                     product: {
-                        id: productsDetails?.id,
                         subtotal,
                         ...productsDetails?.item_details,
                     },
                     provider: {
-                        id: productsDetails?.bpp_details?.bpp_id,
-                        locations: productsDetails?.locations,
+                        locations: [productsDetails?.location_details],
                         ...productsDetails?.provider_details,
                     },
                 };
             })
+            console.log('---------cart------',cart.items)
+            console.log('---------cart------',cart.items[0]?.provider)
 
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
