@@ -1,3 +1,29 @@
+/**
+ * get Delivery Info
+ * @param {object} billingInfo
+ */
+export function createDeliveryInfoFromBillingInfo(billingInfo) {
+  const { address, email, name, phone } = billingInfo;
+  const { lat, lng } = address;
+
+  const deliveryInfo = {
+      email: email,
+      location: {
+          address: { ...address },
+          gps: `${lat},${lng}`
+      },
+      name: name,
+      phone: phone,
+      type: "Delivery"
+  };
+
+  return deliveryInfo;
+}
+
+/**
+ * get City Code
+ * @param {object} pincode
+ */
 export default function getCityCode(pincode) {
   const areaCode = AreaCodeMap.find((element) => {
     return element.Pincode == pincode
