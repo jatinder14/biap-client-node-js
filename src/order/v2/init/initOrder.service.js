@@ -225,19 +225,6 @@ class InitOrderService {
             const parentOrderId = requestContext?.transaction_id;
             requestContext.city = getCityCode(requestContext?.city)
 
-            const contextFactory = new ContextFactory();
-            const context = contextFactory.create({
-                action: PROTOCOL_CONTEXT.INIT,
-                bppId: order?.items[0]?.bpp_id,
-                bpp_uri: order?.items[0]?.bpp_uri,
-                city: requestContext.city,
-                state: requestContext.state,
-                transactionId: requestContext?.transaction_id,
-                domain: requestContext?.domain,
-                pincode: requestContext?.pincode,
-                // ...(!isMultiSellerRequest && { transactionId: requestContext?.transaction_id })
-            });
-
             if (!(order?.items?.length)) {
                 return {
                     context,
@@ -274,32 +261,18 @@ class InitOrderService {
                 };
             })
 
-            const itemDetailsPromises = order.items.map(async item => {
-                if (item?.id) {
-                    const productsDetails = await protocolGetItemDetails({ id: item.id });
-                    const subtotal = productsDetails?.item_details?.price?.value;
-
-                    return {
-                        ...item,
-                        bpp_id: productsDetails?.bpp_details?.bpp_id,
-                        bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                        contextCity: productsDetails?.bpp_details?.contextCity,
-                        product: {
-                            id: productsDetails?.id,
-                            subtotal,
-                            ...productsDetails?.item_details,
-                        },
-                        provider: {
-                            id: productsDetails?.bpp_details?.bpp_id,
-                            locations: productsDetails?.locations,
-                            ...productsDetails?.provider_details,
-                        },
-                    };
-                }
-                return item;
+            const contextFactory = new ContextFactory();
+            const context = contextFactory.create({
+                action: PROTOCOL_CONTEXT.INIT,
+                bppId: order?.items[0]?.bpp_id,
+                bpp_uri: order?.items[0]?.bpp_uri,
+                city: requestContext.city,
+                state: requestContext.state,
+                transactionId: requestContext?.transaction_id,
+                domain: requestContext?.domain,
+                pincode: requestContext?.pincode,
+                // ...(!isMultiSellerRequest && { transactionId: requestContext?.transaction_id })
             });
-
-            order.items = await Promise.all(itemDetailsPromises);
 
             if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {

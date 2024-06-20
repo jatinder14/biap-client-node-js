@@ -60,18 +60,6 @@ class SelectOrderService {
             const { cart = {}, fulfillments = [] } = message;
             requestContext.city = getCityCode(requestContext?.city)
 
-            const contextFactory = new ContextFactory();
-            const context = contextFactory.create({
-                action: PROTOCOL_CONTEXT.SELECT,
-                transactionId: requestContext?.transaction_id,
-                bppId: cart?.items[0]?.bpp_id,
-                bpp_uri: cart?.items[0]?.bpp_uri,
-                city: requestContext?.city,
-                pincode: requestContext?.pincode,
-                state: requestContext?.state,
-                domain: requestContext?.domain
-            });
-
             if (!(cart?.items || cart?.items?.length)) {
                 return {
                     context,
@@ -82,12 +70,17 @@ class SelectOrderService {
 
             let productIds = '';
             productIds += cart.items.map(item => item?.local_id || '') + ',';
+            console.log('---------productIds------',productIds)
             let result = await protocolGetItemList({ "itemIds": productIds });
+            console.log('---------result------',result)
             const productsDetailsArray = result.data
 
             cart.items = cart.items.map(item => {
+
                 const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
                 )
+            console.log('---------bpp_id------',productsDetails.bpp_details)
+
                 const subtotal = productsDetails?.item_details?.price?.value;
                 return {
                     ...item,
@@ -106,6 +99,18 @@ class SelectOrderService {
                     },
                 };
             })
+
+            const contextFactory = new ContextFactory();
+            const context = contextFactory.create({
+                action: PROTOCOL_CONTEXT.SELECT,
+                transactionId: requestContext?.transaction_id,
+                bppId: cart?.items[0]?.bpp_id,
+                bpp_uri: cart?.items[0]?.bpp_uri,
+                city: requestContext?.city,
+                pincode: requestContext?.pincode,
+                state: requestContext?.state,
+                domain: requestContext?.domain
+            });
 
             if (this.areMultipleBppItemsSelected(cart?.items)) {
                 return {
