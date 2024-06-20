@@ -19,7 +19,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal Server Error!",
+        message: "We encountered an unexpected error while processing your request. Please try again later.",
         error: e?.message
       });
     }
@@ -35,7 +35,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal Server Error!",
+        message: "We encountered an unexpected error while processing your request. Please try again later.",
         error: e?.message
       });
     }
@@ -72,7 +72,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal Server Error!"
+        message: "We encountered an unexpected error while processing your request. Please try again later."
       });
     }
   }

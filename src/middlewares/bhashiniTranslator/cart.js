@@ -85,6 +85,6 @@ export const cartTranslator = async (req, res, next) => {
   } catch (error) {
     console.error("Error:", error);
     res.header("Access-Control-Allow-Origin", "*");
-    return res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({ message: "We encountered an unexpected error while processing your request. Please try again later." });
   }
 };

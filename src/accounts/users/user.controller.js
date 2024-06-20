@@ -172,7 +172,7 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal server error!",
+        message: "We encountered an unexpected error while processing your request. Please try again later.",
         error: error?.message
       })
     }
@@ -217,7 +217,7 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       return res.status(500).json({
         success: false,
-        message: "Internal server error!",
+        message: "We encountered an unexpected error while processing your request. Please try again later.",
       });
     }
   }
