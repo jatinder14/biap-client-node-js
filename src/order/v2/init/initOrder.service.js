@@ -1,6 +1,6 @@
-import { onOrderInit } from "../../../utils/protocolApis/index.js";
+import { onOrderInit, protocolGetItemDetails, protocolGetItemList } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
-import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId,getOrderByTransactionIdAndProvider,addOrUpdateOrderWithTransactionIdAndProvider } from "../../v1/db/dbService.js";
+import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId, getOrderByTransactionIdAndProvider, addOrUpdateOrderWithTransactionIdAndProvider } from "../../v1/db/dbService.js";
 
 import BppInitService from "./bppInit.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
@@ -37,10 +37,10 @@ class InitOrderService {
     async createOrder(response, userId = null, orderRequest, deviceId = null) {
         if (response) {
             const provider = orderRequest?.items?.[0]?.provider || [];
-            
+
             const providerDetails = {
                 id: provider.local_id,
-                descriptor:provider.descriptor,
+                descriptor: provider.descriptor,
                 locations: provider?.locations?.map(location => {
                     return { id: location.local_id };
                 })
@@ -68,7 +68,7 @@ class InitOrderService {
                 provider_id: provider?.local_id
             };
             let itemProducts = []
-            for(let item of orderRequest.items){
+            for (let item of orderRequest.items) {
 
                 let parentItemId = item?.parent_item_id?.toString();
                 let selectitem = {
@@ -76,49 +76,49 @@ class InitOrderService {
                     quantity: item?.quantity,
                     location_id: provider?.locations[0]?.local_id?.toString()
                 }
-                let tag=undefined
-                if(item.tags && item.tags.length>0){
-                    tag= item.tags.find(i => i.code==='type');
-                    if(tag){
-                        selectitem.tags =[tag];
+                let tag = undefined
+                if (item.tags && item.tags.length > 0) {
+                    tag = item.tags.find(i => i.code === 'type');
+                    if (tag) {
+                        selectitem.tags = [tag];
                     }
                 }
 
-                if(item?.parent_item_id){
+                if (item?.parent_item_id) {
                     let parentItemId = item?.parent_item_id?.toString();
                     selectitem.parent_item_id = parentItemId;
                 }
 
-                selectitem.fulfillment_id =item?.fulfillment_id
-                selectitem.product= item?.product
+                selectitem.fulfillment_id = item?.fulfillment_id
+                selectitem.product = item?.product
                 itemProducts.push(selectitem);
 
-                if(item.customisations){
-                    for(let customisation of item.customisations){
+                if (item.customisations) {
+                    for (let customisation of item.customisations) {
                         let selectitem = {
                             id: customisation?.local_id?.toString(),
                             quantity: customisation.quantity,
                             location_id: provider.locations[0].local_id?.toString()
                         }
-                        let tag=undefined
-                        if(customisation.item_details.tags && customisation.item_details.tags.length>0){
-                            tag= customisation.item_details.tags.filter(i =>{ return i.code==='type' || i.code==='parent'});
+                        let tag = undefined
+                        if (customisation.item_details.tags && customisation.item_details.tags.length > 0) {
+                            tag = customisation.item_details.tags.filter(i => { return i.code === 'type' || i.code === 'parent' });
                             let finalTags = []
-                            for(let tg of tag){
-                                if(tg.code==='parent'){
-                                    if(tg.list.length>0){
-                                        tg.list= tg.list.filter(i =>{ return i.code==='id'});
+                            for (let tg of tag) {
+                                if (tg.code === 'parent') {
+                                    if (tg.list.length > 0) {
+                                        tg.list = tg.list.filter(i => { return i.code === 'id' });
                                     }
                                     finalTags.push(tg);
-                                }else{
+                                } else {
                                     finalTags.push(tg);
                                 }
                             }
-                            selectitem.tags =finalTags;
+                            selectitem.tags = finalTags;
                         }
-                        selectitem.fulfillment_id =item?.fulfillment_id
+                        selectitem.fulfillment_id = item?.fulfillment_id
                         selectitem.parent_item_id = parentItemId;
-                        selectitem.product= customisation
+                        selectitem.product = customisation
                         itemProducts.push(selectitem);
                     }
 
@@ -127,7 +127,7 @@ class InitOrderService {
             }
             console.log("deviceId createOrder -------------", deviceId);
             await addOrUpdateOrderWithTransactionIdAndProvider(
-                response.context.transaction_id,provider.local_id,
+                response.context.transaction_id, provider.local_id,
                 {
                     userId: userId,
                     deviceId,
@@ -138,9 +138,9 @@ class InitOrderService {
                     parentOrderId: response?.context?.parent_order_id,
                     bppId: response?.context?.bpp_id,
                     bpp_uri: response?.context?.bpp_uri,
-                    fulfillments: [ fulfillment ],
+                    fulfillments: [fulfillment],
                     provider: { ...providerDetails },
-                    items:itemProducts ,
+                    items: itemProducts,
                 }
             );
         }
@@ -161,9 +161,9 @@ class InitOrderService {
                     id: item?.id?.toString(),
                     quantity: item.quantity,
                     product: item.product,
-                    fulfillment_id:item?.fulfillment_id,
-                    tags:item.tags,
-                    parent_item_id:item.parent_item_id
+                    fulfillment_id: item?.fulfillment_id,
+                    tags: item.tags,
+                    parent_item_id: item.parent_item_id
                 };
             }) || [];
 
@@ -182,32 +182,33 @@ class InitOrderService {
                 }
             };
 
-            if(orderSchema.fulfillment) {
+            if (orderSchema.fulfillment) {
                 orderSchema.fulfillments = [orderSchema.fulfillment];
                 delete orderSchema.fulfillment;
             }
             dbResponse.quote = orderSchema.quote
 
             if (orderSchema.fulfillments && orderSchema.fulfillments.length) {
-                orderSchema.fulfillments = [...orderSchema?.fulfillments].map((fulfillment)=> {
+                orderSchema.fulfillments = [...orderSchema?.fulfillments].map((fulfillment) => {
                     return {
-                    ...fulfillment,
-                    end: {
-                        ...fulfillment?.end,
-                        location: {
-                            ...fulfillment?.end?.location,
-                            address: {
-                                ...fulfillment?.end?.location?.address,
-                                areaCode: fulfillment?.end?.location?.address?.area_code
+                        ...fulfillment,
+                        end: {
+                            ...fulfillment?.end,
+                            location: {
+                                ...fulfillment?.end?.location,
+                                address: {
+                                    ...fulfillment?.end?.location?.address,
+                                    areaCode: fulfillment?.end?.location?.address?.area_code
+                                }
                             }
-                        }
-                    },
-                        customer:dbResponse?.fulfillments[0]?.customer
-                }});
+                        },
+                        customer: dbResponse?.fulfillments[0]?.customer
+                    }
+                });
             }
 
             await addOrUpdateOrderWithTransactionIdAndProvider(
-                response?.context?.transaction_id,dbResponse.provider.id,
+                response?.context?.transaction_id, dbResponse.provider.id,
                 { ...orderSchema }
             );
         }
@@ -229,11 +230,11 @@ class InitOrderService {
                 action: PROTOCOL_CONTEXT.INIT,
                 bppId: order?.items[0]?.bpp_id,
                 bpp_uri: order?.items[0]?.bpp_uri,
-                city:requestContext.city,
-                state:requestContext.state,
+                city: requestContext.city,
+                state: requestContext.state,
                 transactionId: requestContext?.transaction_id,
-                domain:requestContext?.domain,
-                pincode:requestContext?.pincode,
+                domain: requestContext?.domain,
+                pincode: requestContext?.pincode,
                 // ...(!isMultiSellerRequest && { transactionId: requestContext?.transaction_id })
             });
 
@@ -244,7 +245,63 @@ class InitOrderService {
                     error: { message: "Empty order received" }
                 };
             }
-            else if (this.areMultipleBppItemsSelected(order?.items)) {
+
+            let productIds = '';
+            productIds += order.items.map(item => item?.local_id || '') + ',';
+            let result = await protocolGetItemList({ "itemIds": productIds });
+            const productsDetailsArray = result.data
+
+            order.items = order.items.map(item => {
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
+                )
+                console.log("productsDetails ----", productsDetails)
+                const subtotal = productsDetails?.item_details?.price?.value;
+                return {
+                    ...item,
+                    bpp_id: productsDetails?.bpp_details?.bpp_id,
+                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                    contextCity: productsDetails?.bpp_details?.contextCity,
+                    product: {
+                        id: productsDetails?.id,
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    },
+                    provider: {
+                        id: productsDetails?.bpp_details?.bpp_id,
+                        locations: productsDetails?.locations,
+                        ...productsDetails?.provider_details,
+                    },
+                };
+            })
+
+            const itemDetailsPromises = order.items.map(async item => {
+                if (item?.id) {
+                    const productsDetails = await protocolGetItemDetails({ id: item.id });
+                    const subtotal = productsDetails?.item_details?.price?.value;
+
+                    return {
+                        ...item,
+                        bpp_id: productsDetails?.bpp_details?.bpp_id,
+                        bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                        contextCity: productsDetails?.bpp_details?.contextCity,
+                        product: {
+                            id: productsDetails?.id,
+                            subtotal,
+                            ...productsDetails?.item_details,
+                        },
+                        provider: {
+                            id: productsDetails?.bpp_details?.bpp_id,
+                            locations: productsDetails?.locations,
+                            ...productsDetails?.provider_details,
+                        },
+                    };
+                }
+                return item;
+            });
+
+            order.items = await Promise.all(itemDetailsPromises);
+
+            if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
                     context,
                     success: false,
@@ -303,7 +360,7 @@ class InitOrderService {
                             message: "We are encountering issue to proceed with this order!"
                         }
                     }
-                    
+
                 }
 
             })
@@ -358,7 +415,7 @@ class InitOrderService {
                 messageIds.map(async messageId => {
                     try {
                         let protocolInitResponse = await this.onInitOrder(messageId);
-                        let dbResponse = await getOrderByTransactionIdAndProvider(protocolInitResponse?.context?.transaction_id,protocolInitResponse?.message.order.provider.id);
+                        let dbResponse = await getOrderByTransactionIdAndProvider(protocolInitResponse?.context?.transaction_id, protocolInitResponse?.message.order.provider.id);
                         await this.updateOrder(protocolInitResponse, dbResponse);
 
                         dbResponse = dbResponse?.toJSON();
@@ -386,7 +443,7 @@ class InitOrderService {
                                 message: "We are encountering issue to proceed with this order!"
                             }
                         }
-                        
+
                     }
                 })
             );
