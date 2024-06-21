@@ -96,6 +96,8 @@ class OrderStatusController {
                     const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
                     if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
+                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/outForDelivery.ejs" : "'/template/outForDelivery.ejs'";
+
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
                                 event_type: 'out-for-delivery',
@@ -106,7 +108,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: emailWithoutNumber,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/outForDelivery.ejs',
+                                HTMLtemplate,
                                 userName: nameWithoutNumber || '',
                                 subject: 'Order Update | Your Order is out for delivery'
                             });
@@ -121,7 +123,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: userEmail,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/outForDelivery.ejs',
+                                HTMLtemplate,
                                 userName: userName || '',
                                 subject: 'Order Update | Your Order is out for delivery'
                             });
@@ -131,6 +133,8 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
+                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/orderPickedup.ejs" : "'/template/orderPickedup.ejs'";
+
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
                                 event_type: 'order-picked-up',
@@ -141,7 +145,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: emailWithoutNumber,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/orderPickedup.ejs',
+                                HTMLtemplate,
                                 userName: nameWithoutNumber || '',
                                 subject: 'Order Update | Your Order has been picked up'
                             });
@@ -159,7 +163,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: userEmail,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/orderPickedup.ejs',
+                                HTMLtemplate,
                                 userName: userName || '',
                                 subject: 'Order Update | Your Order has been picked up'
                             });
@@ -170,6 +174,8 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
+                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/agentAssigned.ejs" : "'/template/agentAssigned.ejs'";
+
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
                                 event_type: 'agent-assigned',
@@ -180,7 +186,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: emailWithoutNumber,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/agentAssigned.ejs',
+                                HTMLtemplate,
                                 userName: nameWithoutNumber || '',
                                 subject: 'Order Update | Agent has been assigned for Your Order'
                             });
@@ -197,7 +203,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: userEmail,
                                 orderIds: orderId,
-                                HTMLtemplate: '/template/agentAssigned.ejs',
+                                HTMLtemplate,
                                 userName: userName || '',
                                 subject: 'Order Update | Agent has been assigned for Your Order'
                             });
@@ -208,6 +214,7 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
+                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/orderDelivered.ejs" : "'/template/orderDelivered.ejs'";
 
                         if (emailWithoutNumber && nameWithoutNumber) {
 
@@ -219,7 +226,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: emailWithoutNumber,
                                 orderIds: orderId,
-                                HTMLtemplate: "/template/orderDelivered.ejs",
+                                HTMLtemplate,
                                 userName: nameWithoutNumber || "",
                                 subject: "Order Confirmation | Your order has been successfully delivered",
                             });
@@ -233,7 +240,7 @@ class OrderStatusController {
                             await sendEmail({
                                 userEmails: userEmail,
                                 orderIds: orderId,
-                                HTMLtemplate: "/template/orderDelivered.ejs",
+                                HTMLtemplate,
                                 subject: "Order Confirmation | Your order has been successfully delivered",
                                 userName: userName || ""
                             });

@@ -370,6 +370,7 @@ const OrderSchema = new mongoose.Schema(
         receiver_settlement_message: { type: String },
         receiver_settlement_message_code: { type: String },
         feedback_sent:{type:Boolean,default:false},
+        plateform:{type:String,default:"web"},
         buyer_state: {
             type: String,
             enum: [BUYER_STATES.UNCONFIRMED, BUYER_STATES.CONFIRMED], // Use the constants here
