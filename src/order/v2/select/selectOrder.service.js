@@ -1,6 +1,6 @@
-import { onOrderSelect } from "../../../utils/protocolApis/index.js";
+import { onOrderSelect, protocolGetItemList } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
-import {RetailsErrorCode} from "../../../utils/retailsErrorCode.js";
+import { RetailsErrorCode } from "../../../utils/retailsErrorCode.js";
 
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppSelectService from "./bppSelect.service.js";
@@ -35,9 +35,9 @@ class SelectOrderService {
      */
     transform(response) {
 
-        let error =  response?.error ? Object.assign({}, response.error, {
-            message: response.error.message?response.error.message:RetailsErrorCode[response.error.code],
-        }):null;
+        let error = response?.error ? Object.assign({}, response.error, {
+            message: response.error.message ? response.error.message : RetailsErrorCode[response.error.code],
+        }) : null;
 
         return {
             context: response?.context,
@@ -46,7 +46,7 @@ class SelectOrderService {
                     ...response?.message?.order
                 }
             },
-            error:error
+            error: error
         };
     }
 
@@ -66,40 +66,68 @@ class SelectOrderService {
                 transactionId: requestContext?.transaction_id,
                 bppId: cart?.items[0]?.bpp_id,
                 bpp_uri: cart?.items[0]?.bpp_uri,
-                city:requestContext?.city,
-                pincode:requestContext?.pincode,
-                state:requestContext?.state,
-                domain:requestContext?.domain
+                city: requestContext?.city,
+                pincode: requestContext?.pincode,
+                state: requestContext?.state,
+                domain: requestContext?.domain
             });
 
             if (!(cart?.items || cart?.items?.length)) {
-                return { 
+                return {
                     context,
                     success: false,
                     error: { message: "Empty order received" }
                 };
-            } else if (this.areMultipleBppItemsSelected(cart?.items)) {
-                return { 
-                    context, 
+            }
+
+            let productIds = '';
+            productIds += cart.items.map(item => item?.local_id || '') + ',';
+            let result = await protocolGetItemList({ "itemIds": productIds });
+            const productsDetailsArray = result.data
+
+            cart.items = cart.items.map(item => {
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
+                )
+                const subtotal = productsDetails?.item_details?.price?.value;
+                return {
+                    ...item,
+                    bpp_id: productsDetails?.bpp_details?.bpp_id,
+                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
+                    contextCity: productsDetails?.bpp_details?.contextCity,
+                    product: {
+                        id: productsDetails?.id,
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    },
+                    provider: {
+                        id: productsDetails?.bpp_details?.bpp_id,
+                        locations: productsDetails?.locations,
+                        ...productsDetails?.provider_details,
+                    },
+                };
+            })
+
+            if (this.areMultipleBppItemsSelected(cart?.items)) {
+                return {
+                    context,
                     success: false,
                     error: { message: "More than one BPP's item(s) selected/initialized" }
                 };
             }
             else if (this.areMultipleProviderItemsSelected(cart?.items)) {
-                return { 
-                    context, 
+                return {
+                    context,
                     success: false,
                     error: { message: "More than one Provider's item(s) selected/initialized" }
                 };
             }
             if (fulfillments.some(el => !el?.end?.location?.gps || el?.end?.location?.gps?.includes('null'))) {
-                return { 
-                    context, 
+                return {
+                    context,
                     success: false,
                     error: { message: "GPS location is not correct!" }
                 };
             }
-
             return await bppSelectService.select(
                 context,
                 { cart, fulfillments }
@@ -138,7 +166,7 @@ class SelectOrderService {
                             message: "We are encountering issue to proceed with this order!"
                         }
                     }
-                    
+
                 }
             })
         );
@@ -167,7 +195,7 @@ class SelectOrderService {
             //         error: protocolSelectResponse?.[0]?.error
             //     };
             // } else {
-                return this.transform(protocolSelectResponse?.[0]);
+            return this.transform(protocolSelectResponse?.[0]);
             // }
         }
         catch (err) {
@@ -223,7 +251,7 @@ class SelectOrderService {
                                 message: "We are encountering issue to proceed with this order!"
                             }
                         }
-                        
+
                     }
                 })
             );

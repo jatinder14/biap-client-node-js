@@ -1,3 +1,4 @@
+import { createDeliveryInfoFromBillingInfo } from "../../../utils/AreaCodeMap.js";
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES } from "../../../utils/constants.js";
 import { protocolInit } from "../../../utils/protocolApis/index.js";
 
@@ -12,9 +13,12 @@ class BppInitService {
         try {
             const provider = order?.items?.[0]?.provider || {};
 
-            console.log("context---------------->",context);
-            order.delivery_info.location.address.area_code = order.delivery_info.location.address.areaCode
-            delete order.delivery_info.location.address.areaCode
+            console.log("context---------------->", context);
+            if (order?.billing_info) {
+                order.delivery_info = createDeliveryInfoFromBillingInfo(order.billing_info)
+                order.delivery_info.location.address.area_code = order?.delivery_info?.location.address?.areaCode
+                delete order.delivery_info.location.address.areaCode
+            }
 
             order.billing_info.address.area_code = order.billing_info.address.areaCode
             delete order.billing_info.address.areaCode
@@ -24,7 +28,7 @@ class BppInitService {
 
             const fulfillments = order?.fulfillments
             let fulfillment = {}
-            if(fulfillments && fulfillments.length>0){ //TODO: Feature pending for dyanamic fulfillments
+            if (fulfillments && fulfillments.length > 0) { //TODO: Feature pending for dyanamic fulfillments
                 fulfillment = fulfillments[0]
             }
 
@@ -43,9 +47,9 @@ class BppInitService {
 
             //check if item has customisation present
 
-            let items  = []
+            let items = []
             let locationSet = new Set()
-            for(let item of order.items){
+            for (let item of order.items) {
 
                 let parentItemId = item?.parent_item_id?.toString();
                 let selectitem = {
@@ -54,44 +58,45 @@ class BppInitService {
                     // location_id: item?.product?.location_id?.toString()
                 }
                 locationSet.add(item?.product?.location_id?.toString());
-                let tag=undefined
-                if(item.tags && item.tags.length>0){
-                    tag= item.tags.find(i => i.code==='type');
-                    if(tag){
-                        selectitem.tags =[tag];
+                let tag = undefined
+                if (item.tags && item.tags.length > 0) {
+                    tag = item.tags.find(i => i.code === 'type');
+                    if (tag) {
+                        selectitem.tags = [tag];
                     }
                 }
-                if(item?.parent_item_id){
+                if (item?.parent_item_id) {
                     let parentItemId = item?.parent_item_id?.toString();
                     selectitem.parent_item_id = parentItemId;
                 }
                 // selectitem.parent_item_id = parentItemId;
-                selectitem.fulfillment_id =item?.fulfillment_id
+                selectitem.fulfillment_id = item?.fulfillment_id
                 items.push(selectitem);
-                if(item.customisations){
-                    for(let customisation of item.customisations){
+                if (item.customisations) {
+                    for (let customisation of item.customisations) {
                         let selectitem = {
                             id: customisation?.local_id?.toString(),
                             quantity: customisation.quantity,
                             location_id: item?.product?.location_id?.toString()
                         }
-                        let tag=undefined
-                        if(customisation.item_details.tags && customisation.item_details.tags.length>0){
-                            tag= customisation.item_details.tags.filter(i =>{ return i.code==='type' || i.code==='parent'});
+                        let tag = undefined
+                        if (customisation.item_details.tags && customisation.item_details.tags.length > 0) {
+                            tag = customisation.item_details.tags.filter(i => { return i.code === 'type' || i.code === 'parent' });
                             let finalTags = []
-                            for(let tg of tag){tag
-                                if(tg.code==='parent'){
-                                    if(tg.list.length>0){
-                                        tg.list= tg.list.filter(i =>{ return i.code==='id'});
+                            for (let tg of tag) {
+                                tag
+                                if (tg.code === 'parent') {
+                                    if (tg.list.length > 0) {
+                                        tg.list = tg.list.filter(i => { return i.code === 'id' });
                                     }
                                     finalTags.push(tg);
-                                }else{
+                                } else {
                                     finalTags.push(tg);
                                 }
                             }
-                            selectitem.tags =finalTags;
+                            selectitem.tags = finalTags;
                         }
-                        selectitem.fulfillment_id =item?.fulfillment_id
+                        selectitem.fulfillment_id = item?.fulfillment_id
                         selectitem.parent_item_id = parentItemId;
                         items.push(selectitem);
                     }
@@ -119,8 +124,8 @@ class BppInitService {
                                 name: order.billing_info.name,
                                 area_code: order?.billing_info?.address?.area_code
                             },
-                            created_at:context.timestamp,
-                            updated_at:context.timestamp
+                            created_at: context.timestamp,
+                            updated_at: context.timestamp
                         },
                         fulfillments: [{
                             id: fulfillment?.id,
@@ -140,8 +145,8 @@ class BppInitService {
                                 },
                             }
                         }]
+                    }
                 }
-            }
 
             };
 
@@ -160,7 +165,7 @@ class BppInitService {
         }
         catch (err) {
 
-            console.log("error------->",err)
+            console.log("error------->", err)
             // err.response.data.initRequest =order
 
             throw err;

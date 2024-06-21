@@ -27,10 +27,10 @@ class BppSelectService {
         };
         locationSet.add(item?.product?.location_id?.toString());
         let tag = undefined;
-        if (item.tags && item.tags.length > 0) {
-          tag = item.tags.find((i) => i.code === "type");
-          if (tag) {
-            selectitem.tags = [tag];
+        if (item.tags && item.tags.length) {
+          tag = item.tags.filter((i) => i.code === "type");
+          if (tag?.length) {
+            selectitem.tags = tag;
           }
         }
         if (item.customisations && item.customisations.length > 0) {
@@ -121,7 +121,6 @@ class BppSelectService {
           message: "Validation error: Fulfillment end area code is required.",
         };
       }
-      console.log('hasInvalidAreaCode-=----------------');
       const response = await protocolSelect(selectRequest);
 
       return { context: context, message: response.message };
