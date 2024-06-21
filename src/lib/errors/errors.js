@@ -37,7 +37,7 @@ const ERRORS = {
     INTERNAL_SERVER_ERROR: {
         status: 500,
         name: 'INTERNAL_SERVER_ERROR',
-        message: 'Internal server error occurred'
+        message: 'We encountered an unexpected error while processing your request. Please try again later.'
     }
 }
 
