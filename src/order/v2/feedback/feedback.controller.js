@@ -19,7 +19,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "We encountered an unexpected error while creating the feedback. Please try again later.",
+        message: "We encountered an unexpected error while creating the feedback, Please try again later.",
         error: e?.message
       });
     }
@@ -35,7 +35,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "We encountered an unexpected error while getting the feedback. Please try again later.",
+        message: "We encountered an unexpected error while getting the feedback, Please try again later.",
         error: e?.message
       });
     }
@@ -72,7 +72,7 @@ class OrderFeedbackController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "We encountered an unexpected error while recording your data. Please try again later."
+        message: "We encountered an unexpected error while recording your data, Please try again later."
       });
     }
   }

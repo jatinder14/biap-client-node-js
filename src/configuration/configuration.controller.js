@@ -128,7 +128,7 @@ export const createConfiguration = async (req, res, next) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "We encountered an unexpected error while creating the configuration. Please try again later.",
+            message: "We encountered an unexpected error while creating the configuration, Please try again later.",
             error: error?.message
         });
     }
@@ -168,7 +168,7 @@ export const getConfigurations = async (req, res) => {
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: "We encountered an unexpected error while retrieving the configuration. Please try again later.",
+            message: "We encountered an unexpected error while retrieving the configuration, Please try again later.",
             error: error?.message
         });
     }

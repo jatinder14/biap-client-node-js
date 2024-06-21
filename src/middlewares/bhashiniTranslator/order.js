@@ -101,6 +101,6 @@ export const bhashiniTranslator = async (req, res, next) => {
   } catch (error) {
     console.error("Error:", error);
     res.header("Access-Control-Allow-Origin", "*");
-    return res.status(500).json({ message: "We encountered an unexpected error while translating the orders. Please try again later." });
+    return res.status(500).json({ message: "We encountered an unexpected error while translating the orders, Please try again later." });
   }
 };

@@ -98,6 +98,6 @@ console.log('JSON.stringify(valuesToTranslate)',JSON.stringify(valuesToTranslate
   } catch (error) {
     console.error("Error:", error);
     res.header("Access-Control-Allow-Origin", "*");
-    return res.status(500).json({ message: "We encountered an unexpected error while translating delivery address. Please try again later." });
+    return res.status(500).json({ message: "We encountered an unexpected error while translating delivery address, Please try again later." });
   }
 };
