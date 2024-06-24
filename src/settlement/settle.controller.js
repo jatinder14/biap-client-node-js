@@ -149,7 +149,7 @@ export async function getSettlementsHandler(req, res) {
                     quantity: quantity?.count,
                     product_id: product?.id,
                     variant_id: 'Variant ID',
-                    return_window: parseDuration(product["@ondc/org/return_window"]) || '',
+                    return_window: parseDuration(product['@ondc/org/return_window']) || '',
                     variant_title: 'Variant Title'
                 })),
                 return_window: '@ondc/org/return_window',

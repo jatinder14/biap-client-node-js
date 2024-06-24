@@ -1,5 +1,6 @@
 import InitOrderService from './initOrder.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
+import { protocolGetItemList } from '../../../utils/protocolApis/index.js';
 
 const initOrderService = new InitOrderService();
 
@@ -29,11 +30,42 @@ class InitOrderController {
     * @param {*} next   Callback argument to the middleware function
     * @return {callback}
     */
-    initMultipleOrder(req, res, next) {
+    async initMultipleOrder(req, res, next) {
         const { body: orderRequests, user } = req;
 
         if (orderRequests && orderRequests.length) {
-            console.log("orderRequests-->",orderRequests)
+            for (const request of orderRequests) {
+                let order = request?.message;
+                let productIds = order.items.map(item => item?.local_id || '').join(',');
+            
+                try {
+                    let result = await protocolGetItemList({ "itemIds": productIds });
+                    const productsDetailsArray = result.data;
+            
+                    request.message.items = order.items.map(item => {
+                        const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id);
+                        console.log("productsDetails ----", productsDetails);
+                        const subtotal = productsDetails?.item_details?.price?.value;
+                        return {
+                            ...item,
+                            bpp_id: productsDetails?.context?.bpp_id,
+                            bpp_uri: productsDetails?.context?.bpp_uri,
+                            contextCity: productsDetails?.context?.city,
+                            product: {
+                                subtotal,
+                                ...productsDetails?.item_details,
+                            },
+                            provider: {
+                                locations: [productsDetails?.location_details],
+                                ...productsDetails?.provider_details,
+                            },
+                        };
+                    });
+                } catch (error) {
+                    console.error(`Error fetching product details for productIds ${productIds}:`, error);
+                }
+            }
+            console.log("orderRequests-->", orderRequests);
             const missing_location = orderRequests.filter(x => {
                 if (x?.message?.items?.length && x?.message?.items?.some(el => !el?.provider?.locations?.length)) {
                     return x;
@@ -54,7 +86,7 @@ class InitOrderController {
                     } else {
                         res.json(response);
                     }
-                    
+
                 }).catch((err) => {
                     next(err);
                 });

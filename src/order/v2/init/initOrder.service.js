@@ -74,7 +74,7 @@ class InitOrderService {
                 let selectitem = {
                     id: item?.local_id?.toString(),
                     quantity: item?.quantity,
-                    location_id: provider?.locations[0]?.local_id?.toString()
+                    location_id: provider?.locations?.[0]?.local_id?.toString()
                 }
                 let tag = undefined
                 if (item.tags && item.tags.length > 0) {
@@ -225,6 +225,14 @@ class InitOrderService {
             const parentOrderId = requestContext?.transaction_id;
             requestContext.city = getCityCode(requestContext?.city)
 
+            if (!(order?.items?.length)) {
+                return {
+                    context,
+                    success: false,
+                    error: { message: "Empty order received" }
+                };
+            }
+            
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.INIT,
@@ -237,69 +245,6 @@ class InitOrderService {
                 pincode: requestContext?.pincode,
                 // ...(!isMultiSellerRequest && { transactionId: requestContext?.transaction_id })
             });
-
-            if (!(order?.items?.length)) {
-                return {
-                    context,
-                    success: false,
-                    error: { message: "Empty order received" }
-                };
-            }
-
-            let productIds = '';
-            productIds += order.items.map(item => item?.local_id || '') + ',';
-            let result = await protocolGetItemList({ "itemIds": productIds });
-            const productsDetailsArray = result.data
-
-            order.items = order.items.map(item => {
-                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
-                )
-                console.log("productsDetails ----", productsDetails)
-                const subtotal = productsDetails?.item_details?.price?.value;
-                return {
-                    ...item,
-                    bpp_id: productsDetails?.bpp_details?.bpp_id,
-                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                    contextCity: productsDetails?.bpp_details?.contextCity,
-                    product: {
-                        id: productsDetails?.id,
-                        subtotal,
-                        ...productsDetails?.item_details,
-                    },
-                    provider: {
-                        id: productsDetails?.bpp_details?.bpp_id,
-                        locations: productsDetails?.locations,
-                        ...productsDetails?.provider_details,
-                    },
-                };
-            })
-
-            const itemDetailsPromises = order.items.map(async item => {
-                if (item?.id) {
-                    const productsDetails = await protocolGetItemDetails({ id: item.id });
-                    const subtotal = productsDetails?.item_details?.price?.value;
-
-                    return {
-                        ...item,
-                        bpp_id: productsDetails?.bpp_details?.bpp_id,
-                        bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                        contextCity: productsDetails?.bpp_details?.contextCity,
-                        product: {
-                            id: productsDetails?.id,
-                            subtotal,
-                            ...productsDetails?.item_details,
-                        },
-                        provider: {
-                            id: productsDetails?.bpp_details?.bpp_id,
-                            locations: productsDetails?.locations,
-                            ...productsDetails?.provider_details,
-                        },
-                    };
-                }
-                return item;
-            });
-
-            order.items = await Promise.all(itemDetailsPromises);
 
             if (this.areMultipleBppItemsSelected(order?.items)) {
                 return {
