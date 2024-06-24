@@ -494,11 +494,10 @@ class DashboardController {
         default:
           throw new Error("Invalid Filter");
       }
-      const result = Object.entries(data)
       return res.status(200).json({
         success: true,
         message: "Data fetched successfully",
-        data: result,
+        data,
       });
     } catch (error) {
       return res.status(500).json({
