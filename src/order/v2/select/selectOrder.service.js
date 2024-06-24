@@ -60,6 +60,46 @@ class SelectOrderService {
             const { cart = {}, fulfillments = [] } = message;
             requestContext.city = getCityCode(requestContext?.city)
 
+            if (!(cart?.items || cart?.items?.length)) {
+                return {
+                    context,
+                    success: false,
+                    error: { message: "Empty order received" }
+                };
+            }
+
+            let productIds = '';
+            productIds += cart.items.map(item => item?.local_id || '') + ',';
+            console.log('---------productIds------',productIds)
+            let result = await protocolGetItemList({ "itemIds": productIds });
+            console.log('---------result------',result)
+            const productsDetailsArray = result.data
+
+            cart.items = cart.items.map(item => {
+
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
+                )
+            console.log('---------bpp_id------',productsDetails)
+
+                const subtotal = productsDetails?.item_details?.price?.value;
+                return {
+                    ...item,
+                    bpp_id: productsDetails?.context?.bpp_id,
+                    bpp_uri: productsDetails?.context?.bpp_uri,
+                    contextCity: productsDetails?.context?.city,
+                    product: {
+                        subtotal,
+                        ...productsDetails?.item_details,
+                    },
+                    provider: {
+                        locations: [productsDetails?.location_details],
+                        ...productsDetails?.provider_details,
+                    },
+                };
+            })
+            console.log('---------cart------',cart.items)
+            console.log('---------cart------',cart.items[0]?.provider)
+
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.SELECT,
@@ -71,41 +111,6 @@ class SelectOrderService {
                 state: requestContext?.state,
                 domain: requestContext?.domain
             });
-
-            if (!(cart?.items || cart?.items?.length)) {
-                return {
-                    context,
-                    success: false,
-                    error: { message: "Empty order received" }
-                };
-            }
-
-            let productIds = '';
-            productIds += cart.items.map(item => item?.local_id || '') + ',';
-            let result = await protocolGetItemList({ "itemIds": productIds });
-            const productsDetailsArray = result.data
-
-            cart.items = cart.items.map(item => {
-                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id
-                )
-                const subtotal = productsDetails?.item_details?.price?.value;
-                return {
-                    ...item,
-                    bpp_id: productsDetails?.bpp_details?.bpp_id,
-                    bpp_uri: productsDetails?.bpp_details?.bpp_uri,
-                    contextCity: productsDetails?.bpp_details?.contextCity,
-                    product: {
-                        id: productsDetails?.id,
-                        subtotal,
-                        ...productsDetails?.item_details,
-                    },
-                    provider: {
-                        id: productsDetails?.bpp_details?.bpp_id,
-                        locations: productsDetails?.locations,
-                        ...productsDetails?.provider_details,
-                    },
-                };
-            })
 
             if (this.areMultipleBppItemsSelected(cart?.items)) {
                 return {
