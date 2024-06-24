@@ -19,11 +19,11 @@ const ConfigurationSchema = new mongoose.Schema({
     finderFee: { type: String, default: null },
     finderFeeType: { type: String, default: null },
     faq: { type: [contentSchema] },
-    aboutus: { type: [contentSchema] },
-    tandc: { type: [contentSchema] },
-    shippingpolicy: { type: [contentSchema] },
-    cancelpolicy: { type: [contentSchema] },
-    returnpolicy: { type: [contentSchema] },
+    aboutus: { type: String, default: null },
+    tandc: { type: String, default: null },
+    shippingpolicy: { type: String, default: null },
+    cancelpolicy: { type: String, default: null },
+    returnpolicy: { type: String, default: null },
 }, { timestamps: true });
 
 const Configuration = mongoose.model('configuration', ConfigurationSchema, "configuration");

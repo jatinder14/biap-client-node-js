@@ -35,59 +35,35 @@ export const createConfiguration = async (req, res, next) => {
                 message: "Frequently ask question should be valid!",
             })
         }
-        if (payload?.aboutus && !Array.isArray(payload?.aboutus)) {
+
+        if(payload?.aboutus && payload.aboutus === ""){
             return res.status(400).json({
                 success: false,
-                message: "About us should be array!",
-            })
-        } else if (payload?.aboutus && Array.isArray(payload?.aboutus) && !payload?.aboutus?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "About us should be valid!",
+                message: `About us should not be empty!`,
             })
         }
-        if (payload?.tandc && !Array.isArray(payload?.tandc)) {
+        if(payload?.tandc && payload.tandc === ""){
             return res.status(400).json({
                 success: false,
-                message: "Term and condition should be array!",
-            })
-        } else if (payload?.tandc && Array.isArray(payload?.tandc) && !payload?.tandc?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Term and condition should be valid!",
+                message: `Terms & Conditions should not be empty!`,
             })
         }
-        if (payload?.shippingpolicy && !Array.isArray(payload?.shippingpolicy)) {
+        if(payload?.shippingpolicy && payload.shippingpolicy === ""){
             return res.status(400).json({
                 success: false,
-                message: "Shipping policy should be array!",
-            })
-        } else if (payload?.shippingpolicy && Array.isArray(payload?.shippingpolicy) && !payload?.shippingpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Shipping policy should be valid!",
+                message: `Shipping Policy should not be empty!`,
             })
         }
-        if (payload?.cancelpolicy && !Array.isArray(payload?.cancelpolicy)) {
+        if(payload?.cancelpolicy && payload.cancelpolicy === ""){
             return res.status(400).json({
                 success: false,
-                message: "Cancellation policy should be array!",
-            })
-        } else if (payload?.cancelpolicy && Array.isArray(payload?.cancelpolicy) && !payload?.cancelpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Cancellation policy should be valid!",
+                message: `Cancellation Policy should not be empty!`,
             })
         }
-        if (payload?.returnpolicy && !Array.isArray(payload?.returnpolicy)) {
+        if(payload?.returnpolicy && payload.returnpolicy === ""){
             return res.status(400).json({
                 success: false,
-                message: "Return and refund policy should be array!",
-            })
-        } else if (payload?.returnpolicy && Array.isArray(payload?.returnpolicy) && !payload?.returnpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Return and refund policy should be valid!",
+                message: `Return Policy should not be empty!`,
             })
         }
 
