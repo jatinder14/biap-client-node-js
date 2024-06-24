@@ -36,6 +36,37 @@ export const createConfiguration = async (req, res, next) => {
             })
         }
 
+        if(payload?.aboutus && payload.aboutus === ""){
+            return res.status(400).json({
+                success: false,
+                message: `About us should not be empty!`,
+            })
+        }
+        if(payload?.tandc && payload.tandc === ""){
+            return res.status(400).json({
+                success: false,
+                message: `Terms & Conditions should not be empty!`,
+            })
+        }
+        if(payload?.shippingpolicy && payload.shippingpolicy === ""){
+            return res.status(400).json({
+                success: false,
+                message: `Shipping Policy should not be empty!`,
+            })
+        }
+        if(payload?.cancelpolicy && payload.cancelpolicy === ""){
+            return res.status(400).json({
+                success: false,
+                message: `Cancellation Policy should not be empty!`,
+            })
+        }
+        if(payload?.returnpolicy && payload.returnpolicy === ""){
+            return res.status(400).json({
+                success: false,
+                message: `Return Policy should not be empty!`,
+            })
+        }
+
         let existingConfig = await Configuration.findOne({ bapId });
         let updateObject = {
             "bapId": bapId,
