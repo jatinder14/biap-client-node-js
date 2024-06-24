@@ -96,7 +96,7 @@ class OrderStatusController {
                     const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
                     if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
-                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/outForDelivery.ejs" : "'/template/outForDelivery.ejs'";
+                        const HTMLtemplate = orders[0].message.order.platform === "app" ? "/appTemplate/outForDelivery.ejs" : "'/template/outForDelivery.ejs'";
 
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
@@ -133,7 +133,7 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-picked-up") {
-                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/orderPickedup.ejs" : "'/template/orderPickedup.ejs'";
+                        const HTMLtemplate = orders[0].message.order.platform === "app" ? "/appTemplate/orderPickedup.ejs" : "/template/orderPickedup.ejs";
 
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
@@ -174,7 +174,8 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Agent-assigned") {
-                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/agentAssigned.ejs" : "'/template/agentAssigned.ejs'";
+                        const HTMLtemplate = orders[0]?.message?.order?.platform === "app" ? "/appTemplate/agentAssigned.ejs" : "/template/agentAssigned.ejs";
+
 
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
@@ -214,7 +215,7 @@ class OrderStatusController {
                             res.json(orders);
                         }
                     } else if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Order-delivered") {
-                        const HTMLtemplate = orders.message.order.platform === "app" ? "/appTemplate/orderDelivered.ejs" : "'/template/orderDelivered.ejs'";
+                        const HTMLtemplate = orders[0].message.order.platform === "app" ? "/appTemplate/orderDelivered.ejs" : "/template/orderDelivered.ejs";
 
                         if (emailWithoutNumber && nameWithoutNumber) {
 
