@@ -35,61 +35,6 @@ export const createConfiguration = async (req, res, next) => {
                 message: "Frequently ask question should be valid!",
             })
         }
-        if (payload?.aboutus && !Array.isArray(payload?.aboutus)) {
-            return res.status(400).json({
-                success: false,
-                message: "About us should be array!",
-            })
-        } else if (payload?.aboutus && Array.isArray(payload?.aboutus) && !payload?.aboutus?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "About us should be valid!",
-            })
-        }
-        if (payload?.tandc && !Array.isArray(payload?.tandc)) {
-            return res.status(400).json({
-                success: false,
-                message: "Term and condition should be array!",
-            })
-        } else if (payload?.tandc && Array.isArray(payload?.tandc) && !payload?.tandc?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Term and condition should be valid!",
-            })
-        }
-        if (payload?.shippingpolicy && !Array.isArray(payload?.shippingpolicy)) {
-            return res.status(400).json({
-                success: false,
-                message: "Shipping policy should be array!",
-            })
-        } else if (payload?.shippingpolicy && Array.isArray(payload?.shippingpolicy) && !payload?.shippingpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Shipping policy should be valid!",
-            })
-        }
-        if (payload?.cancelpolicy && !Array.isArray(payload?.cancelpolicy)) {
-            return res.status(400).json({
-                success: false,
-                message: "Cancellation policy should be array!",
-            })
-        } else if (payload?.cancelpolicy && Array.isArray(payload?.cancelpolicy) && !payload?.cancelpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Cancellation policy should be valid!",
-            })
-        }
-        if (payload?.returnpolicy && !Array.isArray(payload?.returnpolicy)) {
-            return res.status(400).json({
-                success: false,
-                message: "Return and refund policy should be array!",
-            })
-        } else if (payload?.returnpolicy && Array.isArray(payload?.returnpolicy) && !payload?.returnpolicy?.every(el => el.heading && el.content)) {
-            return res.status(400).json({
-                success: false,
-                message: "Return and refund policy should be valid!",
-            })
-        }
 
         let existingConfig = await Configuration.findOne({ bapId });
         let updateObject = {
