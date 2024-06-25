@@ -27,11 +27,12 @@ export const emailschedulerEachDay = () => {
           const orderIDsArray = orderData.map((item) => item.orderIDs);
           const userEmailArray = orderData.map((item) => item.userEmail);
           const userNameArray = orderData.map((item) => item.userName);
+          const HTMLtemplate = order?.platform === "app" ? "/appTemplate/orderFeedback.ejs" : "/template/orderFeedback.ejs";
 
           await sendEmail({
             userEmails: userEmailArray,
             orderIds: orderIDsArray,
-            HTMLtemplate: "/template/orderFeedback.ejs",
+            HTMLtemplate,
             userName: userNameArray,
             subject: "Order Feedback | Tell us about your experience",
           });
