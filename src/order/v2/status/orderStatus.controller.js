@@ -96,7 +96,7 @@ class OrderStatusController {
                     const nameWithoutNumber = orders[0].message.order.fulfillments[0].end?.location?.address?.name
 
                     if (orders[0].message.order.fulfillments[0].state.descriptor.code === "Out-for-delivery") {
-                        const HTMLtemplate = orders[0].message.order.platform === "app" ? "/appTemplate/outForDelivery.ejs" : "'/template/outForDelivery.ejs'";
+                        const HTMLtemplate = orders[0].message.order.platform === "app" ? "/appTemplate/outForDelivery.ejs" : "/template/outForDelivery.ejs";
 
                         if (emailWithoutNumber && nameWithoutNumber) {
                             await Notification.create({
