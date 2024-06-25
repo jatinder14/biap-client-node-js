@@ -218,16 +218,16 @@ class BppSearchService {
 
     async syncProviders(searchRequest, environment) {
         try {
-            let response;
+            const protocolSearchResponse = await protocolSearch(searchRequest);
+    
+            let syncProviderResponse;
             if (environment === "staging") {
-                response = await syncProvider(searchRequest, environment);
-            } else if (environment === "preprod") {
-                response = await protocolSearch(searchRequest);
-            } else {
-                throw new Error(`Unsupported environment: ${environment}`);
+                syncProviderResponse = await syncProvider(searchRequest, environment);
             }
-            return { response };
+    
+            return { protocolSearchResponse, syncProviderResponse };
         } catch (err) {
+            console.error(`Error in syncProviders with environment ${environment}:`, err);
             throw err;
         }
     }
