@@ -214,6 +214,13 @@ const getOrderById = async (orderId) => {
             const uniqueItems = getUniqueItems(order[0].items);
             const fulfillmentTracking = getFulfillmentTacking(uniqueItems, fulfillmentHistory);
             order[0].fulfillmentTracking = fulfillmentTracking;
+            order[0]?.items?.forEach(el => {
+                const breakup = order?.[0]?.quote?.breakup?.find(breakupItem => {
+                    return breakupItem?.['@ondc/org/item_id'] === el?.id;
+                });
+                el.boughtItemcount = breakup?.["@ondc/org/item_quantity"]?.count ?? 0;
+            });
+            
             return order;
         }
     }

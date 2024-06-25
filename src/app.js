@@ -59,7 +59,7 @@ app.use((err, req, res, next) => {
     if (err) {
         lokiLogger.error(`Error -->> `, err?.message)
         res.header("Access-Control-Allow-Origin", "*");
-        res.status(500).json({ message: 'Internal server error!', success: false })
+        res.status(500).json({ message: 'We encountered an unexpected error while processing your request, Please try again later.', success: false })
     } else {
         next()
     }
