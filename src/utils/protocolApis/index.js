@@ -814,19 +814,12 @@ const onOrderSelect = async (messageId) => {
  */
 const syncProvider = async (data, environment) => {
     try {
-        let apiCall;
-
-        // Define apiCall based on environment
-        if (environment === "staging" || environment === "preprod") {
-            apiCall = new HttpRequest(
-                `https://witslab-bpp-${environment}.thewitslab.com`,
-                "api/v2/search",
-                "POST",
-                { ...data }
-            );
-        } else {
-            throw new Error(`Unsupported environment: ${environment}`);
-        }
+        const apiCall = new HttpRequest(
+            `https://witslab-bpp-${environment}.thewitslab.com`,
+            "api/v2/search",
+            "POST",
+            { ...data }
+        );
 
         const result = await apiCall.send();
         return result.data;
