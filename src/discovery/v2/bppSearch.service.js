@@ -11,7 +11,7 @@ import {
     protocolGetLocations,
     protocolProvideDetails, protocolGetLocationDetails,
     protocolGetItemDetails,
-    protocolSearch
+    syncProvider
 } from "../../utils/protocolApis/index.js";
 
 class BppSearchService {
@@ -215,9 +215,9 @@ class BppSearchService {
         }
     }
 
-    async syncProviders(searchRequest) {
+    async syncProviders(searchRequest,environment) {
         try {
-            const response = await protocolSearch(searchRequest);
+            const response = await syncProvider(searchRequest,environment);
             return { response };
         }
         catch (err) {
