@@ -11,7 +11,8 @@ import {
     protocolGetLocations,
     protocolProvideDetails, protocolGetLocationDetails,
     protocolGetItemDetails,
-    syncProvider
+    syncProvider,
+    protocolSearch
 } from "../../utils/protocolApis/index.js";
 
 class BppSearchService {
