@@ -427,14 +427,24 @@ class SearchController {
       }
       const { body } = req;
       const { domain, city } = body;
+      const { environment } = query;
+      const possibleEnvironements = ["staging", "preprod"]
+
       if (!domain) {
         return res.status(400).send({ success: false, message: 'Missing required field domain' });
       }
+      if (!environment) {
+        return res.status(400).send({ success: false, message: 'Missing required query params environment' });
+      }
+      if (!possibleEnvironements.includes(environment)) {
+        return res.status(400).send({ success: false, message: 'Environment in query params should be one of possible environments' });
+      }
+
       if (!city || !city?.includes("std:")) {
         return res.status(400).send({ success: false, message: 'Missing or wrong required field city' });
       }
 
-      searchService.syncProviders(body).then(result => {
+      searchService.syncProviders(body,environment).then(result => {
         res.json(result);
       }).catch((err) => {
         next(err);
