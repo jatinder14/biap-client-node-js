@@ -212,7 +212,7 @@ class CancelOrderService {
                     transationId: order_details?.transactionId,
                     razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                   })
-                  const HTMLtemplate = order_details?.platform === "app" ? "/appTemplate/refund.ejs" : "/template/refund.ejs";
+                  const HTMLtemplate = order_details?.plateform === "app" ? "/appTemplate/refund.ejs" : "/template/refund.ejs";
 
                   await sendEmail({
                     userEmails: order_details?.billing?.email,

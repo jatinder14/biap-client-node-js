@@ -146,7 +146,7 @@ const triggerOrderNotification = (orders, userEmails, userName) => {
       }
     })
 
-    const HTMLtemplate = order?.message?.order?.platform === "app" ? "/appTemplate/acceptedOrder.ejs" : "/template/acceptedOrder.ejs";
+    const HTMLtemplate = order?.message?.order?.plateform === "app" ? "/appTemplate/acceptedOrder.ejs" : "/template/acceptedOrder.ejs";
     if (emailWithoutNumber && nameWithoutNumber) {
       Notification.create({
         event_type: "order_creation",
