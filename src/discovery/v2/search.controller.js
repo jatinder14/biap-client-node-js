@@ -427,7 +427,7 @@ class SearchController {
       }
       const { body } = req;
       const { domain, city } = body;
-      const { environment } = query;
+      const { environment } = req.query;
       const possibleEnvironements = ["staging", "preprod"]
 
       if (!domain) {

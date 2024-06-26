@@ -11,7 +11,8 @@ import {
     protocolGetLocations,
     protocolProvideDetails, protocolGetLocationDetails,
     protocolGetItemDetails,
-    syncProvider
+    syncProvider,
+    protocolSearch
 } from "../../utils/protocolApis/index.js";
 
 class BppSearchService {
@@ -30,13 +31,13 @@ class BppSearchService {
                 categoryId,
                 name
             } = searchRequest
-            const p_no = page ? Number(page): 1
+            const p_no = page ? Number(page) : 1
             const payload = {
                 ...searchRequest,
                 page_number: p_no,
                 pageNumber: p_no,
                 page: p_no,
-                limit: limit ? Number(limit): 10,
+                limit: limit ? Number(limit) : 10,
                 categoryIds: categoryId,
                 name,
             }
@@ -53,7 +54,7 @@ class BppSearchService {
                 };
 
             }
-            
+
             return { response };
         }
         catch (err) {
@@ -65,7 +66,7 @@ class BppSearchService {
 
             const response = await protocolProvideDetails(searchRequest);
 
-            console.log({response});
+            console.log({ response });
 
             return { response };
         }
@@ -79,7 +80,7 @@ class BppSearchService {
 
             const response = await protocolGetLocationDetails(searchRequest);
 
-            console.log({response});
+            console.log({ response });
 
             return { response };
         }
@@ -105,10 +106,10 @@ class BppSearchService {
      * @param {Object} req
      * @returns
      */
-    async getItem(searchRequest,itemId) {
+    async getItem(searchRequest, itemId) {
         try {
 
-            const response = await protocolGetItems(searchRequest,itemId);
+            const response = await protocolGetItems(searchRequest, itemId);
 
             return { response };
         }
@@ -117,10 +118,10 @@ class BppSearchService {
         }
     }
 
-    async getProvider(searchRequest,brandId) {
+    async getProvider(searchRequest, brandId) {
         try {
 
-            const response = await protocolGetProvider(searchRequest,brandId);
+            const response = await protocolGetProvider(searchRequest, brandId);
 
             return { response };
         }
@@ -129,10 +130,10 @@ class BppSearchService {
         }
     }
 
-    async getLocation(searchRequest,id) {
+    async getLocation(searchRequest, id) {
         try {
 
-            const response = await protocolGetLocation(searchRequest,id);
+            const response = await protocolGetLocation(searchRequest, id);
 
             return { response };
         }
@@ -157,7 +158,7 @@ class BppSearchService {
 
             const response = await protocolGetItemList(searchRequest);
 
-            console.log({response})
+            console.log({ response })
             return { response };
         }
         catch (err) {
@@ -194,7 +195,7 @@ class BppSearchService {
             if (searchRequest?.pageNumber) searchRequest.pageNumber = Number(searchRequest?.pageNumber)
             else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
-            
+
 
             return { response };
         }
@@ -215,15 +216,22 @@ class BppSearchService {
         }
     }
 
-    async syncProviders(searchRequest,environment) {
+    async syncProviders(searchRequest, environment) {
         try {
-            const response = await syncProvider(searchRequest,environment);
-            return { response };
-        }
-        catch (err) {
+            const protocolSearchResponse = await protocolSearch(searchRequest);
+    
+            let syncProviderResponse;
+            if (environment === "staging") {
+                syncProviderResponse = await syncProvider(searchRequest, environment);
+            }
+    
+            return { protocolSearchResponse, syncProviderResponse };
+        } catch (err) {
+            console.error(`Error in syncProviders with environment ${environment}:`, err);
             throw err;
         }
     }
+    
 
 }
 
