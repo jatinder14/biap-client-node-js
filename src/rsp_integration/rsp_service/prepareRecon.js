@@ -30,7 +30,6 @@ export const initiateRsp = async () => {
         { is_settlement_sent: false },
       ],
     });
-    const HTMLtemplate = orderDetails[0]?.platform === "app" ? "/appTemplate/collector.ejs" : "/template/collector.ejs";
 
     let orderIds = [], userEmails = [];
     orderDetails = orderDetails.filter((el) => {
@@ -145,7 +144,7 @@ export const initiateRsp = async () => {
         await sendEmail({
           userEmails: userEmails,
           orderIds: orderIds,
-          HTMLtemplate,
+          HTMLtemplate:"/template/collector.ejs",
           userName: "",
           subject: "Payment Settlements intiated to you, See the details",
         });

@@ -298,8 +298,7 @@ class OrderStatusService {
                                     onOrderStatusResponse?.context?.transaction_id,onOrderStatusResponse.message.order.provider.id,
                                     { ...orderSchema }
                                 );
-
-
+                                onOrderStatusResponse.message.order.plateform = orderSchema?.plateform
                                 return { ...onOrderStatusResponse };
 
                             }
