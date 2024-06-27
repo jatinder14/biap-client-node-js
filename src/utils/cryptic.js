@@ -1,5 +1,6 @@
 import _sodium from 'libsodium-wrappers';
 import _ from 'lodash'
+import crypto from "crypto";
 import { SUBSCRIBER_TYPE } from './constants.js';
 import { lookupBppById } from './registryApis/index.js';
 import { v4 as uuidv4 } from 'uuid';
@@ -177,4 +178,8 @@ export const formatRegistryRequest = async (request) => {
         },
         signature: signature
     }
+}
+
+export const encryptString = (data) => {
+    return crypto.createHash('sha256').update(data).digest('hex');
 }
