@@ -1,6 +1,7 @@
 import Cart from "../../db/cart.js";
 import CartItem from "../../db/items.js";
 import User from '../../../../accounts/users/db/user.js';
+import { encryptString } from "../../../../utils/cryptic.js";
 
 class CartService {
   async addItem(data) {
@@ -128,8 +129,17 @@ class CartService {
       let cartIds = []
       if (cart?._id) cartIds.push(cart?._id)
       if (cart2?._id) cartIds.push(cart2?._id)
-      let cartData = await CartItem.find({ cart: { $in: cartIds } });
-
+      let cartData = await CartItem.find({ cart: { $in: cartIds } }).lean().exec();
+      cartData = cartData.map(item => {
+        const cartId = item.cart.slice(-8);
+        const providerDescriptorName = item.item.provider.descriptor.name;
+        const providerLocalId = item.item.provider.local_id;
+        const combinedString = providerDescriptorName + providerLocalId;
+        const encryptedString = encryptString(combinedString);
+        const transactionId = cartId + encryptedString.slice(8);
+        item['transaction_id'] = transactionId
+        return item
+      })
       return cartData;
     } catch (err) {
       throw err;
