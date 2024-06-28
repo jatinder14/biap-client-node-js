@@ -71,9 +71,10 @@ class ConfirmOrderService {
      * @param {Object} dbResponse 
      * @param {Object} confirmResponse 
      */
-    async updateOrder(dbResponse, confirmResponse, paymentType, razorpayPaymentId, paymentObj = undefined) {
+    async updateOrder(dbResponse, confirmResponse, paymentType, razorpayPaymentId, paymentObj = undefined,plateform) {
         let orderSchema = dbResponse?.toJSON() || {};
         orderSchema.messageId = confirmResponse?.context?.message_id;
+        orderSchema.plateform=plateform
         if (paymentType === PAYMENT_TYPES["ON-ORDER"])
             orderSchema.paymentStatus = PROTOCOL_PAYMENT.PAID;
 
@@ -119,7 +120,7 @@ class ConfirmOrderService {
             );
             dbResponse.payment = paymentObj;
             if (bppConfirmResponse?.message?.ack) {
-                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, paymentObj?.razorpayPaymentId, paymentObj);
+                await this.updateOrder(dbResponse, bppConfirmResponse, order?.payment?.type, paymentObj?.razorpayPaymentId, paymentObj,orderRequest?.message?.plateform);
             }
             return bppConfirmResponse;
 
