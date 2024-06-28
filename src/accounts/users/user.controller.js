@@ -92,7 +92,7 @@ class UserController {
       //   res.header("Access-Control-Allow-Origin", "*");
       //   return res.status(400).json({ success: false, message: 'Otp is expired' });
       // }
-      if (!(otp == '4477' || user.otp == otp)) {
+      if (!(otp == '4477' || user.phone_otp == otp)) {
         res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({ success: false, message: 'Entered OTP is invalid!' });
       }
