@@ -150,8 +150,11 @@ class OrderStatusService {
                                 if(onOrderStatusResponse?.message?.order?.state ==='Cancelled') {
                                     orderSchema.settle_status = SETTLE_STATUS.DEBIT
                                 }
-                                orderSchema.state = onOrderStatusResponse?.message?.order?.state;
-
+                                if (dbResponse?.state == 'Cancelled') {
+                                    orderSchema.state = dbResponse?.state
+                                } else {
+                                    orderSchema.state = onOrderStatusResponse?.message?.order?.state;
+                                }
 
 
                                 orderSchema.fulfillments = onOrderStatusResponse?.message?.order?.fulfillments;
