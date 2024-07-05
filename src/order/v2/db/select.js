@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 // Define the schema
 const SelectSchema = new mongoose.Schema({
-    transactionId: { type: String, required: true },
+    transaction_id: { type: String, required: true },
     created_at: { type: Date, default: Date.now },
     items: [{
         item_id: { type: String },
         error_code: { type: String },
-        providerId: {type: String },
+        provider_id: {type: String },
 
     }]
 });

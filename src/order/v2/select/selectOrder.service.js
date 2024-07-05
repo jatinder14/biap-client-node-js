@@ -110,7 +110,7 @@ class SelectOrderService {
               items: { 
                   $elemMatch: { 
                       item_id: { $in: local_ids },
-                      providerid: { $in: provider_id }
+                      provider_id: { $in: provider_id }
                   }
               }
           });
@@ -259,13 +259,13 @@ class SelectOrderService {
   
                                   const saveOperations = itemsWithCount99.map(async (item) => {
                                     const saveTransactionId = await Select.updateOne(
-                                        { transactionId },
+                                        { transaction_id:transactionId },
                                         {
                                             $addToSet: {
                                                 items: {
                                                     item_id: item["@ondc/org/item_id"], 
                                                     error_code: "40002",
-                                                    providerId: providerId // set the providerId if the document is created
+                                                    provider_id: providerId // set the providerId if the document is created
 
                                                 },
                                             },
