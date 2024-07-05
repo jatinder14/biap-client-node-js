@@ -110,7 +110,7 @@ class SelectOrderService {
               items: { 
                   $elemMatch: { 
                       item_id: { $in: local_ids },
-                      providerId: { $in: provider_id }
+                      providerid: { $in: provider_id }
                   }
               }
           });
@@ -261,7 +261,7 @@ class SelectOrderService {
                                     const saveTransactionId = await Select.updateOne(
                                         { transactionId },
                                         {
-                                            $push: {
+                                            $addToSet: {
                                                 items: {
                                                     item_id: item["@ondc/org/item_id"], 
                                                     error_code: "40002",
