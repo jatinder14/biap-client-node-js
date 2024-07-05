@@ -5,6 +5,8 @@ import { RetailsErrorCode } from "../../../utils/retailsErrorCode.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
 import BppSelectService from "./bppSelect.service.js";
 import getCityCode from "../../../utils/AreaCodeMap.js";
+import { v4 as uuidv4 } from "uuid";
+import Select from "../../v2/db/select.js";
 
 const bppSelectService = new BppSelectService();
 
@@ -101,9 +103,32 @@ class SelectOrderService {
             console.log('---------cart------',cart.items[0]?.provider)
 
             const contextFactory = new ContextFactory();
+            const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
+            const provider_id=cart.items.map(item => item?.provider).filter(Boolean);
+
+            let transaction = await Select.findOne({
+              items: { 
+                  $elemMatch: { 
+                      item_id: { $in: local_ids },
+                      provider_id: { $in: provider_id }
+                  }
+              }
+          });
+
+            console.log('Transactions found:', transaction);
+            let transaction_id;
+            if (transaction) {  
+              console.log('transaction133', transaction)
+              transaction_id = transaction.transactionId;
+            } else {
+              transaction_id = uuidv4();
+              console.log("transaction136", transaction_id);
+      
+              
+            }
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.SELECT,
-                transactionId: requestContext?.transaction_id,
+                transactionId: transaction_id,
                 bppId: cart?.items[0]?.bpp_id,
                 bpp_uri: cart?.items[0]?.bpp_uri,
                 city: requestContext?.city,
@@ -222,8 +247,51 @@ class SelectOrderService {
                             const breakup = onSelectResponse?.message?.quote?.quote?.breakup
                             if (breakup.length) {
                                 const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
-                                const isItemNotExist = allItem.find(el => el.item?.quantity?.available?.count != "99")
-                                if (isItemNotExist) {
+                                const itemsWithCount99 = allItem.filter(
+                                  (el) => el.item?.quantity?.available?.count !== "99"
+                              );
+                              console.log('itemsWithCount99', itemsWithCount99)
+
+                                  if (itemsWithCount99.length>0) {
+                                    
+                                  const transactionId = onSelectResponse.context.transaction_id;
+                                  const providerId=onSelectResponse.message.quote.provider.id
+  
+                                  const saveOperations = itemsWithCount99.map(async (item) => {
+                                    const saveTransactionId = await Select.updateOne(
+                                        { transactionId },
+                                        {
+                                            $push: {
+                                                items: {
+                                                    item_id: item["@ondc/org/item_id"], 
+                                                    error_code: "40002",
+                                                },
+                                            },
+                                            $setOnInsert: { 
+                                                created_at: new Date(), 
+                                                providerId: providerId // set the providerId if the document is created
+                                            }
+                                        },
+                                        {
+                                            upsert: true 
+                                        }
+                                    );
+                                
+                                    console.log("Saved item:", item["@ondc/org/item_id"]);
+                                
+                                    return {
+                                        item_id: item["@ondc/org/item_id"],
+                                        error_code: "40002",
+                                    };
+                                });
+                                
+                                
+                                  console.log('saveOperations291', JSON.stringify(saveOperations))
+  
+                                  await Promise.all(saveOperations);
+  
+                                  const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"]).join(', ');
+                                  const errorMessage = `Items with count 99 have been saved with error code 40002: ${savedItemIds}`;
                                     return {
                                         context: onSelectResponse?.context,
                                         message: onSelectResponse?.message,
@@ -232,7 +300,7 @@ class SelectOrderService {
                                         error: {
                                             type: "DOMAIN-ERROR",
                                             code: "40002",
-                                            message: `"[{\"item_id\":\"${isItemNotExist['@ondc/org/item_id']}\",\"error\":\"40002\"}]"`
+                                            message: errorMessage
                                         }
                                     }
                                 }
