@@ -110,7 +110,7 @@ class SelectOrderService {
               items: { 
                   $elemMatch: { 
                       item_id: { $in: local_ids },
-                      provider_id: { $in: provider_id }
+                      providerId: { $in: provider_id }
                   }
               }
           });
