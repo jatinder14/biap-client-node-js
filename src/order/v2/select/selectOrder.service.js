@@ -265,11 +265,12 @@ class SelectOrderService {
                                                 items: {
                                                     item_id: item["@ondc/org/item_id"], 
                                                     error_code: "40002",
+                                                    providerId: providerId // set the providerId if the document is created
+
                                                 },
                                             },
                                             $setOnInsert: { 
                                                 created_at: new Date(), 
-                                                providerId: providerId // set the providerId if the document is created
                                             }
                                         },
                                         {
@@ -291,7 +292,7 @@ class SelectOrderService {
                                   await Promise.all(saveOperations);
   
                                   const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"]).join(', ');
-                                  const errorMessage = `Items with count 99 have been saved with error code 40002: ${savedItemIds}`;
+                                  const errorMessage = `Items found out of stock for id: ${savedItemIds}`;
                                     return {
                                         context: onSelectResponse?.context,
                                         message: onSelectResponse?.message,
