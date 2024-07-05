@@ -104,13 +104,13 @@ class SelectOrderService {
 
             const contextFactory = new ContextFactory();
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
-            const provider_id=cart.items.map(item => item?.provider).filter(Boolean);
 
+            const providerid = cart.items.map(item => item?.provider?.id).filter(Boolean);
             let transaction = await Select.findOne({
               items: { 
                   $elemMatch: { 
                       item_id: { $in: local_ids },
-                      provider_id: { $in: provider_id }
+                      provider_id: { $in: providerid }
                   }
               }
           });
@@ -118,8 +118,7 @@ class SelectOrderService {
             console.log('Transactions found:', transaction);
             let transaction_id;
             if (transaction) {  
-              console.log('transaction133', transaction)
-              transaction_id = transaction.transactionId;
+              transaction_id = transaction.transaction_Id;
             } else {
               transaction_id = uuidv4();
               console.log("transaction136", transaction_id);
@@ -256,6 +255,7 @@ class SelectOrderService {
                                     
                                   const transactionId = onSelectResponse.context.transaction_id;
                                   const providerId=onSelectResponse.message.quote.provider.id
+                                  console.log("providerId",providerId)
   
                                   const saveOperations = itemsWithCount99.map(async (item) => {
                                     const saveTransactionId = await Select.updateOne(
