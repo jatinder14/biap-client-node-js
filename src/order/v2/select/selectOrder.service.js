@@ -248,7 +248,7 @@ class SelectOrderService {
                             if (breakup.length) {
                                 const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
                                 const itemsWithCount99 = allItem.filter(
-                                  (el) => el.item?.quantity?.available?.count !== "99"
+                                  (el) => el.item?.quantity?.available?.count != "99"
                               );
                               console.log('itemsWithCount99', itemsWithCount99)
 
