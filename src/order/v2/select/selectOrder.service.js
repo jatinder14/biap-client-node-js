@@ -276,12 +276,6 @@ class SelectOrderService {
                                         message: errorMessage
                                     }
                                 }
-                            } else {
-                                const itemIds = allItem.map(el => el["@ondc/org/item_id"])
-                                await Select.deleteMany({
-                                    "items.item_id": { $in: itemIds },
-                                    "items.provider_id": providerId
-                                });
                             }
                         }
                         return { ...onSelectResponse };
