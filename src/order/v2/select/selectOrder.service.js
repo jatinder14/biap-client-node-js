@@ -99,21 +99,13 @@ class SelectOrderService {
                     },
                 };
             })
-            console.log('---------cart------',cart.items)
-            console.log('---------cart------',cart.items[0]?.provider)
-
             const contextFactory = new ContextFactory();
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
-
             const providerid = cart.items.map(item => item?.provider?.id).filter(Boolean);
             let transaction = await Select.findOne({
-              items: { 
-                  $elemMatch: { 
-                      item_id: { $in: local_ids },
-                      provider_id: { $in: providerid }
-                  }
-              }
-          });
+                "items.item_id": { $in: local_ids },
+                "items.provider_id": { $in: providerid }
+            });
 
             console.log('Transactions found:', transaction);
             let transaction_id;
@@ -121,9 +113,6 @@ class SelectOrderService {
               transaction_id = transaction.transaction_id;
             } else {
               transaction_id = uuidv4();
-              console.log("transaction136", transaction_id);
-      
-              
             }
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.SELECT,
