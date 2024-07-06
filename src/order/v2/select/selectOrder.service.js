@@ -101,10 +101,10 @@ class SelectOrderService {
             })
             const contextFactory = new ContextFactory();
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
-            const providerid = cart.items.map(item => item?.provider?.id).filter(Boolean);
+            const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
             let transaction = await Select.findOne({
                 "items.item_id": { $in: local_ids },
-                "items.provider_id": { $in: providerid }
+                "items.provider_id": { $in: providerIds }
             });
 
             console.log('Transactions found:', transaction);
@@ -276,6 +276,12 @@ class SelectOrderService {
                                         message: errorMessage
                                     }
                                 }
+                            } else {
+                                const itemIds = allItem.map(el => el["@ondc/org/item_id"])
+                                await Select.deleteMany({
+                                    "items.item_id": { $in: itemIds },
+                                    "items.provider_id": providerId
+                                });
                             }
                         }
                         return { ...onSelectResponse };
