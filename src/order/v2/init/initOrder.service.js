@@ -5,6 +5,7 @@ import { addOrUpdateOrderWithTransactionId, getOrderByTransactionId, getOrderByT
 import BppInitService from "./bppInit.service.js";
 import ContextFactory from "../../../factories/ContextFactory.js";
 import getCityCode from "../../../utils/AreaCodeMap.js";
+import Select from "../../v2/db/select.js";
 
 const bppInitService = new BppInitService();
 
@@ -362,7 +363,7 @@ class InitOrderService {
                         let protocolInitResponse = await this.onInitOrder(messageId);
                         let dbResponse = await getOrderByTransactionIdAndProvider(protocolInitResponse?.context?.transaction_id, protocolInitResponse?.message.order.provider.id);
                         await this.updateOrder(protocolInitResponse, dbResponse);
-
+                        await Select.deleteMany({ transaction_id: protocolInitResponse?.context?.transaction_id });
                         dbResponse = dbResponse?.toJSON();
 
                         protocolInitResponse.context = {
