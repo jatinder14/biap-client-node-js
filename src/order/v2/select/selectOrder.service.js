@@ -242,67 +242,49 @@ class SelectOrderService {
                 messageIds.map(async messageId => {
                     try {
                         const onSelectResponse = await this.onSelectOrder(messageId);
-                        if (onSelectResponse && !onSelectResponse?.error) {
+                        if (onSelectResponse?.error || onSelectResponse?.message?.quote?.quote?.breakup?.length) {
+                            const transactionId = onSelectResponse.context.transaction_id;
+                            const providerId = onSelectResponse.message.quote.provider.id;
                             const breakup = onSelectResponse?.message?.quote?.quote?.breakup
-                            if (breakup.length) {
-                                const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
-                                const itemsWithCount99 = allItem.filter(
-                                  (el) => el.item?.quantity?.available?.count != "99"
-                              );
-                              console.log('itemsWithCount99', itemsWithCount99)
-
-                                  if (itemsWithCount99.length>0) {
-                                    
-                                  const transactionId = onSelectResponse.context.transaction_id;
-                                  const providerId=onSelectResponse.message.quote.provider.id
-                                  console.log("providerId",providerId)
-  
-                                  const saveOperations = itemsWithCount99.map(async (item) => {
-                                    const saveTransactionId = await Select.updateOne(
-                                        { transaction_id:transactionId },
+                            const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
+                            let itemsWithCount99 = allItem.filter(el => el.item?.quantity?.available?.count != "99")
+                            itemsWithCount99 = !itemsWithCount99.length && onSelectResponse?.error?.code ? allItem : itemsWithCount99 // Checking if seller is still sending available = 99 for out of stock product
+                            if (itemsWithCount99.length) {
+                                const saveOperations = itemsWithCount99.map(async (item) => {
+                                    await Select.updateOne(
+                                        { transaction_id: transactionId },
                                         {
                                             $addToSet: {
                                                 items: {
-                                                    item_id: item["@ondc/org/item_id"], 
+                                                    item_id: item["@ondc/org/item_id"],
                                                     error_code: "40002",
-                                                    provider_id: providerId // set the providerId if the document is created
-
+                                                    provider_id: providerId
                                                 },
                                             },
-                                            $setOnInsert: { 
-                                                created_at: new Date(), 
+                                            $setOnInsert: {
+                                                created_at: new Date(),
                                             }
                                         },
                                         {
-                                            upsert: true 
+                                            upsert: true
                                         }
                                     );
-                                
-                                    console.log("Saved item:", item["@ondc/org/item_id"]);
-                                
                                     return {
                                         item_id: item["@ondc/org/item_id"],
                                         error_code: "40002",
                                     };
                                 });
-                                
-                                
-                                  console.log('saveOperations291', JSON.stringify(saveOperations))
-  
-                                  await Promise.all(saveOperations);
-  
-                                  const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"]).join(', ');
-                                  const errorMessage = `Items found out of stock for id: ${savedItemIds}`;
-                                    return {
-                                        context: onSelectResponse?.context,
-                                        message: onSelectResponse?.message,
-                                        success: true,
-                                        // message: "Item out of stock!",
-                                        error: {
-                                            type: "DOMAIN-ERROR",
-                                            code: "40002",
-                                            message: errorMessage
-                                        }
+                                await Promise.all(saveOperations);
+                                const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"]).join(', ');
+                                const errorMessage = `Items found out of stock for id: ${savedItemIds}`;
+                                return {
+                                    context: onSelectResponse?.context,
+                                    message: onSelectResponse?.message,
+                                    success: true,
+                                    error: {
+                                        type: "DOMAIN-ERROR",
+                                        code: "40002",
+                                        message: errorMessage
                                     }
                                 }
                             }
