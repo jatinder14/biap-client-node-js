@@ -37,9 +37,10 @@ class InitOrderController {
             for (const request of orderRequests) {
                 let order = request?.message;
                 let productIds = order.items.map(item => item?.local_id || '').join(',');
+                let providerIds = order.items.map(item => item?.provider?.local_id || '').join(',');
             
                 try {
-                    let result = await protocolGetItemList({ "itemIds": productIds });
+                    let result = await protocolGetItemList({ "itemIds": productIds, providerIds });
                     const productsDetailsArray = result.data;
             
                     request.message.items = order.items.map(item => {
