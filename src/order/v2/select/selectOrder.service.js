@@ -264,8 +264,9 @@ class SelectOrderService {
                                     };
                                 });
                                 await Promise.all(saveOperations);
-                                const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"]).join(', ');
-                                const errorMessage = `Items found out of stock for id: ${savedItemIds}`;
+                                const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"])
+                                const errorMessage = `[${savedItemIds.map(id => `{"item_id":"${id}","error":"40002"}`).join(', ')}]`;
+
                                 return {
                                     context: onSelectResponse?.context,
                                     message: onSelectResponse?.message,
