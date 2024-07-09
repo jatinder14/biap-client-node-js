@@ -503,7 +503,7 @@ class SearchService {
      * sync providers
      * @param {Object} payload
      */
-    async syncProviders(payload) {
+    async syncProviders(payload,environment) {
         try {
             const contextFactory = new ContextFactory();
             const context = contextFactory.create({
@@ -524,7 +524,7 @@ class SearchService {
                     }
                 }
             }
-            let searchResponses = await bppSearchService.syncProviders(searchPayload);
+            let searchResponses = await bppSearchService.syncProviders(searchPayload,environment);
             return searchResponses
 
         } catch (err) {

@@ -21,7 +21,7 @@ import FulfillmentHistory from "../db/fulfillmentHistory.js";
 import Refund from "../db/refund.js";
 import { checkFulfillmentExists, getItemsIdsDataForFulfillment } from "../../v1/db/fullfillmentHistory.helper.js"
 import { sendEmail } from "../../../shared/mailer.js";
-
+import {getRefundAmountFromFulfillment} from "../../../utils/updateRefund/refund.js"
 const bppUpdateService = new BppUpdateService();
 const razorPayService = new RazorPayService()
 
@@ -432,53 +432,44 @@ class UpdateOrderService {
      * @param {Object} obj 
      * @returns 
      */
-    calculateRefundAmountForReturnByUser(obj) {
+     calculateRefundAmountForReturnByUser(obj, dbResponse) {
+       
         let totalRefundAmount = 0;
         let full_Cancel = false;
-        lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
+    
         if (obj) {
-            let sumOfNegativeValues = 0;
             let fulfillments = obj?.message?.order?.fulfillments || [];
-            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
-            lokiLogger.info(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
-            if (["Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
-                latest_fulfillment?.tags?.forEach((tag) => {
-                    if (tag?.code === "quote_trail") {
-                        tag?.list?.forEach((item) => {
-                            if (item?.code === "value") {
-                                let value = parseFloat(item?.value);
-                                if (!isNaN(value) && value < 0) {
-                                    sumOfNegativeValues += value;
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-            lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
-
+            let totalRefundFromFulfillments = 0;
+    
+            fulfillments.forEach((fulfillment) => {
+                if (["Return_Picked", "Liquidated"].includes(fulfillment?.state?.descriptor?.code)) {
+                    totalRefundFromFulfillments += getRefundAmountFromFulfillment(fulfillment);
+                }
+            });
+    
+    
             let totalCharges = 0;
             let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
-
+    
             full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
                 if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
-                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0) {
                         full_Cancel = false;
+                    }
                 }
             });
+    
+            totalRefundAmount = Math.abs(totalRefundFromFulfillments) + totalCharges;
+            console.log('totalRefundAmount49', totalRefundAmount)
+    
+            // Add previously refunded amount to the total
+            if (dbResponse?.payment?.refundDetails?.refundedAmount) {
+                totalRefundAmount += dbResponse?.payment?.refundDetails?.refundedAmount;
+            }
+            console.log('totalRefundAmount485', totalRefundAmount)
 
-            // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
-            // if (full_Cancel) {
-            //     lokiLogger.info(`full_Cancel ---->> :  ${full_Cancel}`);
-
-            //     quoteBreakup.forEach((breakupItem) => {
-            //         totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-            //     });
-            // }
-            lokiLogger.info(`Sum of quoteBreakup values: ${totalCharges}`);
-            totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-            lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+    
             return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
         }
         return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
@@ -489,59 +480,48 @@ class UpdateOrderService {
      * @param {object} obj 
      * @returns 
      */
-    calculateRefundAmountForPartialOrderCancellationBySeller(obj) {
+     calculateRefundAmountForPartialOrderCancellationBySeller(obj, dbResponse) {
+       
         let totalRefundAmount = 0;
         let full_Cancel = false;
-        lokiLogger.info(`obj ======  ${JSON.stringify(obj)}`);
+    
         if (obj) {
-            let sumOfNegativeValues = 0;
-            let fulfillments = obj?.message?.order?.fulfillments;
-            let latest_fulfillment = fulfillments.length ? fulfillments[fulfillments.length - 1] : {};
-            console.log(`latest_fulfillment ======  ${JSON.stringify(latest_fulfillment)}`);
-            if (latest_fulfillment?.state?.descriptor?.code === "Cancelled") {
-                latest_fulfillment?.tags?.forEach((tag) => {
-                    if (tag?.code === "quote_trail") {
-                        tag?.list?.forEach((item) => {
-                            if (item?.code === "value") {
-                                let value = parseFloat(item?.value);
-                                if (!isNaN(value) && value < 0) {
-                                    sumOfNegativeValues += value;
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-            lokiLogger.info(`Sum of negative values:, ${sumOfNegativeValues}`);
-
+            let fulfillments = obj?.message?.order?.fulfillments || [];
+            let totalRefundFromFulfillments = 0;
+    
+            fulfillments.forEach((fulfillment) => {
+                if (fulfillment?.state?.descriptor?.code === "Cancelled") {
+                    totalRefundFromFulfillments += getRefundAmountFromFulfillment(fulfillment);
+                }
+            });
+    
+    
             let totalCharges = 0;
-
-
             let quoteBreakup = obj?.message?.order?.quote?.breakup || [];
-
+    
             full_Cancel = true;
             quoteBreakup.forEach((breakupItem) => {
                 if (breakupItem?.["@ondc/org/item_quantity"]?.count !== undefined) {
-                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0)
+                    if (breakupItem?.["@ondc/org/item_quantity"]?.count != 0) {
                         full_Cancel = false;
+                    }
                 }
             });
-
-            // @@@@@ Need to check this if we need to return delivery amount as well @@@@@
-            // if (full_Cancel) {
-            //     console.log(`full_Cancel ---->> :  ${full_Cancel}`);
-
-            //     quoteBreakup.forEach((breakupItem) => {
-            //         totalCharges += parseFloat(breakupItem?.price?.value) || 0;
-            //     });
-            // }
-            console.log(`Sum of quoteBreakup values: ${totalCharges}`);
-            totalRefundAmount = Math.abs(sumOfNegativeValues) + totalCharges;
-            lokiLogger.info(`total price sum:  ${totalRefundAmount}`);
+    
+            totalRefundAmount = Math.abs(totalRefundFromFulfillments) + totalCharges;
+    
+            // Add previously refunded amount to the total
+            if (dbResponse?.payment?.refundDetails?.refundedAmount) {
+                totalRefundAmount += dbResponse?.payment?.refundDetails?.refundedAmount;
+            }
             return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
+    
         }
         return { totalRefundAmount: totalRefundAmount, full_Cancel: full_Cancel };
     }
+    
+    
+    
 
     /**
     * INFO: on cancel/return order
@@ -662,12 +642,14 @@ class UpdateOrderService {
                         let calculateRefundAmountObject = {};
                         let fulfillments = protocolUpdateResponse?.message?.order?.fulfillments || [];
                         let latest_fulfillment = fulfillments[fulfillments.length - 1];
-                        if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked")
-                            calculateRefundAmountObject = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse);
+                        if (["Liquidated", "Return_Picked"].includes(latest_fulfillment?.state?.descriptor?.code))
+                            calculateRefundAmountObject = this.calculateRefundAmountForReturnByUser(protocolUpdateResponse, dbResponse);
                         else if (latest_fulfillment?.state?.descriptor?.code == "Cancelled")
-                            calculateRefundAmountObject = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse);
+                            calculateRefundAmountObject = this.calculateRefundAmountForPartialOrderCancellationBySeller(protocolUpdateResponse, dbResponse);
+
 
                         refundAmount = calculateRefundAmountObject?.totalRefundAmount;
+
                         lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
                         lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
@@ -700,10 +682,12 @@ class UpdateOrderService {
                                 }
                                 if (return_item_count <= left_order_item_count || ["Cancelled","Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                                     if (razorpayPaymentId && refundAmount) {
-                                        let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) * 100;
+                                        let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) ;
                                         lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
                                         let response = await razorPayService.refundOrder(razorpayPaymentId, razorpayRefundAmount)
-                                        refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount) / 100 : response?.amount,
+
+                                        refunded_amount=refundAmount?refundAmount:response?.amount
+                                        // refunded_amount = (response?.amount && response?.amount > 0) ? (response?.amount)  : response?.amount;
                                         lokiLogger.info(`response_razorpay_on_update>>>>>>>>>> ${JSON.stringify(response)}`)
                                         let order_details = dbResponse;
                                         const refundDetails = await Refund.create({
@@ -905,6 +889,8 @@ class UpdateOrderService {
                         orderSchema.items = updateItems;
                         orderSchema.fulfillments = protocolUpdateResponse?.message?.order?.fulfillments;
                         orderSchema.remaining_cart_value = protocolUpdateResponse?.message?.order?.qoute?.price?.value;
+                        orderSchema.refunded_amount=calculateRefundAmountObject?.totalRefundAmount
+                        orderSchema.refundedAmount=calculateRefundAmountObject?.totalRefundAmount
                         lokiLogger.info(`------------------------calculateRefundAmountObject--------------${JSON.stringify(calculateRefundAmountObject)}`)
                         if (calculateRefundAmountObject?.full_Cancel)
                             orderSchema.state = "Cancelled";

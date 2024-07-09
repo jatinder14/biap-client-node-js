@@ -30,6 +30,7 @@ export const initiateRsp = async () => {
         { is_settlement_sent: false },
       ],
     });
+
     let orderIds = [], userEmails = [];
     orderDetails = orderDetails.filter((el) => {
       let maxReturnWindowObj = el.items[0];
@@ -143,7 +144,7 @@ export const initiateRsp = async () => {
         await sendEmail({
           userEmails: userEmails,
           orderIds: orderIds,
-          HTMLtemplate: "/template/collector.ejs",
+          HTMLtemplate:"/template/collector.ejs",
           userName: "",
           subject: "Payment Settlements intiated to you, See the details",
         });

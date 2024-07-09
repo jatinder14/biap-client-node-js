@@ -31,7 +31,7 @@ export const emailschedulerEachDay = () => {
           await sendEmail({
             userEmails: userEmailArray,
             orderIds: orderIDsArray,
-            HTMLtemplate: "/template/orderFeedback.ejs",
+            HTMLtemplate:"/template/orderFeedback.ejs",
             userName: userNameArray,
             subject: "Order Feedback | Tell us about your experience",
           });

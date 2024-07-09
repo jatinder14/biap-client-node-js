@@ -150,8 +150,11 @@ class OrderStatusService {
                                 if(onOrderStatusResponse?.message?.order?.state ==='Cancelled') {
                                     orderSchema.settle_status = SETTLE_STATUS.DEBIT
                                 }
-                                orderSchema.state = onOrderStatusResponse?.message?.order?.state;
-
+                                if (dbResponse?.state == 'Cancelled') {
+                                    orderSchema.state = dbResponse?.state
+                                } else {
+                                    orderSchema.state = onOrderStatusResponse?.message?.order?.state;
+                                }
 
 
                                 orderSchema.fulfillments = onOrderStatusResponse?.message?.order?.fulfillments;
@@ -298,8 +301,7 @@ class OrderStatusService {
                                     onOrderStatusResponse?.context?.transaction_id,onOrderStatusResponse.message.order.provider.id,
                                     { ...orderSchema }
                                 );
-
-
+                                onOrderStatusResponse.message.order.plateform = orderSchema?.plateform
                                 return { ...onOrderStatusResponse };
 
                             }

@@ -212,10 +212,12 @@ class CancelOrderService {
                     transationId: order_details?.transactionId,
                     razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                   })
+                  const HTMLtemplate = order_details?.plateform === "app" ? "/appTemplate/refund.ejs" : "/template/refund.ejs";
+
                   await sendEmail({
                     userEmails: order_details?.billing?.email,
                     orderIds: order_details?.id,
-                    HTMLtemplate: "/template/refund.ejs",
+                    HTMLtemplate,
                     userName: order_details?.billing?.name || "",
                     subject: "Refund Processed | Your Refund has been Processed to Your account",
                     itemName: order_details?.billing?.email,

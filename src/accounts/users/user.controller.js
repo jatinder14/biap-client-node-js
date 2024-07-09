@@ -92,7 +92,7 @@ class UserController {
       //   res.header("Access-Control-Allow-Origin", "*");
       //   return res.status(400).json({ success: false, message: 'Otp is expired' });
       // }
-      if (!(otp == '4477' || user.otp == otp)) {
+      if (!(otp == '4477' || user.phone_otp == otp)) {
         res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({ success: false, message: 'Entered OTP is invalid!' });
       }
@@ -172,7 +172,7 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       res.status(500).json({
         success: false,
-        message: "Internal server error!",
+        message: "We encountered an unexpected error while updating the user profile, Please try again later.",
         error: error?.message
       })
     }
@@ -217,7 +217,7 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       return res.status(500).json({
         success: false,
-        message: "Internal server error!",
+        message: "We encountered an unexpected error while getting the user profile, Please try again later.",
       });
     }
   }

@@ -103,7 +103,7 @@ class RazorPayController {
       // status code 400 represents that the refunded amoount asked is greater than the actual total payment amount or the left amount that is present in the specific payment id or if the order is already fully refunded
       return res.json({
         status: false,
-        message: (e?.statusCode == 404) ? `paymnet with ${razorpayPaymentId} does not exists` : (e?.statusCode == 400) ? `${e?.error?.description}` : `Internal server error`
+        message: (e?.statusCode == 404) ? `paymnet with ${razorpayPaymentId} does not exists` : (e?.statusCode == 400) ? `${e?.error?.description}` : `We encountered an unexpected error while refunding your payment, We will look into this.`
       })
     }
   }

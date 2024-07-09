@@ -806,6 +806,32 @@ const onOrderSelect = async (messageId) => {
     }
 };
 
+
+/**
+ * search
+ * @param {Object} data 
+ * @returns 
+ */
+const syncProvider = async (data, environment) => {
+    try {
+        const apiCall = new HttpRequest(
+            `https://witslab-bpp-${environment}.thewitslab.com`,
+            "api/v2/search",
+            "POST",
+            { ...data }
+        );
+
+        const result = await apiCall.send();
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err.response.data;
+        } else {
+            throw err;
+        }
+    }
+};
+
 export {
     onOrderCancel,
     onOrderConfirm,
@@ -838,5 +864,6 @@ export {
     protocolGetLocationDetails,
     protocolGetDumps,
     protocolProvideDetails,
-    protocolGetItemDetails
+    protocolGetItemDetails,
+    syncProvider
 };

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Image</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+        .main {
+            width: 100%;
+            max-width: 600px;
+            height: 960px;
+            font-family: 'Poppins', sans-serif;
+        }
+        .container {
+            background: #ffffff;
+        }
+        .responsive-image {
+            width: 100%;
+            height: auto;
+        }
+        .content {
+            padding: 20px;
+        }
+        .content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .content div {
+            margin: 10px 0;
+        }
+        .content button {
+            margin-top: 20px;
+            padding: 12px 24px; /* Adjust padding for larger touch areas on mobile */
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #f07937;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            width: auto; /* Make button width automatically adjust to content */
+            max-width: 100%; /* Ensure button doesn't exceed container width */
+            box-sizing: border-box; /* Ensure padding doesn't increase button width */
+        }
+        .help-text {
+            font-size: 14px;
+            line-height: 22px;
+            font-weight: 400;
+            text-align: center;
+            margin: 30px 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="container">
+            <img src="https://buyer-app-preprod.thewitslab.com/clientApis/v2/getResource/7bf3cd2b-4930-4d50-96b3-454ba387b4e5-Frame%204756.png" alt="Logo image" class="responsive-image"/>
+        </div>
+
+        <div class="container content">
+            <div style="text-align: center;">
+                <img src="https://buyer-app-preprod.thewitslab.com/clientApis/v2/getResource/cd10f20b-3ea2-4ee3-b8d9-815112c6881b-Group%204756.png" alt="Image"/>
+            </div>
+            <div style="font-family: Manrope; font-size: 20px; font-weight: 800; line-height: 44px; text-align: center;
+">
+                  <%= subjectPartData %>
+                </div>
+            <div style="text-align: left; font-family: 'SF Pro Display'; font-size: 20px; font-weight: 700; line-height: 30px;">
+                Hi,
+            </div>
+            <div style="text-align: left; font-family: 'SF Pro Display'; font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0.2px;">
+              We are pleased to inform you that your settlement for <span style="font-weight:600"> Order ID <%= orderId %></span> has been initiated.
+            </div>
+           
+            <div>
+                <button style="width: 100%; max-width: 600px;">Accept Invitation</button>
+            </div>
+            <div class="help-text">
+                Need Help? Ask at team@thewitslab.com or visit our help center.
+            </div>
+        </div>
+
+        <div class="container">
+            <img src="https://buyer-app-preprod.thewitslab.com/clientApis/v2/getResource/6b69877f-9896-496d-bebc-3d63f6533fb3-Frame%204916.png" alt="Logo image" class="responsive-image"/>
+        </div>
+    </div>
+</body>
+</html>
+

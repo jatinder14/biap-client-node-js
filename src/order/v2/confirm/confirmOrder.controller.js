@@ -4,7 +4,7 @@ import BadRequestParameterError from "../../../lib/errors/bad-request-parameter.
 // import  Notification from "../../v1/db/notification.js"
 import { sendEmail } from "../../../shared/mailer.js";
 import Notification from "../../v2/db/notification.js";
-
+import Order from "../../v1/db/order.js"
 const confirmOrderService = new ConfirmOrderService();
 class ConfirmOrderController {
   /**
@@ -122,7 +122,7 @@ class ConfirmOrderController {
   }
 }
 
-const triggerOrderNotification = (orders, userEmails, userName) => {
+const triggerOrderNotification = async (orders, userEmails, userName) => {
   for (let order of orders) {
     const orderIds = order?.message?.order?.id;
     const emailWithoutNumber = order?.message?.order?.fulfillments?.[0]?.end?.contact?.email
@@ -130,6 +130,7 @@ const triggerOrderNotification = (orders, userEmails, userName) => {
     const itemPrice = order?.message?.order?.quote?.price?.value;
     const estimatedDelivery = order?.message?.order?.fulfillments?.[0]["@ondc/org/TAT"];
     const duration = estimatedDelivery ? moment.duration(estimatedDelivery) : undefined;
+    const transaction_id=order?.context?.transaction_id
     let days = duration?.days();
     // If duration is less than 1 day, set days to 1
     if (days === 0 && duration?.asMinutes() < 1440) {
@@ -145,7 +146,8 @@ const triggerOrderNotification = (orders, userEmails, userName) => {
         estimatedDelivery: days,
       }
     })
-
+    const platformKey=await Order.findOne({transaction_id})
+    const HTMLtemplate = platformKey?.plateform === "app" ? "/appTemplate/acceptedOrder.ejs" : "/template/acceptedOrder.ejs";
     if (emailWithoutNumber && nameWithoutNumber) {
       Notification.create({
         event_type: "order_creation",
@@ -156,7 +158,7 @@ const triggerOrderNotification = (orders, userEmails, userName) => {
       sendEmail({
         userEmails: emailWithoutNumber,
         orderIds,
-        HTMLtemplate: "/template/acceptedOrder.ejs",
+        HTMLtemplate,
         userName: nameWithoutNumber || "",
         subject: "Order Acceptance | Your Order has been Accepted",
         items: itemList,
@@ -173,7 +175,7 @@ const triggerOrderNotification = (orders, userEmails, userName) => {
       sendEmail({
         userEmails,
         orderIds,
-        HTMLtemplate: "/template/acceptedOrder.ejs",
+        HTMLtemplate,
         userName: userName || "",
         subject: "Order Acceptance | Your Order has been Accepted",
         items: itemList,
