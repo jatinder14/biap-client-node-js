@@ -219,19 +219,19 @@ class BppSearchService {
     async syncProviders(searchRequest, environment) {
         try {
             const protocolSearchResponse = await protocolSearch(searchRequest);
-    
+
             let syncProviderResponse;
             if (environment === "staging") {
                 syncProviderResponse = await syncProvider(searchRequest, environment);
             }
-    
+
             return { protocolSearchResponse, syncProviderResponse };
         } catch (err) {
             console.error(`Error in syncProviders with environment ${environment}:`, err);
             throw err;
         }
     }
-    
+
 
 }
 

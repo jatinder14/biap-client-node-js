@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "@google-cloud/secret-manager": "^3.11.0",
+    "@turf/turf": "^7.0.0",
     "ajv": "^8.12.0",
     "ajv-errors": "^3.0.0",
     "ajv-formats": "^2.1.1",
@@ -41,6 +42,7 @@
     "paytmchecksum": "^1.5.1",
     "pino": "^8.19.0",
     "pino-http": "^9.0.0",
+    "point-in-polygon": "^1.1.0",
     "razorpay": "^2.9.2",
     "redis": "^4.6.13",
     "twilio": "^5.0.2",
@@ -79,7 +81,7 @@
     "npm-run-all": "^4.1.5"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "lint-staged": {
     "*.js": "eslint --cache --fix"
