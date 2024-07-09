@@ -52,7 +52,7 @@ class DeliveryAddressService {
    */
   async onDeliveryAddressDetails(user = {}) {
     try {
-      const userId = user?.decodedToken?.uid ? user?.decodedToken?.uid : (user?.decodedToken?.user_id || user?.decodedToken?.userId)
+      const userId = user?.decodedToken?.uid ? user?.decodedToken?.uid : user?.decodedToken?.userId
       const deliveryAddressDetails = await DeliveryAddressMongooseModel.find({
         userId: userId, address: { $ne: null },
       });
