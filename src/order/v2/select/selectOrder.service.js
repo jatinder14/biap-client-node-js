@@ -72,8 +72,9 @@ class SelectOrderService {
 
             let productIds = '';
             productIds += cart.items.map(item => item?.local_id || '') + ',';
+            let allProviderIds = cart.items.map(item => item?.provider?.id || '').join(',');
             console.log('---------productIds------',productIds)
-            let result = await protocolGetItemList({ "itemIds": productIds });
+            let result = await protocolGetItemList({ "itemIds": productIds, providerIds: allProviderIds });
             console.log('---------result------',result)
             const productsDetailsArray = result.data
 
