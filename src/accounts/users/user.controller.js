@@ -123,7 +123,7 @@ class UserController {
   async userProfile(req, res) {
     try {
       const { body: request, user } = req;
-      let userId = user?.decodedToken?.userId ? user?.decodedToken?.userId : (user?.decodedToken?.userId || user?.decodedToken?.uid)
+      let userId = user?.decodedToken?.userId || user?.decodedToken?.uid
       if (request?.email || request?.phone) {
         const duplicateUser = await User.findOne({ "userId": { $ne: userId }, $or: [{ phone: request?.phone }, { email: request?.email }] });
         lokiLogger.error('duplicateUser', duplicateUser, 'duplicateUser.emaill', duplicateUser?.email, duplicateUser?.phone)
@@ -135,7 +135,7 @@ class UserController {
         }
       }
 
-      const existingUser = await User.findOne({ $or: [{ userId: user?.decodedToken?.userId }] });
+      const existingUser = await User.findOne({ userId: user?.decodedToken?.userId });
       if (existingUser) {
         if (request.userName) existingUser.userName = request.userName;
         if (request.phone) existingUser.phone = request.phone;
