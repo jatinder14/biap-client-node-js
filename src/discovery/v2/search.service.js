@@ -9,7 +9,6 @@ import createPeriod from "date-period";
 import translateObject from "../../utils/bhashini/translate.js";
 import { OBJECT_TYPE } from "../../utils/constants.js";
 
-import * as turf from '@turf/turf';
 import axios from "axios";
 import pointInPolygon from 'point-in-polygon';
 
