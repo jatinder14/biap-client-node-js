@@ -98,6 +98,35 @@ class MapController {
       next(err);
     }
   }
+
+  static async getCoordinatesByPincode(pincode) {
+    try {
+      const result = await axios.get(
+        "https://api.geoapify.com/v1/geocode/search",
+        {
+          params: {
+            postcode: pincode,
+            apiKey: process.env.MAP_API_KEY,
+          },
+        }
+      );
+
+      if (!result.data.features[0]) {
+        throw new Error("Invalid pincode");
+      }
+
+      return {
+        success: true,
+        data: {
+          longitude: result.data.features[0].properties.lon,
+          latitude: result.data.features[0].properties.lat,
+          pincode: pincode,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 export default MapController;

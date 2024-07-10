@@ -8,8 +8,8 @@ import { CITY_CODE } from "../../utils/cityCode.js"
 import createPeriod from "date-period";
 import translateObject from "../../utils/bhashini/translate.js";
 import { OBJECT_TYPE } from "../../utils/constants.js";
-
-import axios from "axios";
+import MapController from '../../accounts/map/map.controller.js';
+import got from 'got';
 import pointInPolygon from 'point-in-polygon';
 
 // import logger from "../lib/logger";
@@ -226,52 +226,44 @@ class SearchService {
         }
     }
 
-    calculateDistance(coords1, coords2) {
-        const [lon1, lat1] = coords1;
-        const [lon2, lat2] = coords2;
-        const R = 6371;
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
+    calculateDistance(coord1, coord2) {
+        const [lon1, lat1] = coord1;
+        const [lon2, lat2] = coord2;
+        const earthRadiusKm = 6371; // Earth's radius in kilometers
+
+        // Differences in latitude and longitude
+        const deltaLat = (lat2 - lat1) * Math.PI / 180;
+        const deltaLon = (lon2 - lon1) * Math.PI / 180;
+
+        // Haversine formula components
+        const haversineLat = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2);
+        const haversineLon = Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+        const cosLat1 = Math.cos(lat1 * Math.PI / 180);
+        const cosLat2 = Math.cos(lat2 * Math.PI / 180);
+
+        // Haversine formula
+        const haversineFormula = haversineLat + cosLat1 * cosLat2 * haversineLon;
+
+        // Angular distance in radians
+        const angularDistance = 2 * Math.atan2(Math.sqrt(haversineFormula), Math.sqrt(1 - haversineFormula));
+
+        // Distance in kilometers
+        const distance = earthRadiusKm * angularDistance;
         return distance;
     }
 
-    async getCoordinatesForPincode(pincode) {
-        const url = `${process.env.ONDC_BASE_API_URL}/clientApis/v2/map/getCordinates?postcode=${pincode}`;
-        try {
-            const response = await axios.get(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (response.data.success) {
-                return {
-                    latitude: response.data.data.latitude,
-                    longitude: response.data.data.longitude,
-                };
-            } else {
-                throw new Error('Failed to fetch coordinates');
-            }
-        } catch (error) {
-            throw error;
-        }
-    }
-
     async getProviderGPS(userId, providerId) {
-        const url = `${process.env.ONDC_BASE_API_URL}/clientApis/v2/search/${userId}?page=1&limit=18&providerIds=${providerId}`;
+        const url = `${process.env.ONDC_BASE_API_URL}/clientApis/v2/search/${userId}?providerIds=${providerId}`;
         try {
-            const response = await axios.get(url, {
+            const response = await got(url, {
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                responseType: 'json'
             });
-            if (response.data.response.count > 0) {
-                const providerData = response.data.response.data[0];
+
+            if (response.body.response.count > 0) {
+                const providerData = response.body.response.data[0];
                 const gps = providerData.location_details.gps.split(',');
                 return {
                     latitude: parseFloat(gps[0]),
@@ -286,13 +278,13 @@ class SearchService {
     }
 
     async filterByPincodeOrPanIndia(providers, userId, pincode) {
-        const coordinates = await this.getCoordinatesForPincode(pincode);
-        if (!coordinates) {
+        const coordinatesResponse = await MapController.getCoordinatesByPincode(pincode);
+        if (!coordinatesResponse.success) {
             return [];
         }
 
-        const currentCoords = [coordinates.longitude, coordinates.latitude];
-
+        const { latitude, longitude } = coordinatesResponse.data;
+        const currentCoords = [longitude, latitude];
         const filteredProviders = [];
 
         for (const provider of providers.response.data) {
@@ -305,44 +297,45 @@ class SearchService {
                 if (tag.code !== "serviceability") continue;
 
                 for (let item of tag.list) {
-                    if (item.code === "unit" && item.value === "pincode") {
-                        const valItem = tag.list.find(i => i.code === "val");
-                        if (valItem) {
-                            const pincodeRanges = valItem.value.split(',').map(range => range.trim());
+                    switch (item.value) {
+                        case "10": // Radius
+                            const providerGPS = await this.getProviderGPS(userId, provider.id);
+                            const radiusKm = parseFloat(tag.list.find(i => i.code === "val").value);
+                            const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
+                            isWithinRadius = distance <= radiusKm;
+                            break;
 
-                            hasPincode = pincodeRanges.some(range => {
-                                if (range.includes('-')) {
-                                    const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
-                                    return pincode >= start && pincode <= end;
-                                }
-                                return parseInt(range) === pincode;
-                            });
-                        }
-                    }
+                        case "11": // Pincode
+                            const valItem = tag.list.find(i => i.code === "val");
+                            if (valItem) {
+                                const pincodeRanges = valItem.value.split(',').map(range => range.trim());
 
-                    if (item.code === "type" && item.value === "12") {
-                        isPanIndia = true;
-                    }
-
-                    if (item.code === "unit" && item.value === "GeoJSON") {
-                        const valItem = tag.list.find(i => i.code === "val");
-                        if (valItem) {
-                            const geoJSONString = valItem.value;
-                            const geoJSON = JSON.parse(geoJSONString);
-
-                            if (geoJSON.features && geoJSON.features.length) {
-                                isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
+                                hasPincode = pincodeRanges.some(range => {
+                                    if (range.includes('-')) {
+                                        const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
+                                        return pincode >= start && pincode <= end;
+                                    }
+                                    return parseInt(range) === pincode;
+                                });
                             }
-                        }
-                    }
+                            break;
 
-                    if (item.code === "type" && item.value === "10") {
-                        const providerGPS = await this.getProviderGPS(userId, providerId);
-                        const radiusKm = parseFloat(tag.list.find(i => i.code === "val").value);
-                        const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
-                        isWithinRadius = distance <= radiusKm;
-                    }
+                        case "12": // Pan India
+                            isPanIndia = true;
+                            break;
 
+                        case "13": // Polygon
+                            const geoJSONValItem = tag.list.find(i => i.code === "val");
+                            if (geoJSONValItem) {
+                                const geoJSONString = geoJSONValItem.value;
+                                const geoJSON = JSON.parse(geoJSONString);
+
+                                if (geoJSON.features && geoJSON.features.length) {
+                                    isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
+                                }
+                            }
+                            break;
+                    }
                 }
 
                 if (hasPincode || isPanIndia || isWithinPolygon || isWithinRadius) {
@@ -350,10 +343,11 @@ class SearchService {
                     break;
                 }
             }
-        };
+        }
 
         return filteredProviders;
     }
+
 
     /**
      * get custom menus
