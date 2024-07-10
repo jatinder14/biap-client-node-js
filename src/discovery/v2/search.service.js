@@ -508,7 +508,10 @@ class SearchService {
         try {
             const contextFactory = new ContextFactory();
             const bapId=process.env.BAP_ID
-            const finder_data=await Configuration.findOne({bapId})
+            const finder_data = await Configuration.findOne({ bapId })
+            const finderFeeType = finder_data?.finderFeeType ?? process.env.BAP_FINDER_FEE_TYPE;
+            const finderFee = finder_data?.finderFee ?? process.env.BAP_FINDER_FEE_AMOUNT;
+
             const context = contextFactory.create({
                 city: payload.city,
                 domain: payload.domain
@@ -521,8 +524,8 @@ class SearchService {
                             type: "Delivery"
                         },
                         payment: {
-                            "@ondc/org/buyer_app_finder_fee_type": finder_data?.finderFeeType,
-                            "@ondc/org/buyer_app_finder_fee_amount": finder_data?.finderFee
+                            "@ondc/org/buyer_app_finder_fee_type": finderFeeType,
+                            "@ondc/org/buyer_app_finder_fee_amount": finderFee
                         }
                     }
                 }
