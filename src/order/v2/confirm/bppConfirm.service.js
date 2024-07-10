@@ -159,7 +159,8 @@ class BppConfirmService {
             let settlement_details = order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                 storedOrder?.settlementDetails?.["@ondc/org/settlement_details"] :
                 order.payment['@ondc/org/settlement_details']
-            const buyerFinderData=await Configuration.findOne({})
+            const bapId= process.env.BAP_ID   
+            const buyerFinderData=await Configuration.findOne({bapId})
 
             const confirmRequest = {
                 context: context,
