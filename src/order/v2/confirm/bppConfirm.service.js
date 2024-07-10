@@ -4,6 +4,7 @@ import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../
 import {protocolConfirm, protocolGetDumps} from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../../v1/db/order.js";
 import lokiLogger from '../../../utils/logger.js';
+import Configuration from "../../../configuration/db/configuration.js"
 
 class BppConfirmService {
 
@@ -158,6 +159,10 @@ class BppConfirmService {
             let settlement_details = order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                 storedOrder?.settlementDetails?.["@ondc/org/settlement_details"] :
                 order.payment['@ondc/org/settlement_details']
+            const bapId = process.env.BAP_ID
+            const finder_data = await Configuration.findOne({ bapId })
+            const finderFeeType = finder_data?.finderFeeType ?? process.env.BAP_FINDER_FEE_TYPE;
+            const finderFee = finder_data?.finderFee ?? process.env.BAP_FINDER_FEE_AMOUNT;
 
             const confirmRequest = {
                 context: context,
@@ -246,8 +251,8 @@ class BppConfirmService {
                             collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ?
                                 PAYMENT_COLLECTED_BY.BAP :
                                 PAYMENT_COLLECTED_BY.BPP,
-                            '@ondc/org/buyer_app_finder_fee_type': process.env.BAP_FINDER_FEE_TYPE,
-                            '@ondc/org/buyer_app_finder_fee_amount': process.env.BAP_FINDER_FEE_AMOUNT,
+                            '@ondc/org/buyer_app_finder_fee_type': finderFeeType,
+                            '@ondc/org/buyer_app_finder_fee_amount': finderFee,
                             '@ondc/org/settlement_basis': order.payment['@ondc/org/settlement_basis'] ?? "delivery",
                             '@ondc/org/settlement_window': order.payment['@ondc/org/settlement_window'] ?? "P1D",
                             '@ondc/org/withholding_amount': order.payment['@ondc/org/withholding_amount'] ?? "0",

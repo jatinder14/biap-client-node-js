@@ -8,6 +8,7 @@ import {CITY_CODE} from "../../utils/cityCode.js"
 import createPeriod from "date-period";
 import translateObject from "../../utils/bhashini/translate.js";
 import {OBJECT_TYPE} from "../../utils/constants.js";
+import Configuration from "../../configuration/db/configuration.js";
 // import logger from "../lib/logger";
 const bppSearchService = new BppSearchService();
 
@@ -506,6 +507,11 @@ class SearchService {
     async syncProviders(payload,environment) {
         try {
             const contextFactory = new ContextFactory();
+            const bapId=process.env.BAP_ID
+            const finder_data = await Configuration.findOne({ bapId })
+            const finderFeeType = finder_data?.finderFeeType ?? process.env.BAP_FINDER_FEE_TYPE;
+            const finderFee = finder_data?.finderFee ?? process.env.BAP_FINDER_FEE_AMOUNT;
+
             const context = contextFactory.create({
                 city: payload.city,
                 domain: payload.domain
@@ -518,8 +524,8 @@ class SearchService {
                             type: "Delivery"
                         },
                         payment: {
-                            "@ondc/org/buyer_app_finder_fee_type": "percent",
-                            "@ondc/org/buyer_app_finder_fee_amount": process.env.BAP_FINDER_FEE_AMOUNT
+                            "@ondc/org/buyer_app_finder_fee_type": finderFeeType,
+                            "@ondc/org/buyer_app_finder_fee_amount": finderFee
                         }
                     }
                 }

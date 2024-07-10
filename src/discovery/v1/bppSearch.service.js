@@ -1,5 +1,5 @@
 import { protocolSearch } from "../../utils/protocolApis/index.js";
-
+import Configuration from "../../configuration/db/configuration.js";
 class BppSearchService {
 
     /**
@@ -11,6 +11,10 @@ class BppSearchService {
     async search(context = {}, req = {}) {
         try {
             const { criteria = {}, payment = {} } = req || {};
+            const bapId = process.env.BAP_ID
+            const finder_data = await Configuration.findOne({ bapId })
+            const finderFeeType = finder_data?.finderFeeType ?? process.env.BAP_FINDER_FEE_TYPE;
+            const finderFee = finder_data?.finderFee ?? process.env.BAP_FINDER_FEE_AMOUNT;
 
             const searchRequest = {
                 context: context,
@@ -76,8 +80,8 @@ class BppSearchService {
                             }
                         ),
                         payment: {
-                            "@ondc/org/buyer_app_finder_fee_type": payment?.buyer_app_finder_fee_type || process.env.BAP_FINDER_FEE_TYPE,
-                            "@ondc/org/buyer_app_finder_fee_amount": payment?.buyer_app_finder_fee_amount || process.env.BAP_FINDER_FEE_AMOUNT,
+                            "@ondc/org/buyer_app_finder_fee_type": finderFeeType,
+                            "@ondc/org/buyer_app_finder_fee_amount": finderFee,
                         }
                     }
                 }
