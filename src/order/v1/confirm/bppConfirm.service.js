@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PAYMENT_COLLECTED_BY, PAYMENT_TYPES, PROTOCOL_PAYMENT } from "../../../utils/constants.js";
 import { protocolConfirm } from '../../../utils/protocolApis/index.js';
 import OrderMongooseModel from "../db/order.js";
-
+import Configuration from '../../../configuration/db/configuration.js';
 class BppConfirmService {
 
     /**
@@ -144,7 +144,10 @@ class BppConfirmService {
             console.log("confirm----------------------qoute---------->",qoute)
             console.log("confirm----------------------order?.jusPayTransactionId/---------->",order?.jusPayTransactionId)
 
-
+            const bapId = process.env.BAP_ID
+            const finder_data = await Configuration.findOne({ bapId })
+            const finderFeeType = finder_data?.finderFeeType ?? process.env.BAP_FINDER_FEE_TYPE;
+            const finderFee = finder_data?.finderFee ?? process.env.BAP_FINDER_FEE_AMOUNT;
             // Created - when created by the buyer app;
             // Accepted - when confirmed by the seller app;
             // In-progress - when order is ready to ship;
@@ -230,8 +233,8 @@ class BppConfirmService {
                             collected_by: order?.payment?.type === PAYMENT_TYPES["ON-ORDER"] ? 
                                 PAYMENT_COLLECTED_BY.BAP : 
                                 PAYMENT_COLLECTED_BY.BPP,
-                            '@ondc/org/buyer_app_finder_fee_type': process.env.BAP_FINDER_FEE_TYPE,
-                            '@ondc/org/buyer_app_finder_fee_amount':  process.env.BAP_FINDER_FEE_AMOUNT,
+                            '@ondc/org/buyer_app_finder_fee_type': finderFeeType,
+                            '@ondc/org/buyer_app_finder_fee_amount': finderFee,
                             "@ondc/org/settlement_details":storedOrder?.settlementDetails?.["@ondc/org/settlement_details"],
 
                         },
