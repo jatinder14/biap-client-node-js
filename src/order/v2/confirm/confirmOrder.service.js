@@ -107,7 +107,7 @@ class ConfirmOrderService {
                 bppId: dbResponse.bppId,
                 bpp_uri: dbResponse.bpp_uri,
                 city: requestContext.city,
-                state: requestContext.state,
+                state: requestContext?.state,
                 domain: requestContext.domain,
                 pincode: requestContext?.pincode,
             });
