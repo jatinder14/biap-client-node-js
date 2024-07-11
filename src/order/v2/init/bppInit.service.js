@@ -26,11 +26,11 @@ class BppInitService {
             order.billing_info.address.locality = order.billing_info.address.street
             order.delivery_info.location.address.locality = order.delivery_info.location.address.street
 
-            const fulfillments = order?.fulfillments
-            let fulfillment = {}
-            if (fulfillments && fulfillments.length > 0) { //TODO: Feature pending for dyanamic fulfillments
-                fulfillment = fulfillments[0]
-            }
+            // const fulfillments = order?.fulfillments
+            // let fulfillment = {}
+            // if (fulfillments && fulfillments.length > 0) { //TODO: Feature pending for dyanamic fulfillments
+            //     fulfillment = fulfillments[0]
+            // }
 
             delete order.billing_info.address.tag
             delete order.billing_info.address.lat
@@ -47,7 +47,7 @@ class BppInitService {
 
             //check if item has customisation present
 
-            let items = []
+            let items = [], fulfillment_ids = []
             let locationSet = new Set()
             for (let item of order.items) {
 
@@ -71,6 +71,7 @@ class BppInitService {
                 }
                 // selectitem.parent_item_id = parentItemId;
                 selectitem.fulfillment_id = item?.fulfillment_id
+                fulfillment_ids = [...fulfillment_ids, item?.fulfillment_id]
                 items.push(selectitem);
                 if (item.customisations) {
                     for (let customisation of item.customisations) {
@@ -128,7 +129,7 @@ class BppInitService {
                             updated_at: context.timestamp
                         },
                         fulfillments: [{
-                            id: fulfillment?.id,
+                            id: fulfillment_ids[0],
                             type: order.delivery_info.type,
                             end: {
                                 contact: {
