@@ -187,7 +187,7 @@ class UserController {
     const { user } = req;
     let phone = user?.decodedToken?.phone || ""
     let email = user?.decodedToken?.email || ""
-    let userId = user?.decodedToken?.user_id || ""
+    let userId = user?.decodedToken?.userId || ""
     try {
       let query = []
       
