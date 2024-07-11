@@ -209,12 +209,12 @@ class SearchService {
 
             let searchResponses = await bppSearchService.getProviders({
                 ...searchRequest,
-                limit: undefined,
+                limit: 10000,
                 pageNumber: undefined
             });
 
-            if (!searchResponses?.response?.data || !Array.isArray(searchResponses.response.data)) {
-                console.error("No valid data found", searchResponses.response.data);
+            if (!searchResponses?.response?.data || !Array.isArray(searchResponses?.response?.data)) {
+                console.error("No valid data found", searchResponses?.response?.data);
                 throw new NoRecordFoundError("No result found");
             }
 
@@ -267,7 +267,7 @@ class SearchService {
     }
 
     async getProviderGPSFromService(userId, providerId) {
-        const searchRequest = { userId, providerIds: providerId };
+        const searchRequest = { providerIds: providerId };
         const response = await bppSearchService.search(
             searchRequest, 'ITEM', "en"
         );
