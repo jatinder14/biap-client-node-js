@@ -189,13 +189,13 @@ class UserController {
     let email = user?.decodedToken?.email || ""
     let userId = user?.decodedToken?.userId || ""
     try {
-      let query = []
+      let query = {}
       
       if (userId) {
-        query.push({ userId })
+        query = { userId }
       }
-      const userDetails = query.length ? await User.findOne({ $or: query }) : {};
-
+      const userDetails = query?.userId ? await User.findOne(query) : {};
+      console.log("userDetails -----------------, userDetails");
       return res.status(200).json({
         success: true,
         data: {

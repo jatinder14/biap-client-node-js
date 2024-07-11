@@ -204,8 +204,8 @@ class SearchService {
     async getProviders(searchRequest, targetLanguage) {
         try {
 
-            const limit = searchRequest?.limit || 18;
-            const pageNumber = searchRequest?.pageNumber || 1;
+            const limit = searchRequest?.limit ? Number(searchRequest?.limit) : 18;
+            const pageNumber = searchRequest?.pageNumber ? Number(searchRequest?.pageNumber) : 1;
 
             let searchResponses = await bppSearchService.getProviders({
                 ...searchRequest,
