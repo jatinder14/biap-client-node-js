@@ -10,26 +10,26 @@ const wishListController = new WishlistController();
 
 
 rootRouter.post(
-    '/v2/wishlist/:userId/:wishlist_key',wishListController.addItem
+    '/v2/wishlist/:userId/:deviceId',wishListController.addItem
 );
 
 rootRouter.get(
-    '/v2/wishlist/:userId/:wishlist_key',
+    '/v2/wishlist/:userId/:deviceId',
     wishListController.getWishlistItem
 );
 
 rootRouter.delete(
-    '/v2/all/wishlist/:userId/:wishlist_key',
+    '/v2/all/wishlist/:userId/:deviceId',
     wishListController.clearWishlist,
 );
 
 rootRouter.delete(
-    '/v2/item/wishlist/:userId/:wishlist_key/:itemId',
+    '/v2/item/wishlist/:userId/:deviceId/:itemId',
     wishListController.removeWishlistItem,
 );
 
 rootRouter.delete(
-    '/v2/wishlist/:userId/:withlist_id',
+    '/v2/wishlist/:userId/:deviceId',
     wishListController.removeWishlistItemById,
 );
 

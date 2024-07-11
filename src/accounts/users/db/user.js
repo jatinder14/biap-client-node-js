@@ -33,8 +33,7 @@ const  UserSchema = new mongoose.Schema(
         phone_otp_expiry_date : {type : Number},
         email_otp_expiry_date : {type : String},
         address: {type:AddressSchema,default:null},
-        cart_key: { type: String },
-        wishlist_key: { type: String },
+        device_id: { type: String },
 },
     { _id: true, timestamps: true }
 );
