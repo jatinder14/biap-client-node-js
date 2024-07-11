@@ -1,4 +1,5 @@
-import axios from "axios"; // Need to replace with got
+import got from "got";
+
 class MapController {
   async mmiToken(req, res, next) {
     try {
@@ -15,13 +16,16 @@ class MapController {
 
       let headers = { "Content-Type": "application/x-www-form-urlencoded" };
 
-      let result = await axios.post(
+      let result = await got.post(
         "https://outpost.mapmyindia.com/api/security/oauth/token",
-        paramsData,
-        { headers }
+        {
+          body: paramsData.toString(),
+          headers,
+          responseType: 'json',
+        }
       );
 
-      res.send(result.data);
+      res.send(result.body);
     } catch (error) {
       next(error);
     }
@@ -29,17 +33,18 @@ class MapController {
 
   async getCoordinates(req, res, next) {
     try {
-      const result = await axios.get(
+      const result = await got(
         "https://api.geoapify.com/v1/geocode/search",
         {
-          params: {
+          searchParams: {
             postcode: req.query.postcode,
             apiKey: process.env.MAP_API_KEY,
           },
+          responseType: 'json',
         }
       );
 
-      if (result.data.features[0] == undefined) {
+      if (result.body.features[0] == undefined) {
         return res.status(400).json({
           success: false,
           message: "Invalid pincode",
@@ -48,8 +53,8 @@ class MapController {
       return res.status(200).json({
         success: true,
         data: {
-          longitude: result.data.features[0].properties.lon,
-          latitude: result.data.features[0].properties.lat,
+          longitude: result.body.features[0].properties.lon,
+          latitude: result.body.features[0].properties.lat,
           pincode: req.query.postcode,
         },
       });
@@ -62,19 +67,20 @@ class MapController {
     const { lat, lon } = req.query;
 
     try {
-      const result = await axios.get(
+      const result = await got(
         "https://api.geoapify.com/v1/geocode/reverse",
         {
-          params: {
+          searchParams: {
             lat: req.query.lat,
             lon: req.query.lon,
             apiKey: process.env.MAP_API_KEY,
           },
+          responseType: 'json',
         }
       );
-      const { country, city, postcode } = result?.data?.features[0]?.properties;
+      const { country, city, postcode } = result?.body?.features[0]?.properties;
 
-      if (result?.data?.features[0]?.properties == undefined) {
+      if (result?.body?.features[0]?.properties == undefined) {
         res.header("Access-Control-Allow-Origin", "*");
         return res.status(400).json({
           success: false,
@@ -101,25 +107,26 @@ class MapController {
 
   static async getCoordinatesByPincode(pincode) {
     try {
-      const result = await axios.get(
+      const result = await got(
         "https://api.geoapify.com/v1/geocode/search",
         {
-          params: {
+          searchParams: {
             postcode: pincode,
             apiKey: process.env.MAP_API_KEY,
           },
+          responseType: 'json',
         }
       );
 
-      if (!result.data.features[0]) {
+      if (!result?.body?.features[0]) {
         throw new Error("Invalid pincode");
       }
 
       return {
         success: true,
         data: {
-          longitude: result.data.features[0].properties.lon,
-          latitude: result.data.features[0].properties.lat,
+          longitude: result?.body?.features[0]?.properties?.lon,
+          latitude: result?.body?.features[0]?.properties?.lat,
           pincode: pincode,
         },
       };

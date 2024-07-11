@@ -190,13 +190,7 @@ class BppSearchService {
 
     async getProviders(searchRequest) {
         try {
-            if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
-            else searchRequest.limit = 18
-            if (searchRequest?.pageNumber) searchRequest.pageNumber = Number(searchRequest?.pageNumber)
-            else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
-
-
             return { response };
         }
         catch (err) {

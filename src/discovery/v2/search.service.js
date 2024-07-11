@@ -9,9 +9,7 @@ import createPeriod from "date-period";
 import translateObject from "../../utils/bhashini/translate.js";
 import { OBJECT_TYPE } from "../../utils/constants.js";
 import MapController from '../../accounts/map/map.controller.js';
-import got from 'got';
 import pointInPolygon from 'point-in-polygon';
-
 // import logger from "../lib/logger";
 const bppSearchService = new BppSearchService();
 
@@ -202,26 +200,47 @@ class SearchService {
         }
     }
 
-    /**
-     * get providers
-     * @param {Object} searchRequest
-     */
     async getProviders(searchRequest, targetLanguage) {
         try {
-            let searchResponses = await bppSearchService.getProviders(searchRequest);
+
+            const limit = searchRequest?.limit || 18;
+            const pageNumber = searchRequest?.pageNumber || 1;
+
+            let searchResponses = await bppSearchService.getProviders({
+                ...searchRequest,
+                limit: undefined,
+                pageNumber: undefined
+            });
+
+            if (!searchResponses?.response?.data || !Array.isArray(searchResponses.response.data)) {
+                console.error("No valid data found", searchResponses.response.data);
+                throw new NoRecordFoundError("No result found");
+            }
+
+            if (searchRequest.pincode) {
+                searchResponses.response.data = await this.filterByPincodeOrPanIndia(searchResponses.response.data, searchRequest?.userId, searchRequest?.pincode);
+            }
 
             if (targetLanguage) {
-                // Translate data if necessary
-                searchResponses = await translateObject(searchResponses, OBJECT_TYPE.PROVIDER, targetLanguage);
+                searchResponses.response.data = await translateObject(searchResponses.response.data, OBJECT_TYPE.PROVIDER, targetLanguage);
             }
 
-            // Filter by pincode if provided
-            if (searchRequest.pincode) {
-                searchResponses = this.filterByPincodeOrPanIndia(searchResponses, searchRequest.userId, searchRequest.pincode);
-            }
+            const totalCount = searchResponses?.response?.data?.length;
+
+            const totalPages = Math.ceil(totalCount / limit);
+            const startIndex = (pageNumber - 1) * limit;
+            const endIndex = Math.min(startIndex + limit, totalCount);
+
+            const paginatedData = searchResponses?.response?.data.slice(startIndex, endIndex);
+
+            // Update response with paginated data and additional information
+            searchResponses.response.data = paginatedData;
+            searchResponses.response.count = totalCount;
+            searchResponses.response.pages = totalPages;
 
             return searchResponses;
         } catch (err) {
+            console.error("Error in getProviders:", err);
             throw err;
         }
     }
@@ -229,51 +248,38 @@ class SearchService {
     calculateDistance(coord1, coord2) {
         const [lon1, lat1] = coord1;
         const [lon2, lat2] = coord2;
-        const earthRadiusKm = 6371; // Earth's radius in kilometers
+        const earthRadiusKm = 6371;
 
-        // Differences in latitude and longitude
         const deltaLat = (lat2 - lat1) * Math.PI / 180;
         const deltaLon = (lon2 - lon1) * Math.PI / 180;
 
-        // Haversine formula components
         const haversineLat = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2);
         const haversineLon = Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
         const cosLat1 = Math.cos(lat1 * Math.PI / 180);
         const cosLat2 = Math.cos(lat2 * Math.PI / 180);
 
-        // Haversine formula
         const haversineFormula = haversineLat + cosLat1 * cosLat2 * haversineLon;
-
-        // Angular distance in radians
         const angularDistance = 2 * Math.atan2(Math.sqrt(haversineFormula), Math.sqrt(1 - haversineFormula));
 
-        // Distance in kilometers
         const distance = earthRadiusKm * angularDistance;
         return distance;
     }
 
-    async getProviderGPS(userId, providerId) {
-        const url = `${process.env.ONDC_BASE_API_URL}/clientApis/v2/search/${userId}?providerIds=${providerId}`;
-        try {
-            const response = await got(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                responseType: 'json'
-            });
+    async getProviderGPSFromService(userId, providerId) {
+        const searchRequest = { userId, providerIds: providerId };
+        const response = await bppSearchService.search(
+            searchRequest, 'ITEM', "en"
+        );
 
-            if (response.body.response.count > 0) {
-                const providerData = response.body.response.data[0];
-                const gps = providerData.location_details.gps.split(',');
-                return {
-                    latitude: parseFloat(gps[0]),
-                    longitude: parseFloat(gps[1])
-                };
-            } else {
-                throw new Error('Failed to fetch provider GPS coordinates');
-            }
-        } catch (error) {
-            throw error;
+        if (response?.response?.count > 0) {
+            const providerData = response?.response?.data[0];
+            const gps = providerData?.location_details?.gps.split(',');
+            return {
+                latitude: parseFloat(gps[0]),
+                longitude: parseFloat(gps[1])
+            };
+        } else {
+            throw new Error('Failed to fetch provider GPS coordinates');
         }
     }
 
@@ -287,66 +293,68 @@ class SearchService {
         const currentCoords = [longitude, latitude];
         const filteredProviders = [];
 
-        for (const provider of providers.response.data) {
+        for (const provider of providers) {
+            const serviceabilityTag = provider?.tags.find(tag => tag.code === "serviceability");
+            if (!serviceabilityTag) continue;
+
             let hasPincode = false;
             let isPanIndia = false;
             let isWithinPolygon = false;
             let isWithinRadius = false;
 
-            for (let tag of provider.tags) {
-                if (tag.code !== "serviceability") continue;
+            const typeItem = serviceabilityTag.list.find(item => item.code === "type");
+            const valItem = serviceabilityTag.list.find(item => item.code === "val");
+            const unitItem = serviceabilityTag.list.find(item => item.code === "unit");
 
-                for (let item of tag.list) {
-                    switch (item.value) {
-                        case "10": // Radius
-                            const providerGPS = await this.getProviderGPS(userId, provider.id);
-                            const radiusKm = parseFloat(tag.list.find(i => i.code === "val").value);
-                            const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
-                            isWithinRadius = distance <= radiusKm;
-                            break;
+            if (typeItem && valItem) {
+                switch (typeItem.value) {
+                    case "10": // Radius
+                        const providerGPS = await this.getProviderGPSFromService(userId, provider.id);
+                        const radiusKm = parseFloat(valItem.value);
+                        const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
+                        isWithinRadius = distance <= radiusKm;
+                        break;
 
-                        case "11": // Pincode
-                            const valItem = tag.list.find(i => i.code === "val");
-                            if (valItem) {
-                                const pincodeRanges = valItem.value.split(',').map(range => range.trim());
-
-                                hasPincode = pincodeRanges.some(range => {
-                                    if (range.includes('-')) {
-                                        const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
-                                        return pincode >= start && pincode <= end;
-                                    }
-                                    return parseInt(range) === pincode;
-                                });
-                            }
-                            break;
-
-                        case "12": // Pan India
-                            isPanIndia = true;
-                            break;
-
-                        case "13": // Polygon
-                            const geoJSONValItem = tag.list.find(i => i.code === "val");
-                            if (geoJSONValItem) {
-                                const geoJSONString = geoJSONValItem.value;
-                                const geoJSON = JSON.parse(geoJSONString);
-
-                                if (geoJSON.features && geoJSON.features.length) {
-                                    isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
+                    case "11": // Pincode
+                        if (unitItem && unitItem.value === "pincode") {
+                            const pincodeRanges = valItem.value.split(',').map(range => range.trim());
+                            hasPincode = pincodeRanges.some(range => {
+                                if (range.includes('-')) {
+                                    const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
+                                    return pincode >= start && pincode <= end;
                                 }
-                            }
-                            break;
-                    }
-                }
+                                return parseInt(range) === pincode;
+                            });
+                        }
+                        break;
 
-                if (hasPincode || isPanIndia || isWithinPolygon || isWithinRadius) {
-                    filteredProviders.push(provider);
-                    break;
+                    case "12": // Pan India
+                        isPanIndia = true;
+                        break;
+
+                    case "13": // Polygon
+                        if (unitItem && unitItem.value === "GeoJSON") {
+                            const geoJSONString = valItem.value;
+                            const geoJSON = JSON.parse(geoJSONString);
+                            if (geoJSON?.features && geoJSON?.features.length) {
+                                isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
+                            }
+                        }
+                        break;
+
+                    default:
+                        break;
                 }
+            }
+
+            if (hasPincode || isPanIndia || isWithinPolygon || isWithinRadius) {
+                filteredProviders.push(provider);
             }
         }
 
         return filteredProviders;
     }
+
 
 
     /**
