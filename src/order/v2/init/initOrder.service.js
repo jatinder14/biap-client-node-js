@@ -46,29 +46,7 @@ class InitOrderService {
                     return { id: location.local_id };
                 })
             };
-            const fulfillment = {
-                end: {
-                    contact: {
-                        email: orderRequest?.delivery_info?.email,
-                        phone: orderRequest?.delivery_info?.phone
-                    },
-                    location: {
-                        ...orderRequest?.delivery_info?.location,
-                        address: {
-                            ...orderRequest?.delivery_info?.location?.address,
-                            name: orderRequest?.delivery_info?.name
-                        }
-                    },
-                },
-                type: orderRequest?.delivery_info?.type,
-                customer: {
-                    person: {
-                        name: orderRequest?.delivery_info?.name
-                    }
-                },
-                provider_id: provider?.local_id
-            };
-            let itemProducts = []
+            let itemProducts = [], selected_fulfillment_id = ''
             for (let item of orderRequest.items) {
 
                 let parentItemId = item?.parent_item_id?.toString();
@@ -92,6 +70,7 @@ class InitOrderService {
 
                 selectitem.fulfillment_id = item?.fulfillment_id
                 selectitem.product = item?.product
+                selected_fulfillment_id = item?.fulfillment_id
                 itemProducts.push(selectitem);
 
                 if (item.customisations) {
@@ -126,6 +105,29 @@ class InitOrderService {
                 }
 
             }
+            const fulfillment = {
+                id: selected_fulfillment_id,
+                end: {
+                    contact: {
+                        email: orderRequest?.delivery_info?.email,
+                        phone: orderRequest?.delivery_info?.phone
+                    },
+                    location: {
+                        ...orderRequest?.delivery_info?.location,
+                        address: {
+                            ...orderRequest?.delivery_info?.location?.address,
+                            name: orderRequest?.delivery_info?.name
+                        }
+                    },
+                },
+                type: orderRequest?.delivery_info?.type,
+                customer: {
+                    person: {
+                        name: orderRequest?.delivery_info?.name
+                    }
+                },
+                provider_id: provider?.local_id
+            };
             console.log("deviceId createOrder -------------", deviceId);
             await addOrUpdateOrderWithTransactionIdAndProvider(
                 response.context.transaction_id, provider.local_id,
