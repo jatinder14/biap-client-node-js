@@ -308,7 +308,7 @@ class SearchService {
                 case "10": // Radius
                     const providerGPS = await this.getProviderGPSFromService(userId, provider.id);
                     const radiusKm = parseFloat(valItem.value);
-                    const distance = calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
+                    const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
                     isWithinRadius = distance <= radiusKm;
                     break;
 
