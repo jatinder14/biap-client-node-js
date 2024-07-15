@@ -7,8 +7,8 @@ class CartController {
     async addItem(req, res, next) {
 
         try {
-            const { cart_key, userId } = req.params
-            if ((!userId || userId == "guestUser") && (!cart_key || ['null', 'undefined'].includes(cart_key))) {
+            const { deviceId, userId } = req.params
+            if ((!userId || userId == "guestUser") && (!deviceId || ['null', 'undefined'].includes(deviceId))) {
                 res.header("Access-Control-Allow-Origin", "*");
                 return res.status(400).json({ success: false, message: "Rquired parameters are missing!" })
             }
@@ -21,8 +21,8 @@ class CartController {
 
     async getCartItem(req, res, next) {
         try {
-            const { cart_key, userId } = req.params
-            if ((!userId || userId == "guestUser") && (!cart_key || ['null', 'undefined'].includes(cart_key))) {
+            const { deviceId, userId } = req.params
+            if ((!userId || userId == "guestUser") && (!deviceId || ['null', 'undefined'].includes(deviceId))) {
                 res.header("Access-Control-Allow-Origin", "*");
                 return res.status(400).json({ success: false, message: "Rquired parameters are missing!" })
             }
