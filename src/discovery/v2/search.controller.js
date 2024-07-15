@@ -53,7 +53,7 @@ class SearchController {
           let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
           if (wishlistData.length) {
             itemids = wishlistData.map((item) => {
-              return item.item.id;
+              return item?.item?.id;
             });
           }
 
