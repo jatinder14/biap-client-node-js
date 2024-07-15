@@ -1,63 +1,73 @@
 import OrderMongooseModel from '../../v1/db/order.js';
+import { protocolSearchItems } from "../../../utils/protocolApis/index.js"
+import SearchService from "../../../discovery/v2/search.service.js";
+const searchService = new SearchService();
 
-
-import {protocolSearchItems} from "../../../utils/protocolApis/index.js"
-import NoRecordFoundError from '../../../lib/errors/no-record-found.error.js';
 class TopSellingService {
-    async getTopOrderList() {
+    async getTopOrderList(userId, pincode) {
         try {
-          const pipeline = [
-            {
-                $match: { is_order_confirmed: true }
-            },
-            {
-                $unwind: "$items"
-            },
-            {
-                $match: { "items.quantity.count": { $gte: 1 } }
-            },
-            {
-                $group: {
-                    _id: "$items.id",
-                    count: { $sum: "$items.quantity.count" }
+            const pipeline = [
+                {
+                    $match: { is_order_confirmed: true }
+                },
+                {
+                    $unwind: "$items"
+                },
+                {
+                    $match: { "items.quantity.count": { $gte: 1 } }
+                },
+                {
+                    $group: {
+                        _id: "$items.id",
+                        count: { $sum: "$items.quantity.count" }
+                    }
+                },
+                {
+                    $sort: { count: -1 }
+                },
+                {
+                    $limit: 10
+                },
+                {
+                    $group: {
+                        _id: null,
+                        itemIds: { $push: "$_id" }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        itemIds: 1
+                    }
                 }
-            },
-            {
-                $sort: { count: -1 }
-            },
-            {
-                $limit: 10
-            },
-            {
-                $group: {
-                    _id: null,
-                    itemIds: { $push: "$_id" }
+            ];
+            let allOrders = await OrderMongooseModel.aggregate(pipeline);
+            const itemIds = allOrders[0]?.itemIds;
+            const itemJoin = itemIds?.join(',')
+            if (itemJoin) {
+                const response = await protocolSearchItems({ itemIds: itemJoin });
+
+                const filteredItems = [];
+                for (const item of response.data) {
+                    const provider = item.provider_details;
+                    const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
+                    if (serviceable) {
+                        filteredItems.push(item);
+                    }
                 }
-            },
-            {
-                $project: {
-                    _id: 0,
-                    itemIds: 1
-                }
+
+                return filteredItems;
             }
-        ];
-          let allOrders = await OrderMongooseModel.aggregate(pipeline);
-              const itemIds = allOrders[0]?.itemIds;
-              const itemJoin=itemIds?.join(',')
-            if(itemJoin){
-              const response = await protocolSearchItems({ itemIds:itemJoin });
-              return response.data    
+            else {
+                return []
             }
-            else{
-              return []
-            }
-            
+
         } catch (error) {
             throw error;
         }
     }
-    
-    
+
+
 }
 
 export default TopSellingService;

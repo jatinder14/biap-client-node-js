@@ -284,77 +284,83 @@ class SearchService {
         }
     }
 
-    async filterByPincodeOrPanIndia(providers, userId, pincode) {
+    async isProviderServiceable(provider, userId, pincode) {
+        const serviceabilityTag = provider?.tags.find(tag => tag.code === "serviceability");
+        if (!serviceabilityTag) return false;
+
         const coordinatesResponse = await MapController.getCoordinatesByPincode(pincode);
-        if (!coordinatesResponse.success) {
-            return [];
-        }
+        if (!coordinatesResponse.success) return false;
 
         const { latitude, longitude } = coordinatesResponse.data;
         const currentCoords = [longitude, latitude];
+
+        let hasPincode = false;
+        let isPanIndia = false;
+        let isWithinPolygon = false;
+        let isWithinRadius = false;
+
+        const typeItem = serviceabilityTag.list.find(item => item.code === "type");
+        const valItem = serviceabilityTag.list.find(item => item.code === "val");
+        const unitItem = serviceabilityTag.list.find(item => item.code === "unit");
+
+        if (typeItem && valItem) {
+            switch (typeItem.value) {
+                case "10": // Radius
+                    const providerGPS = await getProviderGPSFromService(userId, provider.id);
+                    const radiusKm = parseFloat(valItem.value);
+                    const distance = calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
+                    isWithinRadius = distance <= radiusKm;
+                    break;
+
+                case "11": // Pincode
+                    if (unitItem && unitItem.value === "pincode") {
+                        const pincodeRanges = valItem.value.split(',').map(range => range.trim());
+                        hasPincode = pincodeRanges.some(range => {
+                            if (range.includes('-')) {
+                                const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
+                                return pincode >= start && pincode <= end;
+                            }
+                            return parseInt(range) === pincode;
+                        });
+                    }
+                    break;
+
+                case "12": // Pan India
+                    isPanIndia = true;
+                    break;
+
+                case "13": // Polygon
+                    if (unitItem && unitItem.value === "GeoJSON") {
+                        const geoJSONString = valItem.value;
+                        const geoJSON = JSON.parse(geoJSONString);
+                        if (geoJSON?.features && geoJSON?.features.length) {
+                            isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
+                        }
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        return hasPincode || isPanIndia || isWithinPolygon || isWithinRadius;
+    }
+
+
+    async filterByPincodeOrPanIndia(providers, userId, pincode) {
         const filteredProviders = [];
 
         for (const provider of providers) {
-            const serviceabilityTag = provider?.tags.find(tag => tag.code === "serviceability");
-            if (!serviceabilityTag) continue;
-
-            let hasPincode = false;
-            let isPanIndia = false;
-            let isWithinPolygon = false;
-            let isWithinRadius = false;
-
-            const typeItem = serviceabilityTag.list.find(item => item.code === "type");
-            const valItem = serviceabilityTag.list.find(item => item.code === "val");
-            const unitItem = serviceabilityTag.list.find(item => item.code === "unit");
-
-            if (typeItem && valItem) {
-                switch (typeItem.value) {
-                    case "10": // Radius
-                        const providerGPS = await this.getProviderGPSFromService(userId, provider.id);
-                        const radiusKm = parseFloat(valItem.value);
-                        const distance = this.calculateDistance(currentCoords, [providerGPS.longitude, providerGPS.latitude]);
-                        isWithinRadius = distance <= radiusKm;
-                        break;
-
-                    case "11": // Pincode
-                        if (unitItem && unitItem.value === "pincode") {
-                            const pincodeRanges = valItem.value.split(',').map(range => range.trim());
-                            hasPincode = pincodeRanges.some(range => {
-                                if (range.includes('-')) {
-                                    const [start, end] = range.split('-').map(pc => parseInt(pc.trim()));
-                                    return pincode >= start && pincode <= end;
-                                }
-                                return parseInt(range) === pincode;
-                            });
-                        }
-                        break;
-
-                    case "12": // Pan India
-                        isPanIndia = true;
-                        break;
-
-                    case "13": // Polygon
-                        if (unitItem && unitItem.value === "GeoJSON") {
-                            const geoJSONString = valItem.value;
-                            const geoJSON = JSON.parse(geoJSONString);
-                            if (geoJSON?.features && geoJSON?.features.length) {
-                                isWithinPolygon = geoJSON.features.some(geo => pointInPolygon(currentCoords, geo.geometry.coordinates[0]));
-                            }
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-
-            if (hasPincode || isPanIndia || isWithinPolygon || isWithinRadius) {
+            const serviceable = await this.isProviderServiceable(provider, userId, pincode);
+            if (serviceable) {
                 filteredProviders.push(provider);
             }
         }
 
         return filteredProviders;
     }
+
 
 
 
