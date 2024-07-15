@@ -19,7 +19,7 @@ class TopSellingController {
     topSellingProduct(req, res, next) {
         const { query = {}, user } = req;
         const userId = req.params.userId
-        const { pageNumber = 1, pincode = 140301 } = query;
+        const { pageNumber = 1, pincode } = query;
 
         if (pageNumber > 0) {
             topSellingService.getTopOrderList(userId, pincode).then(async response => {

@@ -46,17 +46,21 @@ class TopSellingService {
             const itemJoin = itemIds?.join(',')
             if (itemJoin) {
                 const response = await protocolSearchItems({ itemIds: itemJoin });
-
-                const filteredItems = [];
-                for (const item of response.data) {
-                    const provider = item.provider_details;
-                    const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
-                    if (serviceable) {
-                        filteredItems.push(item);
+                if (pincode) {
+                    const filteredItems = [];
+                    for (const item of response.data) {
+                        const provider = item.provider_details;
+                        const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
+                        if (serviceable) {
+                            filteredItems.push(item);
+                        }
                     }
+    
+                    return filteredItems;
+                } else {
+                    return response.data;
                 }
-
-                return filteredItems;
+                
             }
             else {
                 return []
