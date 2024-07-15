@@ -7,7 +7,7 @@ import WishList from '../db/wishlist.js';
 const topSellingService = new TopSellingService();
 
 class TopSellingController {
-    
+
     /**
     * get order list
     * @param {*} req    HTTP request object
@@ -15,14 +15,14 @@ class TopSellingController {
     * @param {*} next   Callback argument to the middleware function
     * @return {callback}
     */
-   
+
     topSellingProduct(req, res, next) {
         const { query = {}, user } = req;
-
-        const { pageNumber = 1 } = query;
+        const userId = req.params.userId
+        const { pageNumber = 1, pincode } = query;
 
         if (pageNumber > 0) {
-            topSellingService.getTopOrderList().then(async response => {
+            topSellingService.getTopOrderList(userId, pincode).then(async response => {
                 if (!response.error) {
                     const userId = req.params.userId
                     const wishlistKey = req.query.deviceId 
@@ -46,13 +46,13 @@ class TopSellingController {
                             }
                         });
                     }
-                    
+
                     res.send(response)
                 }
                 else {
                     console.log("topSellingProduct response.error ----------------- ", response.error);
                     res.send([]);
-                } 
+                }
             }).catch((err) => {
                 next(err);
             });
@@ -60,7 +60,7 @@ class TopSellingController {
         else
             throw new BadRequestParameterError();
     }
-  
+
 }
 
 export default TopSellingController;

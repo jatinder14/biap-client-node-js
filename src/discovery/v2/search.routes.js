@@ -1,6 +1,6 @@
-import {Router} from 'express';
-import {bhashiniTranslator} from '../../middlewares/bhashiniTranslator/search.js';
-import {providerTranslator} from '../../middlewares/bhashiniTranslator/provider.js';
+import { Router } from 'express';
+import { bhashiniTranslator } from '../../middlewares/bhashiniTranslator/search.js';
+import { providerTranslator } from '../../middlewares/bhashiniTranslator/provider.js';
 
 import SearchController from './search.controller.js';
 import authentication from '../../middlewares/authentication.js';
@@ -10,20 +10,20 @@ const searchController = new SearchController();
 
 // search
 router.get(
-    '/v2/search/:userId',  
-    searchController.search,bhashiniTranslator
-    
+    '/v2/search/:userId',
+    searchController.search, bhashiniTranslator
+
 );
 
 
 // get item details
 router.get(
-    '/v2/items/:id/:',searchController.getItem
+    '/v2/items/:id/:', searchController.getItem
 );
 
 // get item details
 router.get(
-    '/v2/providers/:itemId',  searchController.getProvider,
+    '/v2/providers/:itemId', searchController.getProvider,
 );
 
 // // get item details
@@ -33,11 +33,11 @@ router.get(
 
 // get item details
 router.get(
-    '/v2/provider-details',authentication(),searchController.getProvideDetails,
+    '/v2/provider-details', authentication(), searchController.getProvideDetails,
 );
 // get item details
 router.get(
-    '/v2/location-details',authentication(),searchController.getLocationDetails,
+    '/v2/location-details', authentication(), searchController.getLocationDetails,
 );
 
 // get item details
@@ -52,11 +52,11 @@ router.get(
 
 
 router.get(
-    '/v2/attributes',  searchController.getAttributes
+    '/v2/attributes', searchController.getAttributes
 );
 
 router.get(
-    '/v2/items',  searchController.getItems
+    '/v2/items', searchController.getItems
 );
 
 router.get(
@@ -65,17 +65,17 @@ router.get(
 
 // get item attributes values
 router.get(
-    '/v2/attributeValues',  searchController.getAttributesValues,
+    '/v2/attributeValues', searchController.getAttributesValues,
 );
 
 // get providers
 router.get(
-    '/v2/providers',  searchController.getProviders
+    '/v2/providers', searchController.getProviders
 );
 
 // get custom menus
 router.get(
-    '/v2/custom-menus',  searchController.getCustomMenus,
+    '/v2/custom-menus', searchController.getCustomMenus,
 );
 
 // search provider

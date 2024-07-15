@@ -395,8 +395,7 @@ const protocolGetProviders = async (searchRequest) => {
         );
 
         const result = await apiCall.send();
-
-        return result.data;
+        return result?.data;
     } catch (err) {
         if (err?.response?.data) {
             throw err?.response?.data;

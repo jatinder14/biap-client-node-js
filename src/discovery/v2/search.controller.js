@@ -56,7 +56,7 @@ class SearchController {
               return item.item.id;
             });
           }
-          
+
           response?.response?.data?.forEach((item) => {
             if (itemids.includes(item?.id)) {
               item.wishlistAdded = true;
@@ -74,54 +74,51 @@ class SearchController {
     });
   }
 
-    getProvideDetails(req, res, next) {
-        const searchRequest = req.query;
+  getProvideDetails(req, res, next) {
+    const searchRequest = req.query;
 
-        console.log({searchRequest})
-        const headers = req.headers;
+    console.log({ searchRequest })
+    const headers = req.headers;
 
-        let targetLanguage = headers['targetlanguage'];
+    let targetLanguage = headers['targetlanguage'];
 
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        searchService.getProvideDetails(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    searchService.getProvideDetails(searchRequest, targetLanguage).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
-    getLocationDetails(req, res, next) {
-        const searchRequest = req.query;
+  getLocationDetails(req, res, next) {
+    const searchRequest = req.query;
+    const headers = req.headers;
 
-        console.log({searchRequest})
-        const headers = req.headers;
+    let targetLanguage = headers['targetlanguage'];
 
-        let targetLanguage = headers['targetlanguage'];
-
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        searchService.getLocationDetails(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    searchService.getLocationDetails(searchRequest, targetLanguage).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
   getItemDetails(req, res, next) {
     const searchRequest = req.query;
 
-    console.log({ searchRequest })
     const headers = req.headers;
 
     let targetLanguage = headers['targetlanguage'];
@@ -149,7 +146,7 @@ class SearchController {
         if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
         let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
         if (wishlistData.length) {
-          const isWishlisted = wishlistData.find((el) => response?.item_details?.id ==  el?.item?.product?.id);
+          const isWishlisted = wishlistData.find((el) => response?.item_details?.id == el?.item?.product?.id);
           if (isWishlisted) {
             response.wishlistAdded = true;
           }
@@ -161,204 +158,203 @@ class SearchController {
     });
   }
 
-    /**
-    * get item
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    getItem(req, res, next) {
-        const searchRequest = req.query;
-        const {id:itemId} = req.params;
+  /**
+  * get item
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  getItem(req, res, next) {
+    const searchRequest = req.query;
+    const { id: itemId } = req.params;
 
-        console.log({searchRequest})
 
-        searchService.getItem(searchRequest,itemId).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
+    searchService.getItem(searchRequest, itemId).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
+
+  getProvider(req, res, next) {
+    const searchRequest = req.query;
+    const { itemId } = req.params;
+
+    console.log("get providers*****1*********", { searchRequest, itemId })
+
+    searchService.getProvider(searchRequest, itemId).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response.response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
+
+  getLocation(req, res, next) {
+    const searchRequest = req.query;
+    const { id: locationId } = req.params;
+
+    console.log({ searchRequest })
+
+    searchService.getLocation(searchRequest, locationId).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response.response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
+
+  getItems(req, res, next) {
+    const searchRequest = req.query;
+
+    console.log({ searchRequest })
+
+    console.log({ searchRequest })
+    const headers = req.headers;
+
+    let targetLanguage = headers['targetlanguage'];
+    console.log({ targetLanguage })
+    console.log({ headers })
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    console.log({ targetLanguage })
 
-    getProvider(req, res, next) {
-        const searchRequest = req.query;
-        const {itemId} = req.params;
+    searchService.getItems(searchRequest, targetLanguage).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response.response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
-        console.log("get providers*****1*********" ,{searchRequest,itemId})
+  getLocations(req, res, next) {
+    const searchRequest = req.query;
 
-        searchService.getProvider(searchRequest,itemId).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response.response);
-        }).catch((err) => {
-            next(err);
-        });
+    console.log({ searchRequest })
+    const headers = req.headers;
+
+    let targetLanguage = headers['targetlanguage'];
+    console.log({ targetLanguage })
+    console.log({ headers })
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    console.log({ targetLanguage })
+    searchService.getLocations(searchRequest, targetLanguage).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response.response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
-    getLocation(req, res, next) {
-        const searchRequest = req.query;
-        const {id:locationId} = req.params;
+  /**
+  * get attribute values
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  getAttributesValues(req, res, next) {
+    const searchRequest = req.query;
 
-        console.log({searchRequest})
+    console.log({ searchRequest })
 
-        searchService.getLocation(searchRequest,locationId).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response.response);
-        }).catch((err) => {
-            next(err);
-        });
+    searchService.getAttributesValues(searchRequest).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
+
+  /**
+  * get providers
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  getProviders(req, res, next) {
+    const searchRequest = req.query;
+    const headers = req.headers;
+
+    let targetLanguage = headers['targetlanguage'];
+
+    if (targetLanguage === 'en' || !targetLanguage) //default catalog is in english hence not considering this for translation
+    {
+      targetLanguage = undefined
     }
+    searchService.getProviders(searchRequest, targetLanguage).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
-    getItems(req, res, next) {
-        const searchRequest = req.query;
+  /**
+  * get custom menu
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  getCustomMenus(req, res, next) {
+    const searchRequest = req.query;
 
-        console.log({searchRequest})
+    console.log({ searchRequest })
 
-        console.log({searchRequest})
-        const headers = req.headers;
+    searchService.getCustomMenus(searchRequest).then(response => {
+      if (!response || response === null)
+        throw new NoRecordFoundError("No result found");
+      else
+        res.json(response.response);
+    }).catch((err) => {
+      next(err);
+    });
+  }
 
-        let targetLanguage = headers['targetlanguage'];
-        console.log({targetLanguage})
-        console.log({headers})
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        console.log({targetLanguage})
+  /**
+  * on search 
+  * @param {*} req    HTTP request object
+  * @param {*} res    HTTP response object
+  * @param {*} next   Callback argument to the middleware function
+  * @return {callback}
+  */
+  onSearch(req, res, next) {
+    const { query } = req;
+    const { messageId } = query;
 
-        searchService.getItems(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response.response);
-        }).catch((err) => {
-            next(err);
-        });
+    if (messageId) {
+      searchService.onSearch(query).then(result => {
+        res.json(result);
+      }).catch((err) => {
+        next(err);
+      });
+    } else {
+      next();
     }
-
-    getLocations(req, res, next) {
-        const searchRequest = req.query;
-
-        console.log({searchRequest})
-        const headers = req.headers;
-
-        let targetLanguage = headers['targetlanguage'];
-        console.log({targetLanguage})
-        console.log({headers})
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        console.log({targetLanguage})
-        searchService.getLocations(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response.response);
-        }).catch((err) => {
-            next(err);
-        });
-    }
-
-    /**
-    * get attribute values
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    getAttributesValues(req, res, next) {
-        const searchRequest = req.query;
-
-        console.log({searchRequest})
-
-        searchService.getAttributesValues(searchRequest).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
-    }
-
-    /**
-    * get providers
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    getProviders(req, res, next) {
-      const searchRequest = req.query;
-        const headers = req.headers;
-
-        let targetLanguage = headers['targetlanguage'];
-
-        if(targetLanguage==='en' || !targetLanguage) //default catalog is in english hence not considering this for translation
-        {
-            targetLanguage = undefined
-        }
-        searchService.getProviders(searchRequest,targetLanguage).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response);
-        }).catch((err) => {
-            next(err);
-        });
-    }
-
-    /**
-    * get custom menu
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    getCustomMenus(req, res, next) {
-        const searchRequest = req.query;
-
-        console.log({searchRequest})
-
-        searchService.getCustomMenus(searchRequest).then(response => {
-            if(!response || response === null)
-                throw new NoRecordFoundError("No result found");
-            else
-                res.json(response.response);
-        }).catch((err) => {
-            next(err);
-        });
-    }
-
-    /**
-    * on search 
-    * @param {*} req    HTTP request object
-    * @param {*} res    HTTP response object
-    * @param {*} next   Callback argument to the middleware function
-    * @return {callback}
-    */
-    onSearch(req, res, next) {
-        const { query } = req;
-        const { messageId } = query;
-
-        if(messageId) {
-            searchService.onSearch(query).then(result => {
-                res.json(result);
-            }).catch((err) => {
-                next(err);
-            });
-        } else {
-          next();
-        }
-    }
+  }
 
   /**
    * get attributes
@@ -443,7 +439,7 @@ class SearchController {
         return res.status(400).send({ success: false, message: 'Missing or wrong required field city' });
       }
 
-      searchService.syncProviders(body,environment).then(result => {
+      searchService.syncProviders(body, environment).then(result => {
         res.json(result);
       }).catch((err) => {
         next(err);
