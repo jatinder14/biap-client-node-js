@@ -232,13 +232,13 @@ class SelectOrderService {
                 messageIds.map(async messageId => {
                     try {
                         const onSelectResponse = await this.onSelectOrder(messageId);
-                        if (onSelectResponse?.error || onSelectResponse?.message?.quote?.quote?.breakup?.length) {
+                        if (onSelectResponse?.error?.code == "40002" || onSelectResponse?.message?.quote?.quote?.breakup?.length) {
                             const transactionId = onSelectResponse.context.transaction_id;
                             const providerId = onSelectResponse.message.quote.provider.id;
                             const breakup = onSelectResponse?.message?.quote?.quote?.breakup
                             const allItem = breakup.filter(el => el["@ondc/org/title_type"] == "item")
                             let itemsWithCount99 = allItem.filter(el => el.item?.quantity?.available?.count != "99")
-                            itemsWithCount99 = !itemsWithCount99.length && onSelectResponse?.error?.code ? allItem : itemsWithCount99 // Checking if seller is still sending available = 99 for out of stock product
+                            itemsWithCount99 = !itemsWithCount99.length && onSelectResponse?.error?.code == "40002" ? allItem : itemsWithCount99 // Checking if seller is still sending available = 99 for out of stock product
                             if (itemsWithCount99.length) {
                                 const saveOperations = itemsWithCount99.map(async (item) => {
                                     await Select.updateOne(

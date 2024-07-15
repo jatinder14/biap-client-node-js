@@ -14,6 +14,7 @@ const validateToken = async (token, is_otp_login) => {
       decodedToken = decodeJwtToken(token);
     } else {
       decodedToken = await admin.auth().verifyIdToken(token);
+      if (decodedToken.user_id) decodedToken.userId = decodedToken.user_id
     }
 
     return decodedToken;

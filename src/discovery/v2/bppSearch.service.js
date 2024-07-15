@@ -190,13 +190,11 @@ class BppSearchService {
 
     async getProviders(searchRequest) {
         try {
-            if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
-            else searchRequest.limit = 18
-            if (searchRequest?.pageNumber) searchRequest.pageNumber = Number(searchRequest?.pageNumber)
-            else searchRequest.pageNumber = 1
+            // if (searchRequest?.limit) searchRequest.limit = Number(searchRequest?.limit)
+            // else searchRequest.limit = 18
+            // if (searchRequest?.pageNumber) searchRequest.pageNumber = Number(searchRequest?.pageNumber)
+            // else searchRequest.pageNumber = 1
             const response = await protocolGetProviders(searchRequest);
-
-
             return { response };
         }
         catch (err) {
@@ -219,19 +217,19 @@ class BppSearchService {
     async syncProviders(searchRequest, environment) {
         try {
             const protocolSearchResponse = await protocolSearch(searchRequest);
-    
+
             let syncProviderResponse;
             if (environment === "staging") {
                 syncProviderResponse = await syncProvider(searchRequest, environment);
             }
-    
+
             return { protocolSearchResponse, syncProviderResponse };
         } catch (err) {
             console.error(`Error in syncProviders with environment ${environment}:`, err);
             throw err;
         }
     }
-    
+
 
 }
 
