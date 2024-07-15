@@ -400,7 +400,7 @@ class UpdateOrderService {
                             id: returnId,
                             remarks: returnType,
                             returnStatus: returnState,
-                            refunded_amount: quote_trail ? Math.abs(quote_trail)?.toFixed(2): undefined
+                            refunded_amount: quote_trail ? Math.abs(quote_trail)?.toString(): undefined
                         },
                     },
                 };
