@@ -254,7 +254,8 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       return res.status(403).json({
         success: false,
-        message: "Your session is expired, Please login again!"
+        message: "Your session is expired, Please login again!",
+        error:error?.message
       });
     }
   }

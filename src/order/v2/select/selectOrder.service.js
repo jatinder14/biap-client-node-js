@@ -60,8 +60,8 @@ class SelectOrderService {
         try {
             const { context: requestContext, message = {} } = orderRequest || {};
             const { cart = {}, fulfillments = [] } = message;
-            requestContext.city = getCityCode(requestContext?.city)
-
+            requestContext.city = getCityCode(requestContext?.city) 
+                      
             if (!(cart?.items || cart?.items?.length)) {
                 return {
                     context,
