@@ -1,6 +1,8 @@
 
 import WishList from '../db/wishlist.js';
 import WishlistItem from "../db/wishlistItem.js"
+import { protocolGetItemList } from '../../../utils/protocolApis/index.js';
+import {transformProductDetails} from "../../../utils/mapData/transformProductDetails.js"
 
 class WishListService {
   async addItem(data) {
@@ -23,13 +25,15 @@ class WishListService {
       }
 
       if (wishlist_ids.length) {
-        const existingItem = await WishlistItem.findOne({ "item.id": data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
+        const existingItem = await WishlistItem.findOne({ item_id: data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
         if (existingItem) {
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
           let wishlistItem = new WishlistItem();
           wishlistItem.wishlist = device_wishlist ? device_wishlist : login_wishlist;
-          wishlistItem.item = data;
+          wishlistItem.item_id = data.local_id;
+          wishlistItem.provider_id=data.provider.id;
+          wishlistItem.count=data.quantity.count;
           wishlistItem.added = true
           const saveData = await wishlistItem.save();
           return saveData
@@ -55,7 +59,9 @@ class WishListService {
         
         let wishlistItem = new WishlistItem();
         wishlistItem.wishlist = saved_wishlist._id;
-        wishlistItem.item = data;
+        wishlistItem.item_id = data.local_id;
+        wishlistItem.provider_id=data.provider.id;
+        wishlistItem.count=data.quantity.count;
         wishlistItem.added = true
 
         let wishlistdata = await wishlistItem.save();
@@ -80,7 +86,14 @@ class WishListService {
       if (wishlist?._id) wishlistIds.push(wishlist?._id)
       if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
       let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
-
+      let providerIds = wishlistData.map(item => item?.provider_id || '').join(',');
+      let itemIds = wishlistData.map(item => item?.item_id || '').join(',');
+  
+      let result = await protocolGetItemList({ itemIds, providerIds });
+      let productsDetailsArray = result.data;
+  
+      wishlistData = await Promise.all(wishlistData.map(item => transformProductDetails(item, productsDetailsArray)));
+  
       return wishlistData;
     } catch (err) {
       throw err;
