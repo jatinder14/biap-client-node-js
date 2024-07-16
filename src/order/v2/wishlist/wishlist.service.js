@@ -91,12 +91,15 @@ class WishListService {
       let providerIds = wishlistData.map(item => item?.provider_id || '').join(',');
       let itemIds = wishlistData.map(item => item?.item_id || '').join(',');
 
-      let result = await protocolGetItemList({ itemIds, providerIds });
+      let result = await protocolGetItemList({ "itemIds":itemIds, providerIds });
       let productsDetailsArray = result.data;
 
       wishlistData = wishlistData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)
-        return product
+        return {
+          ...product._doc,
+          item:product.item
+        }
       });
       return wishlistData;
     } catch (err) {
