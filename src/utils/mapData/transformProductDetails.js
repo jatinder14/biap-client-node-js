@@ -1,7 +1,8 @@
 // utils.js
 export async function transformProductDetails(item, productsDetailsArray) {
   const productDetails = productsDetailsArray.find(el => item.item_id === el.item_details.id) || {};
-
+  let providers = productDetails?.provider_details ?? {}
+  if (productDetails?.location_details) providers = { ...providers, locations : [productDetails?.location_details] }
   return {
     ...item,
     item: {
@@ -15,7 +16,7 @@ export async function transformProductDetails(item, productsDetailsArray) {
       quantity: {
         count: item?.count ?? 0
       },
-      provider: productDetails?.provider_details ?? {},
+      provider: providers,
       product: {
         ...productDetails?.item_details ?? {},
         subtotal: productDetails?.item_details?.price?.value ?? 0
