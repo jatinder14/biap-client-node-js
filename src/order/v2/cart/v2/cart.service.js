@@ -2,6 +2,9 @@ import Cart from "../../db/cart.js";
 import CartItem from "../../db/items.js";
 import User from '../../../../accounts/users/db/user.js';
 import { encryptString } from "../../../../utils/cryptic.js";
+import mongoose from 'mongoose';
+import { protocolGetItemList } from '../../../../utils/protocolApis/index.js';
+import { transformProductDetails } from "../../../../utils/mapData/transformProductDetails.js"
 
 class CartService {
   async addItem(data) {
@@ -14,17 +17,17 @@ class CartService {
           { $set: { device_id: data.deviceId } },
           { new: true, upsert: true });
         cart = await Cart.findOne({ device_id: data.deviceId, userId: data.userId });
-      } 
+      }
       if (!cart && data.deviceId && data.deviceId != "undefined") {
         cart = await Cart.findOne({ device_id: data.deviceId });
-      } 
+      }
       if (!cart && data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         cart = await Cart.findOne({ userId: data.userId });
       }
 
       if (cart) {
         let existingItem = await CartItem.findOneAndUpdate(
-          { "item.id": data.id, "cart": cart._id },
+          { item_id: data.id, "cart": cart._id },
           { $inc: { "item.quantity.count": 1 } },
           { new: true });
 
@@ -34,7 +37,11 @@ class CartService {
 
         let cartItem = new CartItem();
         cartItem.cart = cart?._id;
-        cartItem.item = data;
+        cartItem.item_id = data.local_id;
+        cartItem.provider_id = data.provider.id;
+        cartItem.count = data.quantity.count;
+        console.log('data.quantity.count46', data.quantity.count)
+
         return await cartItem.save();
       } else {
         //create a new cart
@@ -48,7 +55,10 @@ class CartService {
         let saved_cart = await new Cart({ ...cart }).save();
         let cartItem = new CartItem();
         cartItem.cart = saved_cart._id;
-        cartItem.item = data;
+        cartItem.item_id = data.local_id;
+        cartItem.provider_id = data.provider.id;
+        cartItem.count = data.quantity.count;
+        console.log('cartItem60', cartItem)
         return await cartItem.save();
 
       }
@@ -130,6 +140,15 @@ class CartService {
       if (cart?._id) cartIds.push(cart?._id)
       if (cart2?._id) cartIds.push(cart2?._id)
       let cartData = await CartItem.find({ cart: { $in: cartIds } }).lean().exec();
+      if (!cartData.length) {
+        return [];
+      }
+      let providerIds = cartData.map(item => item?.provider_id || '').join(',');
+      let itemIds = cartData.map(item => item?.item_id || '').join(',');
+      let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
+      let productsDetailsArray = result.data;
+      cartData = await Promise.all(cartData.map(item => transformProductDetails(item, productsDetailsArray)));
+
       return cartData;
     } catch (err) {
       throw err;
