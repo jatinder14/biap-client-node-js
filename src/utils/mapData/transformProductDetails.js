@@ -1,8 +1,8 @@
 // utils.js
-export async function transformProductDetails(item, productsDetailsArray) {
+export const transformProductDetails = (item, productsDetailsArray) => {
   const productDetails = productsDetailsArray.find(el => item.item_id === el.item_details.id) || {};
   let providers = productDetails?.provider_details ?? {}
-  if (productDetails?.location_details) providers = { ...providers, locations : [productDetails?.location_details] }
+  if (productDetails?.location_details) providers = { ...providers, locations: [productDetails?.location_details] }
   return {
     ...item,
     item: {

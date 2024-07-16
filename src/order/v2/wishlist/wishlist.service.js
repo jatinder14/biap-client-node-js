@@ -94,8 +94,10 @@ class WishListService {
       let result = await protocolGetItemList({ itemIds, providerIds });
       let productsDetailsArray = result.data;
 
-      wishlistData = await Promise.all(wishlistData.map(item => transformProductDetails(item, productsDetailsArray)));
-
+      wishlistData = wishlistData.map(item => {
+        const product = transformProductDetails(item, productsDetailsArray)
+        return product
+      });
       return wishlistData;
     } catch (err) {
       throw err;

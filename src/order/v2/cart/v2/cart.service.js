@@ -147,7 +147,10 @@ class CartService {
       let itemIds = cartData.map(item => item?.item_id || '').join(',');
       let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
       let productsDetailsArray = result.data;
-      cartData = await Promise.all(cartData.map(item => transformProductDetails(item, productsDetailsArray)));
+      cartData = cartData.map(item => {
+        const product = transformProductDetails(item, productsDetailsArray)
+        return product
+      });
 
       return cartData;
     } catch (err) {
