@@ -152,7 +152,7 @@ const getOrderByTransactionIdAndProvider = async (transactionId, providerId) => 
 const getUniqueItems = (items) => {
     const uniqueItems = items.reduce((acc, item) => {
         let existingItem = acc.find(entry => entry.id === item.id);
-        
+
         if (existingItem) {
             existingItem.quantity.count += item.quantity.count;
         } else {
@@ -162,7 +162,7 @@ const getUniqueItems = (items) => {
                 product: item.product
             });
         }
-        
+
         return acc;
     }, []);
     return uniqueItems;
@@ -218,9 +218,16 @@ const getOrderById = async (orderId) => {
                 const breakup = order?.[0]?.quote?.breakup?.find(breakupItem => {
                     return breakupItem?.['@ondc/org/item_id'] === el?.id;
                 });
+                const updatedBreakup = order?.[0]?.updatedQuote?.breakup?.find(breakupItem => {
+                    return breakupItem?.['@ondc/org/item_id'] === el?.id;
+                });
+                if (order[0]?.state === "Cancelled") {
+                    el.fulfillment_status = "Cancelled";
+                }
                 el.boughtItemcount = breakup?.["@ondc/org/item_quantity"]?.count ?? 0;
+                el.cancelItemcount = (breakup?.["@ondc/org/item_quantity"]?.count - updatedBreakup?.["@ondc/org/item_quantity"]?.count) ?? 0;
             });
-            
+
             return order;
         }
     }
@@ -340,7 +347,7 @@ const getTotalItemsCountByAction = async (orderId, action) => {
             }
         ]);
 
-    return totalItemsCountByActionData[0]?.totalQuantity ? Number(totalItemsCountByActionData[0]?.totalQuantity): 0;
+    return totalItemsCountByActionData[0]?.totalQuantity ? Number(totalItemsCountByActionData[0]?.totalQuantity) : 0;
 
 }
 export { getOrderRequest, addOrUpdateOrderWithdOrderId, getOrderRequestLatestFirst, saveOrderRequest, getOrderByIdAndTransactionId, addOrUpdateOrderWithTransactionIdAndOrderId, addOrUpdateOrderWithTransactionId, getOrderByTransactionIdAndProvider, getOrderByTransactionId, getOrderById, addOrUpdateOrderWithTransactionIdAndProvider, getTotalOrderedItemsCount, getTotalItemsCountByAction, getOrderByTransactionAndOrderId, getOrderBasicDetailsById };

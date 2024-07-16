@@ -2,7 +2,7 @@ import _ from "lodash";
 import { ORDER_STATUS } from "../../../utils/constants.js";
 
 import OrderMongooseModel from '../../v1/db/order.js';
-import {protocolGetLocations,protocolGetLocationDetails} from "../../../utils/protocolApis/index.js";
+import { protocolGetLocations, protocolGetLocationDetails } from "../../../utils/protocolApis/index.js";
 
 class OrderHistoryService {
 
@@ -30,13 +30,13 @@ class OrderHistoryService {
                 transactionId,
                 userId
             } = params;
-            let pageNo = pageNumber ? pageNumber: (page || 1)
+            let pageNo = pageNumber ? pageNumber : (page || 1)
 
 
-            orderStatus = orderStatus??ORDER_STATUS.COMPLETED
+            orderStatus = orderStatus ?? ORDER_STATUS.COMPLETED
             limit = parseInt(limit);
             let skip = (pageNo - 1) * limit;
-            
+
             let clonedFilterObj = {};
 
             if (orderId)
@@ -45,14 +45,14 @@ class OrderHistoryService {
                 clonedFilterObj = { ...clonedFilterObj, parentOrderId: { "$in": parentOrderId.split(",") } };
             if (transactionId)
                 clonedFilterObj = { ...clonedFilterObj, transactionId: { "$in": transactionId.split(",") } };
-            if (state) 
+            if (state)
                 clonedFilterObj = { ...clonedFilterObj, state: { "$in": state.split(",") } };
             if (userId)
                 clonedFilterObj = { ...clonedFilterObj, userId: userId };
 
-           // if (_.isEmpty(clonedFilterObj))
-                clonedFilterObj = {...clonedFilterObj, userId: user.decodedToken.uid };
-                console.log("clonedFilter obj --->",clonedFilterObj)
+            // if (_.isEmpty(clonedFilterObj))
+            clonedFilterObj = { ...clonedFilterObj, userId: user.decodedToken.uid };
+            console.log("clonedFilter obj --->", clonedFilterObj)
 
             switch (orderStatus) {
                 case ORDER_STATUS.COMPLETED:
@@ -64,7 +64,7 @@ class OrderHistoryService {
                 default:
                     break;
             }
-            
+
             if (clonedFilterObj.state["$in"].includes("Return")) {
                 // Aggregation to get total count
                 const countAggregation = await OrderMongooseModel.aggregate([
@@ -141,16 +141,38 @@ class OrderHistoryService {
                 // orders = orders.toJSON();
                 let locations = []
                 let orderList = []
-                for(let order of orders){
+                for (let order of orders) {
 
                     //construct id
                     //bppid:domain_providerid_location_id
-                    if(order.provider.locations.length>0){
+                    if (order.provider.locations.length > 0) {
                         let id = `${order.bppId}_${order.domain}_${order.provider.id}_${order.provider.locations[0].id}`
-                        const response = await protocolGetLocationDetails({id:id})                    // locations.push(response)
+                        const response = await protocolGetLocationDetails({ id: id })                    // locations.push(response)
                         order.locations = response//.data?response.data[0]:[]
                     }
-                    orderList.push({...order})
+
+                    let canceledCount = 0;
+                    let totalBroughtItems = 0;
+
+                    order?.items?.forEach(item => {
+
+                        const breakup = order?.quote?.breakup?.find(breakupItem => {
+                            return breakupItem?.['@ondc/org/item_id'] === item?.id;
+                        });
+                        item.originalCount = breakup?.["@ondc/org/item_quantity"]?.count ?? 0;
+                        totalBroughtItems = item.originalCount
+                        if (item.cancellation_status === "Cancelled") {
+                            canceledCount++;
+                        }
+                    });
+
+                    if (order.state === "Cancelled") {
+                        canceledCount = totalBroughtItems;
+                    }
+
+                    order.canceledItemCount = canceledCount;
+
+                    orderList.push({ ...order })
 
 
                 }
