@@ -39,10 +39,10 @@ class TopSellingController {
                     if (wishlistData.length) {
                         itemids = wishlistData.map((item) => {
                            
-                            return item?.item?.id;
+                            return item?.item_id;
                         });
                         response.forEach((item) => {
-                            if (itemids.includes(item?.id)) {
+                            if (itemids.includes(item?.local_id)) {
                                 item.wishlistAdded = true;
                             }
                         });

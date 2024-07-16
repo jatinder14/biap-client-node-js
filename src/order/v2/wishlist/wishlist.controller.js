@@ -41,7 +41,8 @@ class WishlistController {
     }
     async removeWishlistItemById(req, res, next) {
         try {
-            return res.send(await wishlistService.removeWishlistItemById({ ...req.body, ...req.params }));
+            const { productId } = req.params;
+            return res.send(await wishlistService.removeWishlistItemById(productId));
 
         } catch (err) {
             next(err);
