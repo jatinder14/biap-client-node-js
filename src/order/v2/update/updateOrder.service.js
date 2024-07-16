@@ -402,7 +402,7 @@ class UpdateOrderService {
                             id: returnId,
                             remarks: returnType,
                             returnStatus: returnState,
-                            refunded_amount: quote_trail ? (Math.abs(parseFloat(quote_trail)))?.toString(): undefined
+                            refunded_amount: quote_trail ? (Math.abs(quote_trail))?.toString(): undefined
                         },
                     },
                 };
