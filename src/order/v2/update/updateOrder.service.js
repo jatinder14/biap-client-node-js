@@ -380,7 +380,7 @@ class UpdateOrderService {
             let returnState = lastFulfillment?.state?.descriptor?.code;
             const returnId = lastFulfillment?.id;
 
-            const validReturnStates = ["liquidated", "rejected", "reverse-qc", "return_initiated"];
+            const validReturnStates = ["liquidated", "rejected", "reverse-qc", "return_initiated"]; // Return_Picked
 
             const returnType = lastFulfillment?.type;
             let quote_trail = lastFulfillment?.tags?.find(el => el.code == "quote_trail");
@@ -606,7 +606,7 @@ class UpdateOrderService {
      */
     async onUpdateDbOperation(messageId) {
         try {
-            // await new Promise((resolve) => setTimeout(resolve, 20000)) // Just for pramaan report
+            await new Promise((resolve) => setTimeout(resolve, 20000)) // Just for pramaan report
             let protocolUpdateResponse = await onUpdateStatus(messageId);
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 lokiLogger.info(`onUpdateprotocolresponse inside ----------------${JSON.stringify(protocolUpdateResponse)}`)
@@ -696,15 +696,17 @@ class UpdateOrderService {
                                             transationId: order_details?.transactionId,
                                             razorpayPaymentId: order_details?.payment?.razorpayPaymentId
                                         })
-                                        await sendEmail({
-                                            userEmails: order_details?.billing?.email,
-                                            orderIds: order_details?.id,
-                                            HTMLtemplate: "/template/refund.ejs",
-                                            userName: order_details?.billing?.name || "",
-                                            subject: "Refund Processed | Your Refund has been Processed to Your account",
-                                            itemName: order_details?.billing?.email,
-                                            itemPrice: razorpayRefundAmount / 100,
-                                        });
+                                        if (refunded_amount) {
+                                            await sendEmail({
+                                                userEmails: order_details?.billing?.email,
+                                                orderIds: order_details?.id,
+                                                HTMLtemplate: "/template/refund.ejs",
+                                                userName: order_details?.billing?.name ? order_details?.billing?.name : (order_details?.billing?.address?.name ? order_details?.billing?.address?.name : order_details?.customer?.person?.name || "Recipent"),
+                                                subject: "Refund Processed | Your Refund has been Processed to Your account",
+                                                itemName: order_details?.items?.[0]?.product?.descriptor?.name || "",
+                                                itemPrice: razorpayRefundAmount / 100,
+                                            });
+                                        }
 
                                         lokiLogger.info(`refundDetails>>>>>>>>>>, ${JSON.stringify(refundDetails)}`)
 
