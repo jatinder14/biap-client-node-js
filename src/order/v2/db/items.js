@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 import Cart from "./cart.js";
 
-const  CartItemSchema = new mongoose.Schema(
+const CartItemSchema = new mongoose.Schema(
     {
         item_id: { type: String },
-        provider_id:{type:String},
-        count:{type:Number},
-        cart:{type:String, ref:'Cart'}
+        provider_id: { type: String },
+        count: { type: Number },
+        cart: { type: String, ref: 'Cart' }
     },
     { _id: true, timestamps: true }
 );
