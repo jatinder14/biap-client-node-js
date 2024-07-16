@@ -380,15 +380,17 @@ class UpdateOrderService {
             let returnState = lastFulfillment?.state?.descriptor?.code;
             const returnId = lastFulfillment?.id;
 
-            const validReturnStates = ["Liquidated", "Rejected", "Reverse-QC"];
+            const validReturnStates = ["liquidated", "rejected", "reverse-qc", "return_initiated"];
 
             const returnType = lastFulfillment?.type;
             let quote_trail = lastFulfillment?.tags?.find(el => el.code == "quote_trail");
             quote_trail = quote_trail?.list?.filter(item => item.code === "value")
             .reduce((acc, item) => acc + parseFloat(item.value), 0);
             const essentialDashboardUri = process.env.ESSENTIAL_DASHBOARD_URI;
+            lokiLogger.info(`returnState - ${returnState}`)
+            lokiLogger.info(`essentialDashboardUri - ${essentialDashboardUri}`)
             if (
-                validReturnStates.includes(returnState) &&
+                validReturnStates.includes(returnState?.toLowerCase()) &&
                 essentialDashboardUri &&
                 order.context?.transaction_id &&
                 order.context?.bap_id
@@ -399,7 +401,7 @@ class UpdateOrderService {
                             id: returnId,
                             remarks: returnType,
                             returnStatus: returnState,
-                            refunded_amount: quote_trail ? Math.abs(quote_trail): undefined
+                            refunded_amount: quote_trail ? (Math.abs(quote_trail))?.toString(): undefined
                         },
                     },
                 };
@@ -416,6 +418,7 @@ class UpdateOrderService {
                 };
                 const response = await axios.request(config);
             } else {
+                lokiLogger.info(`Else when no returnState`)
                 return;
             }
         } catch (error) {

@@ -38,12 +38,12 @@ class SearchController {
 
         try {
           const userId = req.params.userId
-          const wishlistKey = req.query.wishlist_key || req.query.deviceId
+          const wishlistKey = req.query.deviceId
           console.log("userId ------------------------", userId);
           console.log("wishlistKey ------------------------", wishlistKey);
           let itemids = [], wishlist, wishlist2, wishlistIds = [];
           if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
-            wishlist = await WishList.findOne({ wishlist_key: wishlistKey });
+            wishlist = await WishList.findOne({ device_id: wishlistKey });
           }
           if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
             wishlist2 = await WishList.findOne({ userId: userId });
@@ -53,12 +53,12 @@ class SearchController {
           let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
           if (wishlistData.length) {
             itemids = wishlistData.map((item) => {
-              return item.item.id;
+              return item?.item_id;
             });
           }
 
           response?.response?.data?.forEach((item) => {
-            if (itemids.includes(item?.id)) {
+            if (itemids.includes(item?.local_id)) {
               item.wishlistAdded = true;
             }
           });
@@ -128,9 +128,8 @@ class SearchController {
       targetLanguage = undefined
     }
     const userId = searchRequest.userId
-    const wishlistKey = searchRequest.wishlist_key || searchRequest.deviceId
+    const wishlistKey = searchRequest.deviceId 
     if (searchRequest.userId) delete searchRequest.userId
-    if (searchRequest.wishlist_key) delete searchRequest.wishlist_key
     if (searchRequest.deviceId) delete searchRequest.deviceId
     searchService.getItemDetails(searchRequest, targetLanguage).then(async (response) => {
       if (!response || response === null)
@@ -138,7 +137,7 @@ class SearchController {
       else {
         let wishlist, wishlist2, wishlistIds = [];
         if (wishlistKey && !["null", "undefined", "guestUser"].includes(wishlistKey)) {
-          wishlist = await WishList.findOne({ wishlist_key: wishlistKey });
+          wishlist = await WishList.findOne({ device_id: wishlistKey });
         }
         if (userId && !["null", "undefined", "guestUser"].includes(userId)) {
           wishlist2 = await WishList.findOne({ userId: userId });

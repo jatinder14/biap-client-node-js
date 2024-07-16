@@ -1,19 +1,21 @@
 
 import WishList from '../db/wishlist.js';
 import WishlistItem from "../db/wishlistItem.js"
+import { protocolGetItemList } from '../../../utils/protocolApis/index.js';
+import { transformProductDetails } from "../../../utils/mapData/transformProductDetails.js"
 
 class WishListService {
   async addItem(data) {
     try {
       let wishlist, wishlist_ids = [], device_wishlist, login_wishlist;
-      if (data.wishlist_key && data.wishlist_key != "undefined") {
-        wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
+      if (data.deviceId && data.deviceId != "undefined") {
+        wishlist = await WishList.findOne({ device_id: data.deviceId });
         if (wishlist?._id) {
           wishlist_ids.push(wishlist?._id)
           device_wishlist = wishlist?._id
         }
 
-      } 
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist = await WishList.findOne({ userId: data.userId });
         if (wishlist?._id) {
@@ -23,13 +25,15 @@ class WishListService {
       }
 
       if (wishlist_ids.length) {
-        const existingItem = await WishlistItem.findOne({ "item.id": data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
+        const existingItem = await WishlistItem.findOne({ item_id: data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
         if (existingItem) {
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
           let wishlistItem = new WishlistItem();
           wishlistItem.wishlist = device_wishlist ? device_wishlist : login_wishlist;
-          wishlistItem.item = data;
+          wishlistItem.item_id = data.local_id;
+          wishlistItem.provider_id = data.provider.id;
+          wishlistItem.count = data.quantity.count;
           wishlistItem.added = true
           const saveData = await wishlistItem.save();
           return saveData
@@ -37,25 +41,29 @@ class WishListService {
 
       } else {
         let wishlist = {};
-        if (data.wishlist_key && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
-          wishlist = { ...wishlist,
-            wishlist_key: data.wishlist_key,
+        if (data.deviceId && (!data.userId || data.userId == "undefined" || data.userId == "guestUser")) {
+          wishlist = {
+            ...wishlist,
+            device_id: data.deviceId,
           }
 
         }
         if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
-          wishlist = { ...wishlist,
+          wishlist = {
+            ...wishlist,
             userId: data.userId,
           }
         }
 
         const saved_wishlist = await new WishList({
-          wishlist_key: data.wishlist_key,
+          device_id: data.deviceId,
         }).save();
-        
+
         let wishlistItem = new WishlistItem();
         wishlistItem.wishlist = saved_wishlist._id;
-        wishlistItem.item = data;
+        wishlistItem.item_id = data.local_id;
+        wishlistItem.provider_id = data.provider.id;
+        wishlistItem.count = data.quantity.count;
         wishlistItem.added = true
 
         let wishlistdata = await wishlistItem.save();
@@ -70,9 +78,9 @@ class WishListService {
   async getWishlistItem(data) {
     try {
       let wishlist, wishlist2;
-      if (data.wishlist_key) {
-        wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
-      } 
+      if (data.deviceId) {
+        wishlist = await WishList.findOne({ device_id: data.deviceId });
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
@@ -80,7 +88,16 @@ class WishListService {
       if (wishlist?._id) wishlistIds.push(wishlist?._id)
       if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
       let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
+      let providerIds = wishlistData.map(item => item?.provider_id || '').join(',');
+      let itemIds = wishlistData.map(item => item?.item_id || '').join(',');
 
+      let result = await protocolGetItemList({ itemIds, providerIds });
+      let productsDetailsArray = result.data;
+
+      wishlistData = wishlistData.map(item => {
+        const product = transformProductDetails(item, productsDetailsArray)
+        return product
+      });
       return wishlistData;
     } catch (err) {
       throw err;
@@ -95,13 +112,13 @@ class WishListService {
       next(err);
     }
   }
-  
+
   async clearWishlist(data) {
     try {
       let wishlist = {}, wishlist2 = {};
-      if (data.wishlist_key) {
-        wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
-      } 
+      if (data.deviceId) {
+        wishlist = await WishList.findOne({ device_id: data.deviceId });
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
@@ -118,9 +135,9 @@ class WishListService {
   async removeWishlistItem(data) {
     try {
       let wishlist, wishlist2;
-      if (data.wishlist_key) {
-        wishlist = await WishList.findOne({ wishlist_key: data.wishlist_key });
-      } 
+      if (data.deviceId) {
+        wishlist = await WishList.findOne({ device_id: data.deviceId });
+      }
       if (data.userId && (data.userId != "null" && data.userId != "undefined" && data.userId != "guestUser")) {
         wishlist2 = await WishList.findOne({ userId: data.userId });
       }
@@ -134,9 +151,9 @@ class WishListService {
     }
   }
 
-  async removeWishlistItemById(data) {
+  async removeWishlistItemById(productId) {
     try {
-      return await WishlistItem.deleteOne({ _id: data.withlist_id });
+      return await WishlistItem.deleteOne({ _id: productId });
     } catch (err) {
       throw err;
     }

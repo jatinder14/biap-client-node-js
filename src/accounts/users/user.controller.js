@@ -143,8 +143,7 @@ class UserController {
         if (request.userImage || request.picture) existingUser.userImage = request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture);
         if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
         if (request.userId) existingUser.userId = request.userId
-        if (request.cart_key) existingUser.cart_key = request.cart_key
-        if (request.wishlist_key) existingUser.wishlist_key = request.wishlist_key
+        if (request.deviceId) existingUser.device_id = request.deviceId
         existingUser.userId = userId
         await existingUser.save();
 
@@ -157,8 +156,7 @@ class UserController {
           userImage: request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture),
           delivery_address: request.address || user?.decodedToken?.address,
           userId: request.userId || userId,
-          cart_key: request.cart_key || "",
-          wishlist_key: request.wishlist_key || "",
+          device_id: request.deviceId || "",
           userId
         });
 
@@ -256,7 +254,8 @@ class UserController {
       res.header("Access-Control-Allow-Origin", "*");
       return res.status(403).json({
         success: false,
-        message: "Your session is expired, Please login again!"
+        message: "Your session is expired, Please login again!",
+        error:error?.message
       });
     }
   }

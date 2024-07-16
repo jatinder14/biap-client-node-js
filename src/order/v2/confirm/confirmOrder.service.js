@@ -250,7 +250,7 @@ class ConfirmOrderService {
                 //clear cart
                 console.log("dbResponse?.deviceId processOnConfirmResponse ===============", dbResponse?.deviceId);
                 console.log("dbResponse?.userId processOnConfirmResponse ===============", dbResponse?.userId);
-                cartService.clearCart({ userId: dbResponse.userId, cart_key: dbResponse?.deviceId || undefined });
+                cartService.clearCart({ userId: dbResponse.userId, deviceId: dbResponse?.deviceId || undefined });
             }
             return response;
         }
