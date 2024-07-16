@@ -373,7 +373,6 @@ class UpdateOrderService {
      */
     async updateReturnOnEssentialDashboard(order) {
         try {
-            lokiLogger.info(`SENDING UPDATED RETURN TO BUYER ADMIN - ${JSON.stringify(order)}`)
             const lastFulfillment =
                 order?.message?.order?.fulfillments[
                 order?.message?.order?.fulfillments.length - 1
@@ -415,9 +414,7 @@ class UpdateOrderService {
                     },
                     data: data,
                 };
-                lokiLogger.info(`UPDATE RETURN - config - ${JSON.stringify(config)}`)
                 const response = await axios.request(config);
-                lokiLogger.info(`UPDATE RETURN - BUYER ADMIN RESPONSE - ${JSON.stringify(response)}`)
             } else {
                 return;
             }
@@ -530,9 +527,6 @@ class UpdateOrderService {
     async onUpdate(messageId) {
         try {
             let protocolUpdateResponse = await onUpdateStatus(messageId);
-
-            lokiLogger.info(`onUpdate protocolUpdateResponse_onUpdateStatus ----------------${JSON.stringify(protocolUpdateResponse)}`)
-
             if (!(protocolUpdateResponse && protocolUpdateResponse.length)) {
                 const contextFactory = new ContextFactory();
                 const context = contextFactory.create({
@@ -593,7 +587,6 @@ class UpdateOrderService {
 
 
             }
-            lokiLogger.info(`protocolUpdateResponse----lastLine---->>>>> -------------${JSON.stringify(protocolUpdateResponse)}`)
             return protocolUpdateResponse;
         }
 
