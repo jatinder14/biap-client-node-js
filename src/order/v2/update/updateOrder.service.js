@@ -771,9 +771,6 @@ class UpdateOrderService {
                                 Object.keys(currentfulfillmentHistoryData).forEach((itemIdToFind) => {
                                     const quantityFromQuote = getItemQuantity(dbResponse?.quote, itemIdToFind);
                                     const quantityFromUpdatedQuote = getItemQuantity(dbResponse?.updatedQuote, itemIdToFind);
-                                    console.log("-------------quantityFromQuote--------------", quantityFromQuote)
-                                    console.log("-------------quantityFromUpdatedQuote--------------", quantityFromUpdatedQuote)
-
                                     currentfulfillmentHistoryData[itemIdToFind].quantity = quantityFromQuote - quantityFromUpdatedQuote;
                                 });
                                 await FulfillmentHistory.create({
