@@ -249,7 +249,7 @@ class SseProtocol {
             );
             lokiLogger.info(`updateOrderService.onUpdateDbOperation --------------------------- ${messageId}`)
             await updateOrderService.onUpdateDbOperation(messageId);
-
+            lokiLogger.info(`updateOrderService.onUpdateDbOperation Final --------------------------- ${messageId}`)
             return {
                 message: {
                     ack: {
