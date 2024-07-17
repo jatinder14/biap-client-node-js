@@ -29,7 +29,7 @@ rootRouter.delete(
 );
 
 rootRouter.delete(
-    '/v2/wishlist/:userId/:productId',
+    '/v2/wishlist/:userId/:wishlistId',
     wishListController.removeWishlistItemById,
 );
 
