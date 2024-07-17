@@ -143,7 +143,7 @@ class SearchController {
         if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
         let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
         if (wishlistData.length) {
-          const isWishlisted = wishlistData.find((el) => response?.item_details?.local_id == el?.item_id && response?.provider_details?.id == el?.provider_id);
+          const isWishlisted = wishlistData.find((el) => response?.item_details?.id == el?.item_id && response?.provider_details?.id == el?.provider_id);
           if (isWishlisted) {
             response.wishlistAdded = true;
           }
