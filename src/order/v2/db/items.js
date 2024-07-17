@@ -6,6 +6,9 @@ const CartItemSchema = new mongoose.Schema(
         item_id: { type: String },
         provider_id: { type: String },
         count: { type: Number },
+        customisationState: { type: mongoose.Schema.Types.Mixed },
+        customisations: { type: mongoose.Schema.Types.Mixed },
+        hasCustomisations: { type: Boolean },
         cart: { type: String, ref: 'Cart' }
     },
     { _id: true, timestamps: true }
