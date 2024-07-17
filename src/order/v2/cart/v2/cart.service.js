@@ -40,6 +40,9 @@ class CartService {
         cartItem.item_id = data.local_id;
         cartItem.provider_id = data.provider.id;
         cartItem.count = data.quantity.count;
+        cartItem.customisationState = data?.customisationState;
+        cartItem.customisations = data?.customisations;
+        cartItem.hasCustomisations = data?.hasCustomisations;
         console.log('data.quantity.count46', data.quantity.count)
 
         return await cartItem.save();

@@ -22,7 +22,11 @@ export const transformProductDetails = (item, productsDetailsArray) => {
         subtotal: productDetails?.item_details?.price?.value ?? 0
       },
       userId: item?.userId ?? '',
-      deviceId: item?.deviceId ?? ''
+      deviceId: item?.deviceId ?? '',
+      customisationState: item?.customisationState,
+      customisations: item?.customisations,
+      hasCustomisations: item?.hasCustomisations
+
     }
   };
 }
