@@ -423,7 +423,7 @@ class UpdateOrderService {
             }
         } catch (error) {
             console.log("error updateReturnOnEssentialDashboard update order ===================", error);
-            throw error;
+            return;
         }
     }
 
@@ -629,8 +629,7 @@ class UpdateOrderService {
                 if (!(protocolUpdateResponse?.[0].error)) {
                     protocolUpdateResponse = protocolUpdateResponse?.[0];
                     const dbResponse = await getOrderByTransactionAndOrderId(protocolUpdateResponse.context.transaction_id, protocolUpdateResponse.message.order.id);
-                    lokiLogger.info(`----------------ondbResponse----dbResponse------------${JSON.stringify(dbResponse)}`)
-                    if (!(dbResponse || dbResponse.length) && (dbResponse?.state == "Cancelled"))
+                    if (!dbResponse && (dbResponse?.state?.toLowerCase() == "cancelled"))
                         throw new NoRecordFoundError();
                     else {
                         let refundAmount = 0;
@@ -645,15 +644,8 @@ class UpdateOrderService {
 
 
                         refundAmount = calculateRefundAmountObject?.totalRefundAmount;
-
-                        lokiLogger.info(`----------fulfillments-Items-------------: ${JSON.stringify(fulfillments)}`);
-                        lokiLogger.info(`----------latest_fulfillment-Items----------------: ${JSON.stringify(latest_fulfillment)}`);
                         let razorpayPaymentId = dbResponse?.payment?.razorpayPaymentId
                         let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, dbResponse?.id, latest_fulfillment?.state?.descriptor?.code);
-                        lokiLogger.info(`-------------checkFulfillmentAlreadyExist---------------- ${JSON.stringify(checkFulfillmentAlreadyExist)}`)
-                        lokiLogger.info(`razorpayPaymentId_onUpdate----- ${razorpayPaymentId}`)
-
-                        lokiLogger.info(`totalAmount_onUpdate-----, ${refundAmount}`)
                         if (!checkFulfillmentAlreadyExist) {
                             if (latest_fulfillment?.state?.descriptor?.code == "Liquidated" || latest_fulfillment?.state?.descriptor?.code == "Return_Picked" || latest_fulfillment?.state?.descriptor?.code == "Cancelled") {
                                 let return_item_count = 0, left_order_item_count = 0;
@@ -669,14 +661,10 @@ class UpdateOrderService {
                                     )?.value;
                                     let items = protocolUpdateResponse?.message?.order?.items;
                                     left_order_item_count =
-                                        items?.find(
-                                            (el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id,
-                                        )?.quantity?.count +
-                                        items?.find(
-                                            (el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id,
-                                        )?.quantity?.count;
+                                        items?.find((el) => el?.id == item_id && el?.fulfillment_id != fulfillment_id)?.quantity?.count +
+                                        items?.find((el) => el?.id == item_id && el?.fulfillment_id == fulfillment_id)?.quantity?.count;
                                 }
-                                if (return_item_count <= left_order_item_count || ["Cancelled","Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
+                                if (return_item_count <= left_order_item_count || ["Cancelled", "Return_Picked", "Liquidated"].includes(latest_fulfillment?.state?.descriptor?.code)) {
                                     if (razorpayPaymentId && refundAmount) {
                                         let razorpayRefundAmount = Math.abs(refundAmount).toFixed(2) ;
                                         lokiLogger.info(`------------------amount-passed-to-razorpay-- ${razorpayRefundAmount}`)
@@ -690,8 +678,6 @@ class UpdateOrderService {
                                             orderId: order_details?.id,
                                             refundId: response?.id,
                                             refundedAmount: refunded_amount,
-                                            // itemId: dbResponse.items[0].id,     will correct it after teammate [ritu] task to store return item details  - todo
-                                            // itemQty: dbResponse.items[0].quantity.count,
                                             isRefunded: true,
                                             transationId: order_details?.transactionId,
                                             razorpayPaymentId: order_details?.payment?.razorpayPaymentId
@@ -778,6 +764,7 @@ class UpdateOrderService {
                             })
                             if (!existingFulfillment?.id) {
                                 let incomingItemQuoteTrailData = {};
+                                lokiLogger.info(`fl----------------------',${JSON.stringify(fl)}`)
                                 const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(fl, dbResponse, incomingItemQuoteTrailData);
                                 lokiLogger.info(`itemIdsData----------------------',${JSON.stringify(currentfulfillmentHistoryData)}`)
                                 await FulfillmentHistory.create({
@@ -792,7 +779,7 @@ class UpdateOrderService {
                             // }
 
                             if (fl?.state?.descriptor?.code === 'Cancelled' || fl?.state?.descriptor?.code === 'Return_Picked' || fl?.state?.descriptor?.code === 'Liquidated') {
-                                console.log("amount", refundAmount);
+                                lokiLogger.info(`refundAmount---------------------- ${refundAmount}`)
 
                                 let oldSettlement = await Settlements.findOne({ orderId: dbFl.orderId, fulfillmentId: dbFl.id })
                                 if (!oldSettlement) {
@@ -859,8 +846,6 @@ class UpdateOrderService {
                                 }
                             }
                         }
-
-                        // console.log("updateItems",updateItems)
                         let updateItems = []
                         for (let item of protocolItems) {
                             let updatedItem = {}
@@ -874,7 +859,6 @@ class UpdateOrderService {
                                 item.return_status = fulfillmentStatus?.state?.descriptor?.code;
                                 item.cancellation_status = fulfillmentStatus?.state?.descriptor?.code;
                                 // item.returned_item_count = fulfillmentStatus?.item_quantity || 0
-                                // lokiLogger.info(`--------returned_item_count--------------- ${item.returned_item_count}`)
                                 // orderSchema.settle_status = SETTLE_STATUS.DEBIT
                             }
                             item.fulfillment_status = fulfillmentStatus?.state?.descriptor?.code;
@@ -901,7 +885,7 @@ class UpdateOrderService {
 
                     }
                 }
-                lokiLogger.info(`protocolUpdateResponse final ----------------${JSON.stringify(protocolUpdateResponse)}`)
+                lokiLogger.info(`protocolUpdateResponse final in db push ----------------${JSON.stringify(protocolUpdateResponse)}`)
                 return protocolUpdateResponse;
             }
 
