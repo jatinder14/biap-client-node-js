@@ -44,6 +44,7 @@ class TopSellingService {
             let allOrders = await OrderMongooseModel.aggregate(pipeline);
             const itemIds = allOrders[0]?.itemIds;
             const itemJoin = itemIds?.join(',')
+            console.log("itemJoin ================", itemJoin);
             if (itemJoin) {
                 const response = await protocolSearchItems({ itemIds: itemJoin });
                 if (pincode) {
