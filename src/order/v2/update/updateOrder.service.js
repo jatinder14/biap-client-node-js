@@ -575,12 +575,19 @@ class UpdateOrderService {
                         orderId: protocolUpdateResponse.message.order.id,
                     }).lean().exec()
                     if (!existingFulfillment?.id) {
+                        const currentfulfillmentHistoryData = getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {});
+                        lokiLogger.info(`currentfulfillmentHistoryData----------------------',${JSON.stringify(currentfulfillmentHistoryData)}`)
+                        Object.keys(currentfulfillmentHistoryData).forEach((itemIdToFind) => {
+                            const quantityFromQuote = dbResponse?.quote ? getItemQuantity(dbResponse?.quote, itemIdToFind): 0;
+                            const quantityFromUpdatedQuote = dbResponse?.updatedQuote ? getItemQuantity(dbResponse?.updatedQuote, itemIdToFind) : 0;
+                            if (dbResponse?.updatedQuote) currentfulfillmentHistoryData[itemIdToFind].quantity = quantityFromQuote - quantityFromUpdatedQuote;
+                        });
                         const fullfillmentHistory = new FulfillmentHistory({
                             id: dbResponse.id,
                             type: latestFullfilement.type,
                             state: latestFullfilement.state.descriptor.code,
                             orderId: protocolUpdateResponse.message.order.id,
-                            itemIds: getItemsIdsDataForFulfillment(latestFullfilement, dbResponse, {})
+                            itemIds: currentfulfillmentHistoryData
                         })
                         fullfillmentHistory.save()
                     }
