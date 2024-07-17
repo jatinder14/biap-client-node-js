@@ -148,7 +148,7 @@ class WishListService {
       if (wishlist?._id) wishlistIds.push(wishlist?._id)
       if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
 
-      return await WishlistItem.deleteOne({ wishlist: { $in: wishlistIds }, "item.product.id": data.itemId });
+      return await WishlistItem.deleteOne({ wishlist: { $in: wishlistIds }, item_id: data.itemId });
     } catch (err) {
       throw err;
     }
@@ -156,7 +156,7 @@ class WishListService {
 
   async removeWishlistItemById(productId) {
     try {
-      return await WishlistItem.deleteOne({ _id: productId });
+      return await WishlistItem.deleteOne({ item_id: productId });
     } catch (err) {
       throw err;
     }
@@ -164,7 +164,7 @@ class WishListService {
 
   async updateWishlistItem(data) {
     try {
-      let wishlistItem = await WishlistItem.findOne({ _id: data.itemId });
+      let wishlistItem = await WishlistItem.findOne({ item_id: data.itemId });
       wishlistItem.item = data;
       return await wishlistItem.save();
     } catch (err) {
