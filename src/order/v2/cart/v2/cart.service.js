@@ -27,8 +27,8 @@ class CartService {
 
       if (cart) {
         let existingItem = await CartItem.findOneAndUpdate(
-          { item_id: data.id, "cart": cart._id },
-          { $inc: { "item.quantity.count": 1 } },
+          { item_id: data.local_id, "cart": cart._id },
+          { $inc: { count: 1 } },
           { new: true });
 
         if (existingItem) {
@@ -61,6 +61,9 @@ class CartService {
         cartItem.item_id = data.local_id;
         cartItem.provider_id = data.provider.id;
         cartItem.count = data.quantity.count;
+        cartItem.customisationState = data?.customisationState;
+        cartItem.customisations = data?.customisations;
+        cartItem.hasCustomisations = data?.hasCustomisations;
         console.log('cartItem60', cartItem)
         return await cartItem.save();
 
@@ -153,7 +156,7 @@ class CartService {
       cartData = cartData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)
         return product
-      });
+      }).filter(el => el != null);
 
       return cartData;
     } catch (err) {

@@ -25,7 +25,7 @@ class WishListService {
       }
 
       if (wishlist_ids.length) {
-        const existingItem = await WishlistItem.findOne({ item_id: data.id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
+        const existingItem = await WishlistItem.findOne({ item_id: data.local_id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
         if (existingItem) {
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
@@ -55,9 +55,7 @@ class WishListService {
           }
         }
 
-        const saved_wishlist = await new WishList({
-          device_id: data.deviceId,
-        }).save();
+        const saved_wishlist = await new WishList(wishlist).save();
 
         let wishlistItem = new WishlistItem();
         wishlistItem.wishlist = saved_wishlist._id;
@@ -96,11 +94,12 @@ class WishListService {
 
       wishlistData = wishlistData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)
-        return {
-          ...product._doc,
-          item:product.item
-        }
-      });
+        // return {
+        //   ...product._doc,
+        //   item:product.item
+        // }
+        return product
+      }).filter(el => el != null);
       return wishlistData;
     } catch (err) {
       throw err;
