@@ -247,9 +247,9 @@ class SseProtocol {
                 PROTOCOL_CONTEXT.ON_UPDATE,
                 response,
             );
-            lokiLogger.info(`updateOrderService.onUpdateDbOperation --------------------------- ${messageId}`)
+            lokiLogger.info(`updateOrderService.onUpdateDbOperation --------------------------- ${messageId} ---------- ${new Date()}`)
             await updateOrderService.onUpdateDbOperation(messageId);
-            lokiLogger.info(`updateOrderService.onUpdateDbOperation Final --------------------------- ${messageId}`)
+            lokiLogger.info(`updateOrderService.onUpdateDbOperation Final --------------------------- ${messageId} ---------- ${new Date()}`)
             return {
                 message: {
                     ack: {
