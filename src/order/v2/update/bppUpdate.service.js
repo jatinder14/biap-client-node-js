@@ -19,7 +19,7 @@ class BppUpdateService {
             }
             const returnFulfillment = order?.order?.fulfillments.find(fulfillment => fulfillment?.type === "Return");
             const idValue = returnFulfillment?.tags?.[0]?.list?.find(item => item.code === "id")?.value?.toString();
-            context.subscriber_id = "buyer-app-stage.thewitslab.com" // context.bap_id - Need to fix this once id will subscribe
+            context.subscriber_id = context.bap_id // context.bap_id - Need to fix this once id will subscribe
             const payload = {
                 "0": {
                     "json": {
