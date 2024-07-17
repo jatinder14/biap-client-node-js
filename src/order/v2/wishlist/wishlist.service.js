@@ -154,9 +154,9 @@ class WishListService {
     }
   }
 
-  async removeWishlistItemById(productId) {
+  async removeWishlistItemById(wishlistId) {
     try {
-      return await WishlistItem.deleteOne({ item_id: productId });
+      return await WishlistItem.deleteOne({ _id: wishlistId });
     } catch (err) {
       throw err;
     }
