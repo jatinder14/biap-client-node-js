@@ -48,19 +48,31 @@ class TopSellingService {
                 const response = await protocolSearchItems({ itemIds: itemJoin });
                 if (pincode) {
                     const filteredItems = [];
+                    const uniqueItemsMap = new Map();
                     for (const item of response.data) {
                         const provider = item.provider_details;
-                        const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
-                        if (serviceable) {
-                            filteredItems.push(item);
+                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}_${item?.id}`;
+                        if (!uniqueItemsMap.has(uniqueKey)) {
+                            const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
+                            if (serviceable) {
+                                uniqueItemsMap.set(uniqueKey, item);
+                                filteredItems.push(item);
+                            }
                         }
                     }
-    
+
                     return filteredItems;
                 } else {
-                    return response.data;
+                    const uniqueItemsMap = new Map();
+                    for (const item of response.data) {
+                        const provider = item.provider_details;
+                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}_${item?.id}`;
+                        if (!uniqueItemsMap.has(uniqueKey)) {
+                            uniqueItemsMap.set(uniqueKey, item);
+                        }
+                    }
+                    return Array.from(uniqueItemsMap.values());
                 }
-                
             }
             else {
                 return []

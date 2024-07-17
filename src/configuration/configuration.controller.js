@@ -113,7 +113,7 @@ export const createConfiguration = async (req, res, next) => {
 export const getConfigurations = async (req, res) => {
     try {
         const { type = "basic" } = req.params;
-        const { bapId = "buyer-app-stage.thewitslab.com" } = req.query;
+        const { bapId = process.env.BAP_ID } = req.query;
         if (!["basic", "bank", "finder", "faq", "aboutus", "tandc", "shippingpolicy", "cancelpolicy", "returnpolicy"].includes(type)) {
             return res.status(200).json({
                 success: true,
