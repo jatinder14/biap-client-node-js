@@ -37,12 +37,9 @@ class TopSellingController {
                     if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
                     let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
                     if (wishlistData.length) {
-                        itemids = wishlistData.map((item) => {
-                           
-                            return item?.item_id;
-                        });
                         response.forEach((item) => {
-                            if (itemids.includes(item?.local_id)) {
+                            const isWishlisted = wishlistData.find(el => item?.item_details?.id == el?.item_id && item?.provider_details?.id == el?.provider_id);
+                            if (isWishlisted) {
                                 item.wishlistAdded = true;
                             }
                         });
