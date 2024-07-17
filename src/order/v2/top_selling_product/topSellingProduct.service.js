@@ -52,7 +52,7 @@ class TopSellingService {
                     const uniqueItemsMap = new Map();
                     for (const item of response.data) {
                         const provider = item.provider_details;
-                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}_${item?.id}`;
+                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}`;
                         if (!uniqueItemsMap.has(uniqueKey)) {
                             const serviceable = await searchService.isProviderServiceable(provider, userId, pincode);
                             if (serviceable) {
@@ -67,7 +67,7 @@ class TopSellingService {
                     const uniqueItemsMap = new Map();
                     for (const item of response.data) {
                         const provider = item.provider_details;
-                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}_${item?.id}`;
+                        const uniqueKey = `${item?.item_details?.id}_${provider?.id}`;
                         if (!uniqueItemsMap.has(uniqueKey)) {
                             uniqueItemsMap.set(uniqueKey, item);
                         }

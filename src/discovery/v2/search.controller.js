@@ -52,16 +52,13 @@ class SearchController {
           if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
           let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
           if (wishlistData.length) {
-            itemids = wishlistData.map((item) => {
-              return item?.item_id;
+            response?.response?.data?.forEach((item) => {
+              const isWishlisted = wishlistData.find(el => item?.item_details?.id == el?.item_id && item?.provider_details?.id == el?.provider_id);
+              if (isWishlisted) {
+                item.wishlistAdded = true;
+              }
             });
           }
-
-          response?.response?.data?.forEach((item) => {
-            if (itemids.includes(item?.local_id)) {
-              item.wishlistAdded = true;
-            }
-          });
           req.body.responseData = response;
           next()
         }
@@ -146,7 +143,7 @@ class SearchController {
         if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
         let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
         if (wishlistData.length) {
-          const isWishlisted = wishlistData.find((el) => response?.item_details?.local_id == el?.item_id);
+          const isWishlisted = wishlistData.find((el) => response?.item_details?.local_id == el?.item_id && response?.provider_details?.id == el?.provider_id);
           if (isWishlisted) {
             response.wishlistAdded = true;
           }
