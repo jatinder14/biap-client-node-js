@@ -90,8 +90,6 @@ class WishListService {
       let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
       let providerIds = wishlistData.map(item => item?.provider_id || '').join(',');
       let itemIds = wishlistData.map(item => item?.id || '').join(',');
-      await WishlistItem.deleteMany({})
-      await WishList.deleteMany({})
       // let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
       let result = await protocolListItemDetails({ "id": itemIds });
       let productsDetailsArray = result;

@@ -153,8 +153,6 @@ class CartService {
       if (!cartData.length) {
         return [];
       }
-      await CartItem.deleteMany({})
-      await Cart.deleteMany({})
       let providerIds = cartData.map(item => item?.provider_id || '').join(',');
       let itemIds = cartData.map(item => item?.id || '').join(',');
       // let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
