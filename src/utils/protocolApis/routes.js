@@ -20,6 +20,7 @@ const TRACK = "protocol/track";
 const UPDATE = "protocol/update";
 const SEARCH_ITEM = "protocol/items";
 const SEARCH_ITEM_DETAILS = "protocol/item-details";
+const SEARCH_ITEM_DETAILS_LIST = "protocol/list-item-details";
 const RESPONSE = "protocol/response";
 
 const SEARCH_ATTRIBUTE = "protocol/attributes";
@@ -60,7 +61,8 @@ const PROTOCOL_API_URLS = {
     CUSTOM_MENU,
     RESPONSE,
     DUMP,
-    SEARCH_ITEM_DETAILS
+    SEARCH_ITEM_DETAILS,
+    SEARCH_ITEM_DETAILS_LIST
 };
 
 export default PROTOCOL_API_URLS;
