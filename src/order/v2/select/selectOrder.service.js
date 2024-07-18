@@ -74,13 +74,14 @@ class SelectOrderService {
             let relatedItemIds = cart.items.map(item => item?.id || '').join(',');
             let allProviderIds = cart.items.map(item => item?.provider?.id || '').join(',');
             console.log('---------productIds------',productIds)
-            let result = await protocolGetItemList({ relatedItemIds, "itemIds": productIds, providerIds: allProviderIds });
+            console.log('---------relatedItemIds------',relatedItemIds)
+            let result = await protocolGetItemList({ "relatedItemIds": relatedItemIds, "itemIds": productIds, "providerIds": allProviderIds });
             console.log('---------result------',result)
             const productsDetailsArray = result.data
 
             cart.items = cart.items.map(item => {
                 const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id || item?.id == el?.id)
-                console.log('---------bpp_id------',productsDetails)
+                console.log('---------bpp_id------', productsDetails)
 
                 const subtotal = productsDetails?.item_details?.price?.value;
                 return {
