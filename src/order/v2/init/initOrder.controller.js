@@ -1,6 +1,6 @@
 import InitOrderService from './initOrder.service.js';
 import BadRequestParameterError from '../../../lib/errors/bad-request-parameter.error.js';
-import { protocolGetItemList } from '../../../utils/protocolApis/index.js';
+import { protocolGetItemDetails, protocolGetItemList } from '../../../utils/protocolApis/index.js';
 
 const initOrderService = new InitOrderService();
 
@@ -43,9 +43,15 @@ class InitOrderController {
                     let result = await protocolGetItemList({ "itemIds": productIds, providerIds });
                     const productsDetailsArray = result.data;
             
-                    request.message.items = order.items.map(item => {
-                        const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id);
+                    request.message.items = await Promise.all(order.items.map(async (item) => {
+                        let productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id);
                         console.log("productsDetails ----", productsDetails);
+                        if (!productsDetails?.item_details) {
+                            const response = await protocolGetItemDetails({ id: item?.id });
+                            if (response) productsDetails = response
+                            console.log('---------productsDetails final ------', productsDetails)
+                        }
+                        
                         const subtotal = productsDetails?.item_details?.price?.value;
                         return {
                             ...item,
@@ -61,7 +67,7 @@ class InitOrderController {
                                 ...productsDetails?.provider_details,
                             },
                         };
-                    });
+                    }));
                 } catch (error) {
                     console.error(`Error fetching product details for productIds ${productIds}:`, error);
                 }
