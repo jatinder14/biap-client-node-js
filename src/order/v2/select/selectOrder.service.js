@@ -60,8 +60,8 @@ class SelectOrderService {
         try {
             const { context: requestContext, message = {} } = orderRequest || {};
             const { cart = {}, fulfillments = [] } = message;
-            requestContext.city = getCityCode(requestContext?.city) 
-                      
+            requestContext.city = getCityCode(requestContext?.city)
+
             if (!(cart?.items || cart?.items?.length)) {
                 return {
                     context,
@@ -71,7 +71,7 @@ class SelectOrderService {
             }
 
             let productIds = '';
-            productIds += cart.items.map(item => item?.id || '') + ',';
+            productIds += cart.items.map(item => item?.local_id || '') + ',';
             let allProviderIds = cart.items.map(item => item?.provider?.id || '').join(',');
             console.log('---------productIds------',productIds)
             let result = await protocolGetItemList({ "itemIds": productIds, providerIds: allProviderIds });
@@ -79,8 +79,8 @@ class SelectOrderService {
             const productsDetailsArray = result.data
 
             cart.items = cart.items.map(item => {
-                const productsDetails = productsDetailsArray.find(el => item?.id == el?.id)
-                console.log('---------bpp_id------', productsDetails)
+                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id)
+                console.log('---------bpp_id------',productsDetails)
 
                 const subtotal = productsDetails?.item_details?.price?.value;
                 return {
