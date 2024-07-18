@@ -37,7 +37,7 @@ class UpdateOrderController {
                 }
             })
         );
-
+        await new Promise((resolve) => setTimeout(resolve, 1000)) // Just for testing
         res.json(onUpdateOrderResponse);
 
         // return onUpdateOrderResponse;
