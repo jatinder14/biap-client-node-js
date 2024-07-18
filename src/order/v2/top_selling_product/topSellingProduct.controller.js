@@ -45,7 +45,7 @@ class TopSellingController {
                         });
                     }
 
-                    res.send(response)
+                    res.send(response.slice(0, 5))
                 }
                 else {
                     console.log("topSellingProduct response.error ----------------- ", response.error);
