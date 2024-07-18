@@ -1,4 +1,4 @@
-import { onOrderSelect, protocolGetItemList } from "../../../utils/protocolApis/index.js";
+import { onOrderSelect, protocolGetItemDetails, protocolGetItemList } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
 import { RetailsErrorCode } from "../../../utils/retailsErrorCode.js";
 
@@ -71,17 +71,20 @@ class SelectOrderService {
             }
 
             let productIds = cart.items.map(item => item?.local_id || '').join(',');
-            let relatedItemIds = cart.items.map(item => item?.id || '').join(',');
             let allProviderIds = cart.items.map(item => item?.provider?.id || '').join(',');
             console.log('---------productIds------',productIds)
-            console.log('---------relatedItemIds------',relatedItemIds)
-            let result = await protocolGetItemList({ "relatedItemIds": relatedItemIds, "itemIds": productIds, "providerIds": allProviderIds });
+            let result = await protocolGetItemList({ "itemIds": productIds, "providerIds": allProviderIds });
             console.log('---------result------',result)
             const productsDetailsArray = result.data
 
-            cart.items = cart.items.map(item => {
-                const productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id || item?.id == el?.id)
-                console.log('---------bpp_id------', productsDetails)
+            cart.items = await Promise.all(cart.items.map(async (item) => {
+                let productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id)
+                console.log('---------productsDetails------', productsDetails)
+                if (!productsDetails?.item_details) {
+                    const response = await protocolGetItemDetails({ id: item?.id });
+                    if (response) productsDetails = response
+                    console.log('---------productsDetails final ------', productsDetails)
+                }
 
                 const subtotal = productsDetails?.item_details?.price?.value;
                 return {
@@ -98,7 +101,7 @@ class SelectOrderService {
                         ...productsDetails?.provider_details,
                     },
                 };
-            })
+            }))
             const contextFactory = new ContextFactory();
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
             const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
