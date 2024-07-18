@@ -1,7 +1,7 @@
 
 import WishList from '../db/wishlist.js';
 import WishlistItem from "../db/wishlistItem.js"
-import { protocolGetItemList } from '../../../utils/protocolApis/index.js';
+import { protocolGetItemList, protocolListItemDetails } from '../../../utils/protocolApis/index.js';
 import { transformProductDetails } from "../../../utils/mapData/transformProductDetails.js"
 
 class WishListService {
@@ -32,6 +32,7 @@ class WishListService {
           let wishlistItem = new WishlistItem();
           wishlistItem.wishlist = device_wishlist ? device_wishlist : login_wishlist;
           wishlistItem.item_id = data.local_id;
+          wishlistItem.id = data.id;
           wishlistItem.provider_id = data.provider.id;
           wishlistItem.count = data.quantity.count;
           wishlistItem.added = true
@@ -60,6 +61,7 @@ class WishListService {
         let wishlistItem = new WishlistItem();
         wishlistItem.wishlist = saved_wishlist._id;
         wishlistItem.item_id = data.local_id;
+        wishlistItem.id = data.id;
         wishlistItem.provider_id = data.provider.id;
         wishlistItem.count = data.quantity.count;
         wishlistItem.added = true
@@ -87,10 +89,11 @@ class WishListService {
       if (wishlist2?._id) wishlistIds.push(wishlist2?._id)
       let wishlistData = await WishlistItem.find({ wishlist: { $in: wishlistIds } });
       let providerIds = wishlistData.map(item => item?.provider_id || '').join(',');
-      let itemIds = wishlistData.map(item => item?.item_id || '').join(',');
+      let itemIds = wishlistData.map(item => item?.id || '').join(',');
 
-      let result = await protocolGetItemList({ "itemIds":itemIds, providerIds });
-      let productsDetailsArray = result.data;
+      // let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
+      let result = await protocolListItemDetails({ "id": itemIds });
+      let productsDetailsArray = result;
 
       wishlistData = wishlistData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)

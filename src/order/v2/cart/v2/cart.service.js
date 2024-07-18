@@ -3,7 +3,7 @@ import CartItem from "../../db/items.js";
 import User from '../../../../accounts/users/db/user.js';
 import { encryptString } from "../../../../utils/cryptic.js";
 import mongoose from 'mongoose';
-import { protocolGetItemList } from '../../../../utils/protocolApis/index.js';
+import { protocolGetItemList, protocolListItemDetails } from '../../../../utils/protocolApis/index.js';
 import { transformProductDetails } from "../../../../utils/mapData/transformProductDetails.js"
 
 class CartService {
@@ -26,18 +26,21 @@ class CartService {
       }
 
       if (cart) {
-        let existingItem = await CartItem.findOneAndUpdate(
-          { item_id: data.local_id, "cart": cart._id },
-          { $inc: { count: 1 } },
-          { new: true });
-
+        let existingItem = await CartItem.findOne(
+          { item_id: data.local_id, "cart": cart._id }).lean()
         if (existingItem) {
+          const updateData = await CartItem.findOneAndUpdate(
+            { item_id: data.local_id, "cart": cart._id },
+            { $inc: { count: 1 } },
+            { new: true });
+            console.log("updateData ----------------------- ", updateData);
           return { status: "success", data: existingItem };
         }
 
         let cartItem = new CartItem();
         cartItem.cart = cart?._id;
         cartItem.item_id = data.local_id;
+        cartItem.id = data.id;
         cartItem.provider_id = data.provider.id;
         cartItem.count = data.quantity.count;
         cartItem.customisationState = data?.customisationState;
@@ -59,6 +62,7 @@ class CartService {
         let cartItem = new CartItem();
         cartItem.cart = saved_cart._id;
         cartItem.item_id = data.local_id;
+        cartItem.id = data.id;
         cartItem.provider_id = data.provider.id;
         cartItem.count = data.quantity.count;
         cartItem.customisationState = data?.customisationState;
@@ -150,9 +154,10 @@ class CartService {
         return [];
       }
       let providerIds = cartData.map(item => item?.provider_id || '').join(',');
-      let itemIds = cartData.map(item => item?.item_id || '').join(',');
-      let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
-      let productsDetailsArray = result.data;
+      let itemIds = cartData.map(item => item?.id || '').join(',');
+      // let result = await protocolGetItemList({ "itemIds": itemIds, providerIds });
+      let result = await protocolListItemDetails({ "id": itemIds });
+      let productsDetailsArray = result;
       cartData = cartData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)
         return product

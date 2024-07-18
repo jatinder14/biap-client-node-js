@@ -520,6 +520,29 @@ const protocolGetItemDetails = async (searchRequest) => {
     }
 }
 
+const protocolListItemDetails = async (searchRequest) => {
+    try {
+        const apiCall = new HttpRequest(
+            process.env.PROTOCOL_BASE_URL,
+            PROTOCOL_API_URLS.SEARCH_ITEM_DETAILS_LIST,
+            "GET",
+            {
+                ...searchRequest
+            }
+        );
+
+        const result = await apiCall.send();
+
+        return result.data;
+    } catch (err) {
+        if (err?.response?.data) {
+            throw err?.response?.data;
+        } else {
+            throw err
+        }
+    }
+}
+
 /**
  * on search products
  * @param {Object} query 
@@ -864,5 +887,6 @@ export {
     protocolGetDumps,
     protocolProvideDetails,
     protocolGetItemDetails,
+    protocolListItemDetails,
     syncProvider
 };

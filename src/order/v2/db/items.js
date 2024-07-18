@@ -4,6 +4,7 @@ import Cart from "./cart.js";
 const CartItemSchema = new mongoose.Schema(
     {
         item_id: { type: String },
+        id: { type: String },
         provider_id: { type: String },
         count: { type: Number },
         customisationState: { type: mongoose.Schema.Types.Mixed },
