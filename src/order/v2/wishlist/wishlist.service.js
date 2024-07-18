@@ -94,11 +94,14 @@ class WishListService {
 
       wishlistData = wishlistData.map(item => {
         const product = transformProductDetails(item, productsDetailsArray)
-        return {
-          ...product._doc,
-          item: product.item
+        if (product) {
+          return {
+            ...product._doc,
+            item: product.item
+          }
+        } else {
+          return product
         }
-        return product
       }).filter(el => el != null);
       return wishlistData;
     } catch (err) {
