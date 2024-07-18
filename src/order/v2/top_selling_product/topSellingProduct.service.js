@@ -26,7 +26,7 @@ class TopSellingService {
                     $sort: { count: -1 }
                 },
                 {
-                    $limit: 10
+                    $limit: 50
                 },
                 {
                     $group: {
