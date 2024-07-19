@@ -1,7 +1,7 @@
 // utils.js
 export const transformProductDetails = (item, productsDetailsArray) => {
   console.log("productsDetailsArray -------------", JSON.stringify(productsDetailsArray));
-  const productDetails = productsDetailsArray.find(el => item.item_id === el.item_details.id);
+  const productDetails = productsDetailsArray?.find(el => item?.item_id === el?.item_details?.id);
   if (!productDetails) return null;
   
   let providers = productDetails?.provider_details ?? {}
