@@ -25,7 +25,7 @@ class WishListService {
       }
 
       if (wishlist_ids.length) {
-        const existingItem = await WishlistItem.findOne({ item_id: data.local_id, "wishlist": (device_wishlist ? device_wishlist : login_wishlist) });
+        const existingItem = await WishlistItem.findOne({ item_id: data.local_id, "wishlist": (login_wishlist ? login_wishlist : device_wishlist) });
         if (existingItem) {
           return { status: "error", message: "Item already exists in wishlist" };
         } else {
