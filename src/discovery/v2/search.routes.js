@@ -79,9 +79,9 @@ router.get(
 );
 
 // search provider
-router.post(
-    '/v2/sync_providers', searchController.syncProviders,
-);
+// router.post(
+//     '/v2/sync_providers', searchController.syncProviders,
+// );
 
 // // get custom menus
 // router.get(
