@@ -79,10 +79,16 @@ class CartService {
 
   async updateItem(data) {
     try {
-      let cartItem = await CartItem.findOne({ _id: data.itemId });
-      if (data?._id) delete data?._id
-      cartItem.item = data;
-      return await cartItem.save();
+      let existingItem = await CartItem.findOne({ _id: data.itemId });
+      if (existingItem) {
+        const updateData = await CartItem.findOneAndUpdate(
+          { _id: data.itemId },
+          { $inc: { count: 1 } },
+          { new: true });
+        return updateData
+      }
+      let result = await protocolListItemDetails({ "id": existingItem?.id });
+      return transformProductDetails(existingItem, result);
     } catch (err) {
       throw err;
     }
