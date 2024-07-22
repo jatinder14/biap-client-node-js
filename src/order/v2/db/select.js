@@ -5,7 +5,7 @@ const SelectSchema = new mongoose.Schema({
     transaction_id: { type: String, required: true },
     created_at: { type: Date, default: Date.now },
     items: [{
-        item_id: { type: String },
+        cart_id: { type: String },
         error_code: { type: String },
         provider_id: {type: String },
 

@@ -27,10 +27,10 @@ class CartService {
 
       if (cart) {
         let existingItem = await CartItem.findOne(
-          { item_id: data.id, "cart": cart._id }).lean()
+          { id: data.id, "cart": cart._id }).lean()
         if (existingItem) {
           const updateData = await CartItem.findOneAndUpdate(
-            { item_id: data.id, "cart": cart._id },
+            { id: data.id, "cart": cart._id },
             { $inc: { count: 1 } },
             { new: true });
             console.log("updateData ----------------------- ", updateData);
