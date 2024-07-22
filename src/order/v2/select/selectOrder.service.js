@@ -124,7 +124,7 @@ class SelectOrderService {
                     $addToSet: {
                         items: {
                             cart_id: cartId,
-                            provider_id: providerIds[0]
+                            provider_id: providerIds.length ? providerIds[0] : null
                         },
                     },
                     $setOnInsert: {
@@ -168,10 +168,20 @@ class SelectOrderService {
                     error: { message: "GPS location is not correct!" }
                 };
             }
-            return await bppSelectService.select(
+            const selectResponse = await bppSelectService.select(
                 context,
                 { cart, fulfillments }
             );
+            if (selectResponse?.message?.ack?.status == "NACK") {
+                const providerId = providerIds.length ? providerIds[0]: null;
+                if (providerId) {
+                    const response = await protocolProvideDetails({ id: providerId, local_id: providerId });
+                    console.log("NACK ERROR --------------------- ", response?.descriptor);
+                    selectResponse.message['provider_name'] = response?.descriptor?.name || ''
+                }
+            }
+            return selectResponse;
+
         }
         catch (err) {
             throw err;
