@@ -7,6 +7,8 @@ import BppSelectService from "./bppSelect.service.js";
 import getCityCode from "../../../utils/AreaCodeMap.js";
 import { v4 as uuidv4 } from "uuid";
 import Select from "../../v2/db/select.js";
+import Cart from "../db/cart.js";
+import CartItem from "../db/items.js";
 
 const bppSelectService = new BppSelectService();
 
@@ -58,7 +60,7 @@ class SelectOrderService {
     */
     async selectOrder(orderRequest) {
         try {
-            const { context: requestContext, message = {} } = orderRequest || {};
+            const { context: requestContext, message = {}, userId } = orderRequest || {};
             const { cart = {}, fulfillments = [] } = message;
             requestContext.city = getCityCode(requestContext?.city)
 
@@ -105,10 +107,12 @@ class SelectOrderService {
             const contextFactory = new ContextFactory();
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
             const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
+            const cartData = await Cart.findOne({ userId: userId }).lean().exec();
             let transaction = await Select.findOne({
-                "items.item_id": { $in: local_ids },
+                "items.cart_id": cartData.cart,
+                "items.error_code": "40002",
                 "items.provider_id": { $in: providerIds }
-            });
+            }).lean();
 
             console.log('Transactions found:', transaction);
             let transaction_id;
@@ -117,6 +121,24 @@ class SelectOrderService {
             } else {
               transaction_id = uuidv4();
             }
+            await Select.updateOne(
+                { transaction_id: transaction_id },
+                {
+                    $addToSet: {
+                        items: {
+                            cart_id: cartData.cart,
+                            provider_id: providerIds[0]
+                        },
+                    },
+                    $setOnInsert: {
+                        created_at: new Date(),
+                        transaction_id: transaction_id 
+                    }
+                },
+                {
+                    upsert: true
+                }
+            )
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.SELECT,
                 transactionId: transaction_id,
@@ -244,21 +266,9 @@ class SelectOrderService {
                             if (itemsWithCount99.length) {
                                 const saveOperations = itemsWithCount99.map(async (item) => {
                                     await Select.updateOne(
-                                        { transaction_id: transactionId },
+                                        { transaction_id: transactionId, "items.provider_id": providerId },
                                         {
-                                            $addToSet: {
-                                                items: {
-                                                    item_id: item["@ondc/org/item_id"],
-                                                    error_code: "40002",
-                                                    provider_id: providerId
-                                                },
-                                            },
-                                            $setOnInsert: {
-                                                created_at: new Date(),
-                                            }
-                                        },
-                                        {
-                                            upsert: true
+                                            $set: { "items.$.error_code": "40002" }
                                         }
                                     );
                                     return {

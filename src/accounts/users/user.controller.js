@@ -5,6 +5,7 @@ import { createJwtToken, verifyJwtToken } from '../../utils/token.utils.js';
 import User from './db/user.js';
 import sendOTPUtil from '../../utils/otp.js';
 import lokiLogger from '../../utils/logger.js'
+import Cart from '../../order/v2/db/cart.js';
 
 class UserController {
 
@@ -136,13 +137,15 @@ class UserController {
       }
 
       const existingUser = await User.findOne({ userId: user?.decodedToken?.userId });
+      if (request.deviceId)
+        await Cart.updateMany({ device_id: request.deviceId }, { $set: { userId: userId || request.userId } });
       if (existingUser) {
         if (request.userName) existingUser.userName = request.userName;
         if (request.phone) existingUser.phone = request.phone;
         if (request.email) existingUser.email = request.email;
         if (request.userImage || request.picture) existingUser.userImage = request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture);
         if (request.address || user?.delivery_address) existingUser.address = request.address || user?.delivery_address;
-        if (request.userId) existingUser.userId = request.userId
+        if (request.userId) existingUser.userId = userId || request.userId
         if (request.deviceId) existingUser.device_id = request.deviceId
         existingUser.userId = userId
         await existingUser.save();
@@ -155,7 +158,7 @@ class UserController {
           email: user?.decodedToken?.email || request.email,
           userImage: request.userImage ? request.userImage : (request.picture || user?.decodedToken?.picture),
           delivery_address: request.address || user?.decodedToken?.address,
-          userId: request.userId || userId,
+          userId: userId || request.userId,
           device_id: request.deviceId || "",
           userId
         });
