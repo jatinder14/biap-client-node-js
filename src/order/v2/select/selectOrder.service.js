@@ -104,8 +104,9 @@ class SelectOrderService {
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
             const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
             const cartData = await Cart.findOne({ userId: userId }).lean().exec();
+            const cartId = cartData?.cart || uuidv4()
             let transaction = await Select.findOne({
-                "items.cart_id": cartData.cart,
+                "items.cart_id": cartId,
                 "items.error_code": "40002",
                 "items.provider_id": { $in: providerIds }
             }).lean();
@@ -122,7 +123,7 @@ class SelectOrderService {
                 {
                     $addToSet: {
                         items: {
-                            cart_id: cartData.cart,
+                            cart_id: cartId,
                             provider_id: providerIds[0]
                         },
                     },
@@ -291,7 +292,8 @@ class SelectOrderService {
                         if (onSelectResponse?.message?.ack?.status == "NACK") {
                             const providerId = onSelectResponse.message.quote.provider.id;
                             const response = await protocolProvideDetails({ id: providerId, local_id: providerId });
-                            onSelectResponse.message['provider_name'] = response?.descriptor?.name
+                            console.log("NACK ERROR --------------------- ", response?.descriptor);
+                            onSelectResponse.message['provider_name'] = response?.descriptor?.name || ''
                         }
                         return { ...onSelectResponse };
                     }
