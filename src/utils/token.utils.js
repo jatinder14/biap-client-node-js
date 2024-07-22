@@ -3,7 +3,7 @@ const JWT_SECRET = 'secret_token';
 
 export const createJwtToken = (payload) => {
   payload.loginWithOTP = true
-  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "12h" });
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "30d" });
   return token;
 };
 

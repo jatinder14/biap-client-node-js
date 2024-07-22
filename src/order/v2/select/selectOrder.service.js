@@ -1,4 +1,4 @@
-import { onOrderSelect, protocolGetItemDetails, protocolGetItemList } from "../../../utils/protocolApis/index.js";
+import { onOrderSelect, protocolGetItemDetails, protocolGetItemList, protocolProvideDetails } from "../../../utils/protocolApis/index.js";
 import { PROTOCOL_CONTEXT } from "../../../utils/constants.js";
 import { RetailsErrorCode } from "../../../utils/retailsErrorCode.js";
 
@@ -74,18 +74,14 @@ class SelectOrderService {
 
             let productIds = cart.items.map(item => item?.local_id || '').join(',');
             let allProviderIds = cart.items.map(item => item?.provider?.id || '').join(',');
-            console.log('---------productIds------',productIds)
             let result = await protocolGetItemList({ "itemIds": productIds, "providerIds": allProviderIds });
-            console.log('---------result------',result)
             const productsDetailsArray = result.data
 
             cart.items = await Promise.all(cart.items.map(async (item) => {
                 let productsDetails = productsDetailsArray.find(el => item?.local_id == el?.item_details?.id)
-                console.log('---------productsDetails------', productsDetails)
                 if (!productsDetails?.item_details) {
                     const response = await protocolGetItemDetails({ id: item?.id });
                     if (response) productsDetails = response
-                    console.log('---------productsDetails final ------', productsDetails)
                 }
 
                 const subtotal = productsDetails?.item_details?.price?.value;
@@ -291,6 +287,11 @@ class SelectOrderService {
                                     }
                                 }
                             }
+                        }
+                        if (onSelectResponse?.message?.ack?.status == "NACK") {
+                            const providerId = onSelectResponse.message.quote.provider.id;
+                            const response = await protocolProvideDetails({ id: providerId, local_id: providerId });
+                            onSelectResponse.message['provider_name'] = response?.descriptor?.name
                         }
                         return { ...onSelectResponse };
                     }
