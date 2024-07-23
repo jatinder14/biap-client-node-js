@@ -105,20 +105,22 @@ class SelectOrderService {
             const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
             const cartData = await Cart.findOne({ userId: userId }).lean().exec();
             const cartId = cartData?.cart || uuidv4()
+            console.log("selectOrder userId ===================", userId)
+            console.log("selectOrder cartData ===================", cartData)
+            console.log("selectOrder cartId ===================", cartId)
             let transaction = await Select.findOne({
                 "items.cart_id": cartId,
                 "items.error_code": "40002",
                 "items.provider_id": { $in: providerIds }
             }).lean();
-
-            console.log('Transactions found:', transaction);
+            console.log("selectOrder transaction ===================", transaction)
             let transaction_id;
             if (transaction) {  
               transaction_id = transaction.transaction_id;
             } else {
               transaction_id = uuidv4();
             }
-            await Select.updateOne(
+            const updatedData = await Select.updateOne(
                 { transaction_id: transaction_id },
                 {
                     $addToSet: {
@@ -136,6 +138,9 @@ class SelectOrderService {
                     upsert: true
                 }
             )
+            console.log("selectOrder provider_id ===================", providerIds.length ? providerIds[0] : null)
+            console.log("selectOrder transaction_id ===================", transaction_id)
+            console.log("selectOrder updatedData ===================", updatedData)
             const context = contextFactory.create({
                 action: PROTOCOL_CONTEXT.SELECT,
                 transactionId: transaction_id,
@@ -271,19 +276,15 @@ class SelectOrderService {
                             let itemsWithCount99 = allItem.filter(el => el.item?.quantity?.available?.count != "99")
                             itemsWithCount99 = !itemsWithCount99.length && onSelectResponse?.error?.code == "40002" ? allItem : itemsWithCount99 // Checking if seller is still sending available = 99 for out of stock product
                             if (itemsWithCount99.length) {
-                                const saveOperations = itemsWithCount99.map(async (item) => {
-                                    await Select.updateOne(
-                                        { transaction_id: transactionId, "items.provider_id": providerId },
-                                        {
-                                            $set: { "items.$.error_code": "40002" }
-                                        }
-                                    );
-                                    return {
-                                        item_id: item["@ondc/org/item_id"],
-                                        error_code: "40002",
-                                    };
-                                });
-                                await Promise.all(saveOperations);
+                                const updatedSelect = await Select.updateMany(
+                                    { transaction_id: transactionId, "items.provider_id": providerId },
+                                    {
+                                        $set: { "items.$.error_code": "40002" }
+                                    }
+                                );
+                                console.log("onSelectMultipleOrder transactionId ==================== ", transactionId);
+                                console.log("onSelectMultipleOrder providerId ==================== ", providerId);
+                                console.log("onSelectMultipleOrder updatedSelect ==================== ", updatedSelect);
                                 const savedItemIds = itemsWithCount99.map(item => item["@ondc/org/item_id"])
                                 const errorMessage = `[${savedItemIds.map(id => `{"item_id":"${id}","error":"40002"}`).join(', ')}]`;
 
