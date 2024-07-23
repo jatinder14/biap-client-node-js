@@ -7,7 +7,7 @@
     const pass = process.env.EMAIL_PASSWORD;
     const site_url=process.env.SITE_URL
     const feedback_url=site_url+"/feedback"
-    const profile_site_url=site_url+ "/application/profile"
+    const profile_site_url=site_url+ "/profile"
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
