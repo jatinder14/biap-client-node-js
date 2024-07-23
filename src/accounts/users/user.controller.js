@@ -137,8 +137,12 @@ class UserController {
       }
 
       const existingUser = await User.findOne({ userId: user?.decodedToken?.userId });
-      if (request.deviceId)
-        await Cart.updateMany({ device_id: request.deviceId }, { $set: { userId: userId || request.userId } });
+      if (request.deviceId) {
+        console.log("request.deviceId -------------------", request.deviceId);
+        console.log("userId || request.userId -------------------", userId || request.userId);
+        const updateCart = await Cart.updateMany({ device_id: request.deviceId }, { $set: { userId: userId || request.userId } });
+        console.log("updateCart -------------------", updateCart);
+      }
       if (existingUser) {
         if (request.userName) existingUser.userName = request.userName;
         if (request.phone) existingUser.phone = request.phone;
