@@ -104,7 +104,7 @@ class SelectOrderService {
             const local_ids = cart.items.map(item => item?.local_id).filter(Boolean);
             const providerIds = cart.items.map(item => item?.provider?.local_id).filter(Boolean);
             const cartData = await Cart.findOne({ userId: userId }).lean().exec();
-            const cartId = cartData?.cart || uuidv4()
+            const cartId = cartData?._id?.toString() || uuidv4()
             console.log("selectOrder userId ===================", userId)
             console.log("selectOrder cartData ===================", cartData)
             console.log("selectOrder cartId ===================", cartId)
