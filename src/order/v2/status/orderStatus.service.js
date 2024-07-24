@@ -152,6 +152,7 @@ class OrderStatusService {
                                 }
                                 if (dbResponse?.state == 'Cancelled') {
                                     orderSchema.state = dbResponse?.state
+                                    if (onOrderStatusResponse?.message?.order) onOrderStatusResponse.message.order.state = dbResponse?.state
                                 } else {
                                     orderSchema.state = onOrderStatusResponse?.message?.order?.state;
                                 }
@@ -223,9 +224,9 @@ class OrderStatusService {
                                 //     item.product = temp.product;
                                 //     //item.quantity = item.quantity.count
                                 //
-                            //         console.log("item --after-->",item)
-                            //         updateItems.push(item)
-                            // }
+                                //         console.log("item --after-->",item)
+                                //         updateItems.push(item)
+                                // }
 
                                 for (let fulfillment of onOrderStatusResponse.message?.order?.fulfillments) {
                                     let existingFulfillment = await FulfillmentHistory.findOne({
