@@ -113,9 +113,26 @@ class CancelOrderService {
       } else {
         if (!protocolCancelResponse?.[0].error && protocolCancelResponse?.[0]?.message?.order?.state) {
           protocolCancelResponse = protocolCancelResponse?.[0];
+          let quoteTrailSum = 0;
+
+          const fulfillments = protocolCancelResponse.message?.order?.fulfillments;
+          if (Array.isArray(fulfillments)) {
+            fulfillments.forEach(fulfillment => {
+              fulfillment.tags.forEach(tag => {
+                if (tag.code === 'quote_trail') {
+                  tag.list.forEach(item => {
+                    quoteTrailSum += Math.abs(parseFloat(item.value)) || 0;
+                  });
+                }
+              });
+            });
+          } 
+
           const updateOrderState = await Order.findOneAndUpdate(
             { id: protocolCancelResponse?.message?.order?.id },
-            { state: protocolCancelResponse?.message?.order?.state },
+            { state: protocolCancelResponse?.message?.order?.state,
+              refunded_amount: quoteTrailSum
+             },
             { new: true }
           );
         }
@@ -188,10 +205,13 @@ class CancelOrderService {
             let refunded_amount = 0;
             //RTO scenario is for pramaan flow-4 RTO-Initiated case  
             if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
-              refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
-            else
-              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(protocolCancelResponse);
+{              refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
+  console.log('refundAmount192', refundAmount)
+}            else
+{              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(protocolCancelResponse);
+  console.log('refundAmount195', refundAmount)
 
+}
             let order_details = dbResponse?.[0]?.toJSON();
             let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, order_details?.id, latest_fulfillment?.state?.descriptor?.code);
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
