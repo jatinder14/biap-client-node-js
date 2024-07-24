@@ -205,13 +205,10 @@ class CancelOrderService {
             let refunded_amount = 0;
             //RTO scenario is for pramaan flow-4 RTO-Initiated case  
             if (latest_fulfillment?.type == "RTO" && latest_fulfillment?.state?.descriptor?.code === "RTO-Initiated")
-{              refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
-  console.log('refundAmount192', refundAmount)
-}            else
-{              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(protocolCancelResponse);
-  console.log('refundAmount195', refundAmount)
+              refundAmount = this.calculateRefundAmountForRtoCASE(protocolCancelResponse);
+            else
+              refundAmount = this.calculateRefundAmountForFullOrderCancellationBySellerOrBuyer(protocolCancelResponse);
 
-}
             let order_details = dbResponse?.[0]?.toJSON();
             let checkFulfillmentAlreadyExist = await checkFulfillmentExists(latest_fulfillment?.id, order_details?.id, latest_fulfillment?.state?.descriptor?.code);
             let razorpayPaymentId = order_details?.payment?.razorpayPaymentId
