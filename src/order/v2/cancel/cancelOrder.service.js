@@ -113,26 +113,9 @@ class CancelOrderService {
       } else {
         if (!protocolCancelResponse?.[0].error && protocolCancelResponse?.[0]?.message?.order?.state) {
           protocolCancelResponse = protocolCancelResponse?.[0];
-          let quoteTrailSum = 0;
-
-          const fulfillments = protocolCancelResponse.message?.order?.fulfillments;
-          if (Array.isArray(fulfillments)) {
-            fulfillments.forEach(fulfillment => {
-              fulfillment.tags.forEach(tag => {
-                if (tag.code === 'quote_trail') {
-                  tag.list.forEach(item => {
-                    quoteTrailSum += Math.abs(parseFloat(item.value)) || 0;
-                  });
-                }
-              });
-            });
-          } 
-
           const updateOrderState = await Order.findOneAndUpdate(
             { id: protocolCancelResponse?.message?.order?.id },
-            { state: protocolCancelResponse?.message?.order?.state,
-              refunded_amount: quoteTrailSum
-             },
+            { state: protocolCancelResponse?.message?.order?.state },
             { new: true }
           );
         }
