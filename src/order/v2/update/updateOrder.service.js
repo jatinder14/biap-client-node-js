@@ -899,6 +899,7 @@ class UpdateOrderService {
                     }
                 }
                 lokiLogger.info(`protocolUpdateResponse final in db push ----------------${JSON.stringify(protocolUpdateResponse)}`)
+                await new Promise((resolve) => setTimeout(resolve, 3000))
                 return protocolUpdateResponse;
             }
 
