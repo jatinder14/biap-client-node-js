@@ -83,7 +83,7 @@ class CartService {
       if (existingItem) {
         const updateData = await CartItem.findOneAndUpdate(
           { _id: data.itemId },
-          { $inc: { count: 1 } },
+          { $set: { count: data?.quantity?.count } },
           { new: true });
         return updateData
       }
